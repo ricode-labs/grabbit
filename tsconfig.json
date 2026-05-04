@@ -10,8 +10,7 @@
     "module": "ESNext",
     "types": [
       "vite/client",
-      "node",
-      "@electron-forge/plugin-vite/forge-vite-env"
+      "node"
     ],
     "skipLibCheck": true,
     /* Bundler mode */
