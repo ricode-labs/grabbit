@@ -23,10 +23,9 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true,
-    "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/renderer/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src/renderer"]
 }
