@@ -47,7 +47,11 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Progress } from "@/components/ui/progress"
+import {
+  Progress,
+  ProgressIndicator,
+  ProgressTrack,
+} from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import {
   Table,
@@ -638,11 +642,13 @@ function Field({
 
 function ProgressBar({ value, accent }: { value: number; accent: string }) {
   return (
-    <Progress
-      value={value}
-      className="h-2 flex-1 bg-white/[0.07]"
-      indicatorClassName={cn("rounded-full bg-gradient-to-r", accent)}
-    />
+    <Progress value={value} className="flex-1">
+      <ProgressTrack className="h-2 bg-white/[0.07]">
+        <ProgressIndicator
+          className={cn("rounded-full bg-gradient-to-r", accent)}
+        />
+      </ProgressTrack>
+    </Progress>
   )
 }
 
