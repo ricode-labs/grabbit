@@ -1,824 +1,628 @@
+import type { ComponentType, ReactNode } from "react"
+
 import {
   Activity,
   Bell,
   CheckCircle2,
+  ChevronRight,
   Clock3,
-  CloudLightning,
   Command,
-  Cpu,
-  DatabaseZap,
   Download,
   FileArchive,
+  FileDown,
   Files,
   FolderDown,
   Gauge,
   Globe2,
-  HardDriveDownload,
+  HardDrive,
+  History,
   Info,
-  Layers3,
   Link2,
   ListFilter,
-  LockKeyhole,
   Magnet,
+  MoreHorizontal,
   Pause,
   Play,
   Plus,
   RadioTower,
   RotateCcw,
-  Route,
-  Save,
   Search,
-  ServerCog,
   Settings2,
   ShieldCheck,
   SlidersHorizontal,
   Sparkles,
-  TimerReset,
   Trash2,
-  Waves,
+  Upload,
   Wifi,
-  X,
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
-type TaskStatus = "Downloading" | "Seeding" | "Paused" | "Completed" | "Queued"
-type PageKind = "main" | "add" | "settings" | "details" | "history"
+type TaskStatus = "downloading" | "queued" | "paused" | "seeding" | "completed"
 
 type DownloadTask = {
+  id: string
   name: string
-  detail: string
+  source: string
   status: TaskStatus
   progress: number
-  speed: string
   size: string
+  speed: string
+  eta: string
+  peers: string
+  savePath: string
   accent: string
 }
 
-type Design = {
-  name: string
+type StatItem = {
   label: string
-  mood: string
-  surface: string
-  frame: string
-  sidebar: string
-  panel: string
-  subtle: string
-  border: string
-  accent: string
-  glow: string
-  icon: typeof Download
+  value: string
+  detail: string
+  icon: ComponentType<{ className?: string }>
 }
-
-const pages: Array<{ kind: PageKind; title: string }> = [
-  { kind: "main", title: "Main downloads" },
-  { kind: "add", title: "Add download modal" },
-  { kind: "settings", title: "Settings" },
-  { kind: "details", title: "Task details" },
-  { kind: "history", title: "History" },
-]
 
 const tasks: DownloadTask[] = [
   {
-    name: "ubuntu-26.04-desktop.iso",
-    detail: "HTTP • 18 connections • ~/Downloads/grabbit",
-    status: "Downloading",
+    id: "8f2c4a91",
+    name: "ubuntu-26.04-desktop-amd64.iso",
+    source: "https://releases.ubuntu.com/26.04/ubuntu.iso",
+    status: "downloading",
     progress: 76,
-    speed: "42.8 MB/s",
     size: "4.1 / 5.4 GB",
-    accent: "from-emerald-400 to-cyan-400",
+    speed: "42.8 MB/s",
+    eta: "02:18",
+    peers: "18 conns",
+    savePath: "~/Downloads/grabbit/linux",
+    accent: "from-cyan-300 to-blue-500",
   },
   {
-    name: "archlinux-bootstrap.tar.zst",
-    detail: "Mirror group • retry enabled",
-    status: "Queued",
-    progress: 0,
-    speed: "waiting",
-    size: "958 MB",
-    accent: "from-sky-400 to-blue-500",
-  },
-  {
+    id: "90ad112e",
     name: "foundation-s01-archive.mkv",
-    detail: "Magnet • 84 peers • verified chunks",
-    status: "Seeding",
+    source: "magnet:?xt=urn:btih:foundation-archive",
+    status: "seeding",
     progress: 100,
-    speed: "8.2 MB/s",
     size: "11.7 GB",
-    accent: "from-violet-400 to-fuchsia-400",
+    speed: "8.2 MB/s up",
+    eta: "ratio 2.1",
+    peers: "84 peers",
+    savePath: "~/Media/Series/Foundation",
+    accent: "from-violet-300 to-fuchsia-500",
   },
   {
+    id: "e4b70d30",
     name: "stable-diffusion-model.safetensors",
-    detail: "HTTPS • paused by scheduler",
-    status: "Paused",
+    source: "https://models.example.com/sd-model.safetensors",
+    status: "paused",
     progress: 39,
-    speed: "0 KB/s",
     size: "2.5 / 6.6 GB",
-    accent: "from-amber-300 to-orange-400",
+    speed: "0 KB/s",
+    eta: "paused",
+    peers: "12 conns",
+    savePath: "~/AI/models",
+    accent: "from-amber-300 to-orange-500",
+  },
+  {
+    id: "72ab0081",
+    name: "archlinux-bootstrap-2026.05.tar.zst",
+    source: "https://mirrors.edge.kernel.org/archlinux/iso/latest/",
+    status: "queued",
+    progress: 0,
+    size: "958 MB",
+    speed: "waiting",
+    eta: "queue #2",
+    peers: "mirror set",
+    savePath: "~/Downloads/grabbit/linux",
+    accent: "from-sky-300 to-indigo-500",
   },
 ]
 
-const designs: Design[] = [
+const stats: StatItem[] = [
   {
-    name: "Monolith",
-    label: "01",
-    mood: "Quiet pro dashboard",
-    surface: "bg-zinc-950 text-zinc-50",
-    frame: "border-white/10 bg-zinc-950 shadow-2xl shadow-black/60",
-    sidebar: "border-white/10 bg-white/[0.04]",
-    panel: "border-white/10 bg-white/[0.07]",
-    subtle: "bg-white/[0.05]",
-    border: "border-white/10",
-    accent: "from-zinc-100 to-zinc-400",
-    glow: "bg-white/15",
-    icon: ServerCog,
+    label: "Download",
+    value: "51.0 MB/s",
+    detail: "+12% from avg",
+    icon: Download,
   },
-  {
-    name: "Aurora",
-    label: "02",
-    mood: "Glass and gradients",
-    surface: "bg-slate-950 text-cyan-50",
-    frame: "border-cyan-200/15 bg-slate-950 shadow-2xl shadow-cyan-950/50",
-    sidebar: "border-cyan-200/15 bg-cyan-100/[0.06]",
-    panel: "border-cyan-200/15 bg-cyan-100/[0.08]",
-    subtle: "bg-cyan-100/[0.07]",
-    border: "border-cyan-200/15",
-    accent: "from-cyan-300 via-sky-400 to-violet-400",
-    glow: "bg-cyan-300/25",
-    icon: CloudLightning,
-  },
-  {
-    name: "Paper Trail",
-    label: "03",
-    mood: "Warm and readable",
-    surface: "bg-stone-100 text-stone-950",
-    frame: "border-stone-300 bg-white shadow-xl shadow-stone-300/50",
-    sidebar: "border-stone-300 bg-stone-50",
-    panel: "border-stone-300 bg-stone-50",
-    subtle: "bg-stone-100",
-    border: "border-stone-300",
-    accent: "from-stone-950 to-amber-700",
-    glow: "bg-amber-300/45",
-    icon: FileArchive,
-  },
-  {
-    name: "Neon Ops",
-    label: "04",
-    mood: "Terminal operations",
-    surface: "bg-black text-lime-50",
-    frame: "border-lime-300/20 bg-black shadow-2xl shadow-lime-950/50",
-    sidebar: "border-lime-300/20 bg-lime-300/[0.05]",
-    panel: "border-lime-300/20 bg-lime-300/[0.07]",
-    subtle: "bg-lime-300/[0.06]",
-    border: "border-lime-300/20",
-    accent: "from-lime-300 to-emerald-500",
-    glow: "bg-lime-300/25",
-    icon: RadioTower,
-  },
-  {
-    name: "Graphite",
-    label: "05",
-    mood: "Dense native utility",
-    surface: "bg-neutral-900 text-neutral-100",
-    frame: "border-neutral-700 bg-neutral-800 shadow-xl shadow-black/30",
-    sidebar: "border-neutral-700 bg-neutral-900/70",
-    panel: "border-neutral-700 bg-neutral-900/70",
-    subtle: "bg-neutral-700/40",
-    border: "border-neutral-700",
-    accent: "from-neutral-200 to-neutral-500",
-    glow: "bg-neutral-200/15",
-    icon: Cpu,
-  },
-  {
-    name: "Tidepool",
-    label: "06",
-    mood: "Calm bandwidth health",
-    surface: "bg-blue-950 text-blue-50",
-    frame: "border-blue-200/15 bg-blue-950 shadow-2xl shadow-blue-950/50",
-    sidebar: "border-blue-200/15 bg-blue-100/[0.06]",
-    panel: "border-blue-200/15 bg-blue-100/[0.08]",
-    subtle: "bg-blue-100/[0.07]",
-    border: "border-blue-200/15",
-    accent: "from-teal-200 via-cyan-300 to-blue-400",
-    glow: "bg-teal-200/25",
-    icon: Waves,
-  },
-  {
-    name: "Command Mint",
-    label: "07",
-    mood: "Keyboard-first control",
-    surface: "bg-emerald-50 text-emerald-950",
-    frame: "border-emerald-200 bg-white shadow-xl shadow-emerald-200/60",
-    sidebar: "border-emerald-200 bg-emerald-50",
-    panel: "border-emerald-200 bg-emerald-50",
-    subtle: "bg-emerald-100/80",
-    border: "border-emerald-200",
-    accent: "from-emerald-500 to-teal-600",
-    glow: "bg-emerald-300/45",
-    icon: Command,
-  },
-  {
-    name: "Solar Queue",
-    label: "08",
-    mood: "Scheduling and limits",
-    surface: "bg-orange-50 text-orange-950",
-    frame: "border-orange-200 bg-white/95 shadow-xl shadow-orange-200/50",
-    sidebar: "border-orange-200 bg-orange-50",
-    panel: "border-orange-200 bg-orange-50",
-    subtle: "bg-orange-100/80",
-    border: "border-orange-200",
-    accent: "from-orange-500 via-amber-400 to-yellow-300",
-    glow: "bg-yellow-300/50",
-    icon: TimerReset,
-  },
-  {
-    name: "Orbit",
-    label: "09",
-    mood: "Sources and routes",
-    surface: "bg-indigo-950 text-indigo-50",
-    frame: "border-indigo-200/15 bg-indigo-950 shadow-2xl shadow-indigo-950/50",
-    sidebar: "border-indigo-200/15 bg-indigo-100/[0.06]",
-    panel: "border-indigo-200/15 bg-indigo-100/[0.08]",
-    subtle: "bg-indigo-100/[0.07]",
-    border: "border-indigo-200/15",
-    accent: "from-indigo-300 via-violet-300 to-fuchsia-300",
-    glow: "bg-violet-300/25",
-    icon: Route,
-  },
-  {
-    name: "Vault",
-    label: "10",
-    mood: "Verified archive",
-    surface: "bg-slate-100 text-slate-950",
-    frame: "border-slate-300 bg-white shadow-xl shadow-slate-300/50",
-    sidebar: "border-slate-300 bg-slate-50",
-    panel: "border-slate-300 bg-slate-50",
-    subtle: "bg-slate-100",
-    border: "border-slate-300",
-    accent: "from-slate-900 to-blue-700",
-    glow: "bg-blue-300/40",
-    icon: ShieldCheck,
-  },
+  { label: "Upload", value: "8.2 MB/s", detail: "304 peers", icon: Upload },
+  { label: "Disk", value: "128 MB", detail: "cache active", icon: HardDrive },
+  { label: "RPC", value: "4 ms", detail: "127.0.0.1", icon: RadioTower },
 ]
 
-const statusClass: Record<TaskStatus, string> = {
-  Downloading: "bg-emerald-500/15 text-emerald-300 ring-emerald-400/20",
-  Seeding: "bg-violet-500/15 text-violet-300 ring-violet-400/20",
-  Paused: "bg-amber-500/15 text-amber-300 ring-amber-400/20",
-  Completed: "bg-sky-500/15 text-sky-300 ring-sky-400/20",
-  Queued: "bg-zinc-500/15 text-zinc-300 ring-zinc-400/20",
+const history = [
+  ["debian-live-13.0.iso", "3.7 GB", "Today 11:42"],
+  ["node-v26-linux-x64.tar.xz", "48 MB", "Yesterday"],
+  ["fedora-workstation.iso", "2.1 GB", "May 17"],
+]
+
+const statusLabels: Record<TaskStatus, string> = {
+  downloading: "Downloading",
+  queued: "Queued",
+  paused: "Paused",
+  seeding: "Seeding",
+  completed: "Completed",
 }
 
-const lightStatusClass: Record<TaskStatus, string> = {
-  Downloading: "bg-emerald-100 text-emerald-800 ring-emerald-200",
-  Seeding: "bg-violet-100 text-violet-800 ring-violet-200",
-  Paused: "bg-amber-100 text-amber-800 ring-amber-200",
-  Completed: "bg-sky-100 text-sky-800 ring-sky-200",
-  Queued: "bg-zinc-100 text-zinc-700 ring-zinc-200",
+const statusClasses: Record<TaskStatus, string> = {
+  downloading: "bg-cyan-400/10 text-cyan-200 ring-cyan-300/20",
+  queued: "bg-slate-400/10 text-slate-300 ring-slate-300/20",
+  paused: "bg-amber-400/10 text-amber-200 ring-amber-300/20",
+  seeding: "bg-violet-400/10 text-violet-200 ring-violet-300/20",
+  completed: "bg-emerald-400/10 text-emerald-200 ring-emerald-300/20",
 }
 
 function App() {
-  return (
-    <main className="min-h-svh bg-background text-foreground">
-      <section className="mx-auto flex w-full max-w-[120rem] flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
-        <header className="rounded-3xl border bg-card p-5 shadow-sm">
-          <div className="inline-flex items-center gap-2 rounded-full border bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-            <Sparkles className="size-3.5" />
-            Neon Ops structure, 10 visual directions
-          </div>
-          <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <h1 className="text-3xl font-semibold tracking-tight sm:text-5xl">
-                One structure, 10 visual systems
-              </h1>
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground sm:text-base">
-                Every mock now uses the Neon Ops layout: compact left rail,
-                top action bar, dense central workspace, and bottom aria2c
-                status strip. Only the visual language changes.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline">
-                <ListFilter />
-                Compare
-              </Button>
-              <Button>
-                <Plus />
-                New task
-              </Button>
-            </div>
-          </div>
-        </header>
+  const activeTask = tasks[0]
 
-        <div className="grid gap-8">
-          {designs.map((design) => (
-            <DesignSuite key={design.name} design={design} />
-          ))}
-        </div>
-      </section>
+  return (
+    <main className="min-h-svh overflow-hidden bg-[#071014] text-slate-50">
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(34,211,238,0.20),transparent_34%),radial-gradient(circle_at_90%_10%,rgba(168,85,247,0.16),transparent_32%),linear-gradient(135deg,rgba(15,23,42,0.2),rgba(2,6,23,0.82))]" />
+      <div className="relative mx-auto flex min-h-svh w-full max-w-[96rem] flex-col p-3 sm:p-4 lg:p-5">
+        <AppChrome>
+          <Sidebar />
+          <section className="flex min-w-0 flex-1 flex-col">
+            <Topbar />
+            <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto p-3 sm:p-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
+              <div className="grid min-w-0 gap-4">
+                <Hero />
+                <StatsGrid />
+                <TaskPanel />
+              </div>
+              <aside className="grid content-start gap-4">
+                <AddDownloadCard />
+                <TaskDetails task={activeTask} />
+                <SettingsCard />
+                <HistoryCard />
+              </aside>
+            </div>
+            <StatusBar />
+          </section>
+        </AppChrome>
+      </div>
     </main>
   )
 }
 
-function DesignSuite({ design }: { design: Design }) {
-  const Icon = design.icon
-  const light = isLight(design)
-
+function AppChrome({ children }: { children: ReactNode }) {
   return (
-    <article
-      className={cn(
-        "relative overflow-hidden rounded-[2rem] border p-4 sm:p-5",
-        design.surface,
-        light ? "border-black/10" : "border-white/10"
-      )}
-    >
-      <div className={cn("absolute -right-16 -top-24 size-72 rounded-full blur-3xl", design.glow)} />
-      <div className={cn("absolute -bottom-32 left-1/3 size-80 rounded-full blur-3xl", design.glow)} />
-
-      <div className="relative z-10 mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
-          <div className={cn("grid size-11 place-items-center rounded-2xl bg-gradient-to-br text-black", design.accent)}>
-            <Icon className="size-5" />
-          </div>
-          <div>
-            <div className="text-xs font-semibold uppercase tracking-[0.24em] opacity-55">
-              {design.label} / {design.mood}
-            </div>
-            <h2 className="text-2xl font-semibold tracking-tight">{design.name}</h2>
-          </div>
-        </div>
-        <div className="flex items-center gap-2 text-xs opacity-70">
-          {pages.map((page) => (
-            <span key={`${design.name}-${page.kind}`}>{page.title}</span>
-          ))}
-        </div>
-      </div>
-
-      <div className="relative z-10 flex gap-5 overflow-x-auto pb-3 [scrollbar-width:thin]">
-        {pages.map((page) => (
-          <MockFrame key={`${design.name}-${page.kind}`} title={page.title} design={design}>
-            <AppShellMock design={design} light={light} page={page.kind} />
-          </MockFrame>
-        ))}
-      </div>
-    </article>
-  )
-}
-
-function MockFrame({
-  title,
-  design,
-  children,
-}: {
-  title: string
-  design: Design
-  children: React.ReactNode
-}) {
-  return (
-    <section className={cn("w-[min(74rem,calc(100vw-4rem))] shrink-0 rounded-[1.75rem] border p-3", design.frame)}>
-      <div className="mb-3 flex items-center justify-between gap-3 px-1">
-        <div className="text-xs font-semibold uppercase tracking-[0.2em] opacity-60">{title}</div>
-        <div className="flex gap-1.5 opacity-70">
-          <span className="size-2 rounded-full bg-red-400" />
-          <span className="size-2 rounded-full bg-amber-400" />
-          <span className="size-2 rounded-full bg-emerald-400" />
-        </div>
-      </div>
+    <div className="flex min-h-[calc(100svh-1.5rem)] overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/72 shadow-2xl shadow-black/50 backdrop-blur-2xl sm:min-h-[calc(100svh-2rem)] lg:min-h-[calc(100svh-2.5rem)]">
       {children}
-    </section>
+    </div>
   )
 }
 
-function AppShellMock({
-  design,
-  light,
-  page,
-}: {
-  design: Design
-  light: boolean
-  page: PageKind
-}) {
-  const workspace = <Workspace design={design} light={light} page={page} />
+function Sidebar() {
+  const navItems = [
+    { label: "Tasks", icon: Download, active: true },
+    { label: "Queue", icon: Clock3 },
+    { label: "Files", icon: Files },
+    { label: "History", icon: History },
+    { label: "Settings", icon: Settings2 },
+  ]
 
   return (
-    <ShellRoot className="grid-cols-[4.75rem_1fr]">
-      <RailNav design={design} light={light} page={page} />
-      <MainPane design={design} light={light} page={page}>{workspace}</MainPane>
-    </ShellRoot>
-  )
-}
-
-function ShellRoot({ className, children }: { className: string; children: React.ReactNode }) {
-  return <div className={cn("relative grid h-[44rem] overflow-hidden rounded-[1.35rem]", className)}>{children}</div>
-}
-
-function MainPane({
-  design,
-  light,
-  page,
-  children,
-}: {
-  design: Design
-  light: boolean
-  page: PageKind
-  children: React.ReactNode
-}) {
-  return (
-    <section className={cn("relative flex min-w-0 flex-col", design.border)}>
-      <Toolbar design={design} light={light} page={page} />
-      <div className="min-h-0 flex-1 overflow-hidden p-4">{children}</div>
-      <StatusBar design={design} />
-    </section>
-  )
-}
-
-function Workspace({ design, light, page }: { design: Design; light: boolean; page: PageKind }) {
-  if (page === "add") return <AddWorkspace design={design} light={light} />
-  if (page === "settings") return <SettingsWorkspace design={design} light={light} />
-  if (page === "details") return <DetailsWorkspace design={design} light={light} />
-  if (page === "history") return <HistoryWorkspace design={design} light={light} />
-  return <MainWorkspace design={design} light={light} />
-}
-
-function Toolbar({ design, light, page }: { design: Design; light: boolean; page: PageKind }) {
-  return (
-    <header className={cn("flex h-16 items-center gap-3 border-b px-4", design.border)}>
-      <div className={cn("flex min-w-0 flex-1 items-center gap-2 rounded-2xl border px-3 py-2", design.panel)}>
-        <Search className="size-4 opacity-55" />
-        <span className="truncate text-sm opacity-60">Search tasks, URLs, files, or GID</span>
+    <aside className="hidden w-20 shrink-0 flex-col items-center border-r border-white/10 bg-white/[0.03] px-3 py-4 md:flex">
+      <div className="grid size-12 place-items-center rounded-2xl bg-gradient-to-br from-cyan-300 via-blue-400 to-violet-500 text-slate-950 shadow-lg shadow-cyan-500/20">
+        <FileDown className="size-6" />
       </div>
-      <Button size="sm" variant={light ? "default" : "secondary"}>
-        <Plus />
-        Add
-      </Button>
-      <Button size="icon-sm" variant="ghost" aria-label="Filter downloads">
-        <ListFilter />
-      </Button>
-      <Button size="icon-sm" variant="ghost" aria-label="Notifications">
-        <Bell />
-      </Button>
-      <Button size="icon-sm" variant={page === "settings" ? "default" : "ghost"} aria-label="Settings">
-        <Settings2 />
-      </Button>
-    </header>
-  )
-}
-
-function RailNav({ design, light, page }: { design: Design; light: boolean; page: PageKind }) {
-  const items = [Download, Clock3, CheckCircle2, Pause, Settings2]
-  return (
-    <aside className={cn("hidden flex-col items-center gap-3 border-r p-3 md:flex", design.sidebar)}>
-      <div className={cn("mb-4 grid size-10 place-items-center rounded-2xl bg-gradient-to-br text-black", design.accent)}>
-        <RadioTower className="size-5" />
-      </div>
-      {items.map((Icon, index) => {
-        const active =
-          (index === 0 && (page === "main" || page === "add" || page === "details")) ||
-          (index === 2 && page === "history") ||
-          (index === 4 && page === "settings")
-        return (
-          <div key={`${design.name}-rail-${index}`} className={cn("grid size-10 place-items-center rounded-2xl", active ? cn("font-semibold", light ? "bg-black/10" : "bg-white/10") : "opacity-55")}>
-            <Icon className="size-4" />
-          </div>
-        )
-      })}
-      <div className={cn("mt-auto grid size-10 place-items-center rounded-2xl", design.panel)}>
-        <Activity className="size-4 text-emerald-400" />
+      <nav className="mt-8 flex flex-1 flex-col gap-2">
+        {navItems.map((item) => (
+          <button
+            key={item.label}
+            aria-label={item.label}
+            className={cn(
+              "grid size-11 place-items-center rounded-2xl text-slate-400 transition hover:bg-white/10 hover:text-white",
+              item.active &&
+                "bg-white/12 text-cyan-100 shadow-inner shadow-white/5"
+            )}
+            type="button"
+          >
+            <item.icon className="size-5" />
+          </button>
+        ))}
+      </nav>
+      <div className="grid size-11 place-items-center rounded-2xl border border-emerald-300/20 bg-emerald-400/10 text-emerald-200">
+        <Activity className="size-5" />
       </div>
     </aside>
   )
 }
 
-function MainWorkspace({ design, light }: { design: Design; light: boolean }) {
+function Topbar() {
   return (
-    <div className={cn("h-full overflow-hidden rounded-2xl border", design.panel)}>
-      <TaskTableHeader design={design} />
-      {tasks.concat(tasks.slice(0, 2)).map((task, index) => (
-        <TaskTableRow key={`${design.name}-dense-${task.name}-${index}`} task={task} design={design} light={light} />
-      ))}
-    </div>
+    <header className="flex min-h-16 items-center gap-3 border-b border-white/10 px-3 sm:px-5">
+      <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm text-slate-400">
+        <Search className="size-4 shrink-0" />
+        <span className="truncate">
+          Search URL, magnet, file name, task id...
+        </span>
+        <kbd className="ml-auto hidden rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[0.65rem] text-slate-500 sm:block">
+          /
+        </kbd>
+      </div>
+      <Button className="hidden bg-cyan-300 text-slate-950 hover:bg-cyan-200 sm:inline-flex">
+        <Plus />
+        New task
+      </Button>
+      <Button variant="ghost" size="icon" aria-label="Filters">
+        <ListFilter />
+      </Button>
+      <Button variant="ghost" size="icon" aria-label="Notifications">
+        <Bell />
+      </Button>
+    </header>
   )
 }
 
-function AddWorkspace({ design, light }: { design: Design; light: boolean }) {
+function Hero() {
   return (
-    <div className="relative h-full overflow-hidden rounded-3xl">
-      <MainWorkspace design={design} light={light} />
-      <div className="absolute inset-0 bg-black/35 backdrop-blur-[2px]" />
-      <div className={cn("absolute left-1/2 top-1/2 w-[32rem] max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-[1.75rem] border p-5 shadow-2xl", design.frame)}>
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <div>
-            <div className="text-xl font-semibold">Add download</div>
-            <div className="mt-1 text-sm opacity-60">URL, magnet, torrent, or metalink</div>
+    <section className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-5 shadow-xl shadow-black/20">
+      <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-medium text-cyan-100">
+            <Sparkles className="size-3.5" />
+            aria2 powered desktop downloader
           </div>
-          <Button size="icon-sm" variant="ghost" aria-label="Close modal">
-            <X />
-          </Button>
+          <h1 className="mt-4 max-w-3xl text-3xl font-semibold tracking-tight text-white sm:text-5xl">
+            Grab files, torrents, and mirrors without losing control.
+          </h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
+            A complete Grabbit workspace for managing active downloads, queue
+            limits, task details, history, and local RPC health from one screen.
+          </p>
         </div>
-        <Field design={design} icon={Link2} label="Source" value="https://releases.ubuntu.com/26.04/ubuntu.iso" />
-        <Field design={design} icon={FolderDown} label="Save to" value="~/Downloads/grabbit" />
-        <div className="grid grid-cols-2 gap-3">
-          <Field design={design} icon={Layers3} label="Split" value="16" />
-          <Field design={design} icon={Gauge} label="Speed limit" value="No cap" />
-        </div>
-        <div className="mt-5 flex gap-2">
-          <Button className="flex-1" variant="outline">Cancel</Button>
-          <Button className="flex-1">
-            <Plus />
-            Add task
-          </Button>
+        <div className="grid grid-cols-3 gap-2 rounded-3xl border border-white/10 bg-slate-950/60 p-2 text-center">
+          <MiniMetric value="5" label="active" />
+          <MiniMetric value="128" label="done" />
+          <MiniMetric value="942 GB" label="saved" />
         </div>
       </div>
+    </section>
+  )
+}
+
+function MiniMetric({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="min-w-20 rounded-2xl bg-white/[0.05] px-3 py-3">
+      <div className="text-lg font-semibold text-white">{value}</div>
+      <div className="text-xs text-slate-500">{label}</div>
     </div>
   )
 }
 
-function SettingsWorkspace({ design }: { design: Design; light: boolean }) {
+function StatsGrid() {
   return (
-    <div className="grid h-full gap-4 lg:grid-cols-[1fr_22rem]">
-      <div className="grid content-start gap-3">
-        <SectionTitle title="Core" description="Bundled aria2c process and secure local RPC" />
-        <div className="grid gap-3 lg:grid-cols-2">
-          <SettingRow design={design} icon={ServerCog} label="aria2c binary" value="resources/aria2/linux-x64/aria2c" />
-          <SettingRow design={design} icon={Wifi} label="RPC endpoint" value="127.0.0.1 : dynamic" />
-          <SettingRow design={design} icon={LockKeyhole} label="RPC secret" value="Generated on launch" />
-          <SettingRow design={design} icon={FolderDown} label="Default folder" value="~/Downloads/grabbit" />
-        </div>
-        <SectionTitle title="Performance" description="Connections, retries, and queue limits" />
-        <div className={cn("rounded-3xl border p-4", design.panel)}>
-          {[
-            ["Max concurrent downloads", "5", 55],
-            ["Connections per server", "16", 80],
-            ["Retry wait", "10s", 40],
-            ["Disk cache", "128 MB", 64],
-          ].map(([label, value, width]) => (
-            <div key={`${design.name}-${label}`} className="mb-4 last:mb-0">
-              <div className="mb-2 flex justify-between text-sm">
-                <span>{label}</span>
-                <span className="opacity-60">{value}</span>
+    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {stats.map((stat) => (
+        <Card key={stat.label} className="p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="text-sm text-slate-400">{stat.label}</div>
+              <div className="mt-2 text-2xl font-semibold text-white">
+                {stat.value}
               </div>
-              <div className={cn("h-2 rounded-full", design.subtle)}>
-                <div className={cn("h-full rounded-full bg-gradient-to-r", design.accent)} style={{ width: `${width}%` }} />
-              </div>
+              <div className="mt-1 text-xs text-slate-500">{stat.detail}</div>
             </div>
-          ))}
+            <div className="grid size-10 place-items-center rounded-2xl bg-white/[0.06] text-cyan-200">
+              <stat.icon className="size-5" />
+            </div>
+          </div>
+        </Card>
+      ))}
+    </section>
+  )
+}
+
+function TaskPanel() {
+  return (
+    <Card className="overflow-hidden">
+      <div className="flex flex-col gap-3 border-b border-white/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-white">Active downloads</h2>
+          <p className="text-sm text-slate-500">
+            4 tasks across HTTP, magnet, and mirrored sources
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="secondary" size="sm">
+            <Pause />
+            Pause all
+          </Button>
+          <Button variant="ghost" size="sm">
+            <RotateCcw />
+            Retry failed
+          </Button>
         </div>
       </div>
-      <div className={cn("flex flex-col rounded-3xl border p-4", design.panel)}>
-        <SlidersHorizontal className="mb-4 size-6 opacity-60" />
-        <div className="text-lg font-semibold">Profile</div>
-        <div className="mt-1 text-sm leading-6 opacity-60">Optimized for local Linux x64 aria2c with dynamic RPC and persistent session files.</div>
-        <Button className="mt-auto">
-          <Save />
-          Save settings
+      <div className="hidden grid-cols-[1fr_8rem_8rem_7rem_5rem] gap-3 border-b border-white/10 px-4 py-3 text-xs font-semibold tracking-wide text-slate-500 uppercase lg:grid">
+        <span>Name</span>
+        <span>Status</span>
+        <span>Speed</span>
+        <span>ETA</span>
+        <span>Action</span>
+      </div>
+      <div>
+        {tasks.map((task) => (
+          <TaskRow key={task.id} task={task} />
+        ))}
+      </div>
+    </Card>
+  )
+}
+
+function TaskRow({ task }: { task: DownloadTask }) {
+  return (
+    <article className="grid gap-3 border-b border-white/10 p-4 last:border-b-0 lg:grid-cols-[1fr_8rem_8rem_7rem_5rem] lg:items-center">
+      <div className="min-w-0">
+        <div className="flex items-center gap-3">
+          <div
+            className={cn(
+              "grid size-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br text-slate-950",
+              task.accent
+            )}
+          >
+            {task.source.startsWith("magnet") ? (
+              <Magnet className="size-5" />
+            ) : (
+              <Globe2 className="size-5" />
+            )}
+          </div>
+          <div className="min-w-0">
+            <h3 className="truncate text-sm font-semibold text-white">
+              {task.name}
+            </h3>
+            <p className="truncate text-xs text-slate-500">{task.source}</p>
+          </div>
+        </div>
+        <div className="mt-3 flex items-center gap-3">
+          <Progress value={task.progress} accent={task.accent} />
+          <span className="w-10 text-right text-xs text-slate-500">
+            {task.progress}%
+          </span>
+        </div>
+        <div className="mt-2 text-xs text-slate-500 lg:hidden">
+          {task.speed} · {task.size} · {task.eta}
+        </div>
+      </div>
+      <StatusBadge status={task.status} />
+      <div className="hidden text-sm font-medium text-slate-200 lg:block">
+        {task.speed}
+      </div>
+      <div className="hidden text-sm text-slate-400 lg:block">{task.eta}</div>
+      <div className="flex gap-1">
+        <Button variant="ghost" size="icon-sm" aria-label="Resume task">
+          <Play />
+        </Button>
+        <Button variant="ghost" size="icon-sm" aria-label="Task menu">
+          <MoreHorizontal />
         </Button>
       </div>
-    </div>
+    </article>
   )
 }
 
-function DetailsWorkspace({ design, light }: { design: Design; light: boolean }) {
-  const task = tasks[0]
-
+function AddDownloadCard() {
   return (
-    <div className="grid h-full gap-4 lg:grid-cols-[1fr_20rem]">
-      <div className="grid content-start gap-4">
-        <div className={cn("rounded-3xl border p-5", design.panel)}>
-          <div className="mb-5 flex items-start gap-4">
-            <div className={cn("grid size-14 place-items-center rounded-2xl bg-gradient-to-br text-black", task.accent)}>
-              <HardDriveDownload className="size-7" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-2xl font-semibold">{task.name}</div>
-              <div className="mt-1 text-sm opacity-60">GID 8f2c4a91b70d01ef • HTTP • verified</div>
-            </div>
-          </div>
-          <TaskProgress task={task} design={design} />
-          <div className="mt-5 flex gap-2">
-            <Button size="sm">
-              <Pause />
-              Pause
-            </Button>
-            <Button size="sm" variant="outline">
-              <RotateCcw />
-              Retry
-            </Button>
-            <Button size="sm" variant="ghost">
-              <Trash2 />
-              Remove
-            </Button>
-          </div>
+    <Card className="p-4">
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-white">Add download</h2>
+          <p className="text-sm text-slate-500">
+            URL, magnet, torrent, or metalink
+          </p>
         </div>
-        <div className={cn("rounded-3xl border p-4", design.panel)}>
-          <SectionTitle title="Files" description="Selected files inside this task" />
-          {[
-            ["ubuntu.iso", "5.4 GB", 76],
-            ["SHA256SUMS", "13 KB", 100],
-            ["README", "4 KB", 100],
-          ].map(([name, size, progress]) => (
-            <FileRow key={`${design.name}-${name}`} design={design} name={`${name}`} size={`${size}`} progress={Number(progress)} />
-          ))}
+        <div className="grid size-10 place-items-center rounded-2xl bg-cyan-300 text-slate-950">
+          <Plus className="size-5" />
         </div>
       </div>
-      <div className="grid content-start gap-3">
-        <Stat design={design} icon={Globe2} label="Connections" value="18" />
-        <Stat design={design} icon={Files} label="Pieces" value="8192" />
-        <Stat design={design} icon={Gauge} label="Avg speed" value="39 MB/s" />
-        <TaskCard task={tasks[3]} design={design} light={light} />
+      <Field icon={Link2} label="Source" value="Paste a link or magnet URI" />
+      <Field icon={FolderDown} label="Save to" value="~/Downloads/grabbit" />
+      <div className="grid grid-cols-2 gap-3">
+        <Field icon={SlidersHorizontal} label="Split" value="16" />
+        <Field icon={Gauge} label="Limit" value="No cap" />
       </div>
-    </div>
+      <Button className="mt-4 w-full bg-cyan-300 text-slate-950 hover:bg-cyan-200">
+        <Plus />
+        Queue task
+      </Button>
+    </Card>
   )
 }
 
-function HistoryWorkspace({ design, light }: { design: Design; light: boolean }) {
-  const history = [
-    ["debian-live.iso", "Completed", "3.7 GB"],
-    ["node-v26-linux-x64.tar.xz", "Completed", "48 MB"],
-    ["dataset-part-09.zip", "Removed", "1.2 GB"],
-    ["fedora-workstation.iso", "Completed", "2.1 GB"],
-    ["aria2-1.37-linux.tar.bz2", "Completed", "2.8 MB"],
-  ]
+function TaskDetails({ task }: { task: DownloadTask }) {
+  return (
+    <Card className="p-4">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div>
+          <h2 className="text-lg font-semibold text-white">Task details</h2>
+          <p className="text-xs text-slate-500">GID {task.id}b70d01ef</p>
+        </div>
+        <Button variant="ghost" size="icon-sm" aria-label="Task info">
+          <Info />
+        </Button>
+      </div>
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+        <div className="truncate text-sm font-semibold text-white">
+          {task.name}
+        </div>
+        <div className="mt-1 truncate text-xs text-slate-500">
+          {task.savePath}
+        </div>
+        <div className="mt-4">
+          <div className="mb-2 flex justify-between text-xs text-slate-400">
+            <span>{task.size}</span>
+            <span>{task.peers}</span>
+          </div>
+          <Progress value={task.progress} accent={task.accent} />
+        </div>
+      </div>
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        <IconAction icon={Pause} label="Pause" />
+        <IconAction icon={RotateCcw} label="Retry" />
+        <IconAction icon={Trash2} label="Remove" danger />
+      </div>
+    </Card>
+  )
+}
+
+function SettingsCard() {
+  const settings = [
+    ["RPC endpoint", "127.0.0.1 : dynamic", Wifi],
+    ["RPC secret", "Generated on launch", ShieldCheck],
+    ["Max active", "5 downloads", Command],
+  ] as const
 
   return (
-    <div className="grid h-full grid-rows-[auto_1fr] gap-4">
-      <div className="grid gap-3 lg:grid-cols-4">
-        <Stat design={design} icon={CheckCircle2} label="Done" value="128" />
-        <Stat design={design} icon={DatabaseZap} label="Saved" value="942 GB" />
-        <Stat design={design} icon={Clock3} label="This week" value="18" />
-        <Stat design={design} icon={Magnet} label="Magnets" value="27" />
+    <Card className="p-4">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-white">Settings</h2>
+        <Button variant="ghost" size="icon-sm" aria-label="Open settings">
+          <ChevronRight />
+        </Button>
       </div>
-      <div className={cn("overflow-hidden rounded-3xl border", design.panel)}>
-        <div className={cn("grid grid-cols-[1fr_8rem_7rem_3rem] border-b px-4 py-3 text-xs font-semibold uppercase tracking-wide opacity-60", design.border)}>
-          <span>Name</span>
-          <span>Status</span>
-          <span>Size</span>
-          <span />
-        </div>
-        {history.map(([name, status, size]) => (
-          <div key={`${design.name}-${name}`} className={cn("grid grid-cols-[1fr_8rem_7rem_3rem] items-center gap-3 border-b px-4 py-3 last:border-b-0", design.border)}>
+      <div className="grid gap-2">
+        {settings.map(([label, value, Icon]) => (
+          <div
+            key={label}
+            className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3"
+          >
+            <Icon className="size-4 text-slate-400" />
             <div className="min-w-0">
-              <div className="truncate text-sm font-semibold">{name}</div>
-              <div className="text-xs opacity-55">~/Downloads/grabbit</div>
+              <div className="text-sm font-medium text-slate-200">{label}</div>
+              <div className="truncate text-xs text-slate-500">{value}</div>
             </div>
-            <span className={cn("w-fit rounded-full px-2 py-1 text-xs ring-1", status === "Completed" ? (light ? lightStatusClass.Completed : statusClass.Completed) : lightStatusClass.Paused)}>
-              {status}
-            </span>
-            <span className="text-sm opacity-70">{size}</span>
-            <Button size="icon-sm" variant="ghost" aria-label="Show details">
-              <Info />
-            </Button>
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   )
 }
 
-function StatusBar({ design }: { design: Design }) {
+function HistoryCard() {
   return (
-    <footer className={cn("flex h-10 items-center justify-between border-t px-4 text-xs opacity-70", design.border)}>
-      <span>aria2c running • session saved 8s ago</span>
-      <span>Down 51 MB/s • Up 8.2 MB/s • 304 peers</span>
+    <Card className="p-4">
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-white">Recent history</h2>
+        <FileArchive className="size-5 text-slate-500" />
+      </div>
+      <div className="grid gap-2">
+        {history.map(([name, size, date]) => (
+          <div
+            key={name}
+            className="flex items-center gap-3 rounded-2xl bg-white/[0.03] p-3"
+          >
+            <CheckCircle2 className="size-4 shrink-0 text-emerald-300" />
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-medium text-slate-200">
+                {name}
+              </div>
+              <div className="text-xs text-slate-500">{date}</div>
+            </div>
+            <div className="text-xs text-slate-500">{size}</div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  )
+}
+
+function StatusBar() {
+  return (
+    <footer className="flex flex-col gap-2 border-t border-white/10 px-4 py-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+      <span className="inline-flex items-center gap-2">
+        <span className="size-2 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.8)]" />
+        aria2c running · session saved 8s ago
+      </span>
+      <span>Down 51 MB/s · Up 8.2 MB/s · 304 peers · 5 active</span>
     </footer>
   )
 }
 
-function TaskTableHeader({ design }: { design: Design }) {
+function Card({
+  className,
+  children,
+}: {
+  className?: string
+  children: ReactNode
+}) {
   return (
-    <div className={cn("grid grid-cols-[1fr_8rem_8rem_8rem_7rem] border-b px-4 py-3 text-xs font-semibold uppercase tracking-wide opacity-60", design.border)}>
-      <span>Name</span>
-      <span>Status</span>
-      <span>Speed</span>
-      <span>Size</span>
-      <span>Action</span>
-    </div>
+    <section
+      className={cn(
+        "rounded-[1.5rem] border border-white/10 bg-white/[0.045] shadow-lg shadow-black/15",
+        className
+      )}
+    >
+      {children}
+    </section>
   )
 }
 
-function TaskTableRow({ task, design, light }: { task: DownloadTask; design: Design; light: boolean }) {
-  return (
-    <div className={cn("grid grid-cols-[1fr_8rem_8rem_8rem_7rem] items-center gap-3 border-b px-4 py-3 last:border-b-0", design.border)}>
-      <div className="min-w-0">
-        <div className="truncate text-sm font-semibold">{task.name}</div>
-        <div className="mt-1 flex items-center gap-3 text-xs opacity-60">
-          <span className="truncate">{task.detail}</span>
-          <span>{task.progress}%</span>
-        </div>
-        <div className={cn("mt-2 h-1.5 rounded-full", design.subtle)}>
-          <div className={cn("h-full rounded-full bg-gradient-to-r", task.accent)} style={{ width: `${task.progress}%` }} />
-        </div>
-      </div>
-      <span className={cn("w-fit rounded-full px-2 py-1 text-xs font-medium ring-1", light ? lightStatusClass[task.status] : statusClass[task.status])}>
-        {task.status}
-      </span>
-      <span className="text-sm font-medium">{task.speed}</span>
-      <span className="text-sm opacity-70">{task.size}</span>
-      <div className="flex gap-1">
-        <Button size="icon-sm" variant="ghost" aria-label="Pause download">
-          <Pause />
-        </Button>
-        <Button size="icon-sm" variant="ghost" aria-label="Resume download">
-          <Play />
-        </Button>
-      </div>
-    </div>
-  )
-}
-
-function TaskProgress({ task, design }: { task: DownloadTask; design: Design }) {
-  return (
-    <div>
-      <div className="mb-2 flex justify-between text-sm">
-        <span>{task.speed}</span>
-        <span className="opacity-60">{task.size}</span>
-      </div>
-      <div className={cn("h-3 rounded-full", design.subtle)}>
-        <div className={cn("h-full rounded-full bg-gradient-to-r", task.accent)} style={{ width: `${task.progress}%` }} />
-      </div>
-    </div>
-  )
-}
-
-function TaskCard({ task, design, light }: { task: DownloadTask; design: Design; light: boolean }) {
-  return (
-    <div className={cn("rounded-3xl border p-4", design.panel)}>
-      <div className="mb-3 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="truncate text-sm font-semibold">{task.name}</div>
-          <div className="truncate text-xs opacity-60">{task.detail}</div>
-        </div>
-        <span className={cn("shrink-0 rounded-full px-2 py-1 text-[10px] font-semibold ring-1", light ? lightStatusClass[task.status] : statusClass[task.status])}>
-          {task.status}
-        </span>
-      </div>
-      <TaskProgress task={task} design={design} />
-    </div>
-  )
-}
-
-function SectionTitle({ title, description }: { title: string; description: string }) {
-  return (
-    <div>
-      <div className="text-lg font-semibold">{title}</div>
-      <div className="text-sm opacity-60">{description}</div>
-    </div>
-  )
-}
-
-function Stat({ design, icon: Icon, label, value }: { design: Design; icon: typeof Download; label: string; value: string }) {
-  return (
-    <div className={cn("rounded-3xl border p-4", design.panel)}>
-      <Icon className="mb-3 size-4 opacity-60" />
-      <div className="text-xs opacity-55">{label}</div>
-      <div className="truncate text-lg font-semibold">{value}</div>
-    </div>
-  )
-}
-
-function Field({ design, icon: Icon, label, value }: { design: Design; icon: typeof Download; label: string; value: string }) {
+function Field({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: ComponentType<{ className?: string }>
+  label: string
+  value: string
+}) {
   return (
     <label className="mb-3 block">
-      <span className="mb-1 block text-xs font-medium opacity-65">{label}</span>
-      <span className={cn("flex items-center gap-2 rounded-2xl border px-3 py-2.5 text-sm", design.panel)}>
-        <Icon className="size-4 shrink-0 opacity-55" />
-        <span className="truncate opacity-80">{value}</span>
+      <span className="mb-1 block text-xs font-medium text-slate-500">
+        {label}
+      </span>
+      <span className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-2.5 text-sm text-slate-400">
+        <Icon className="size-4 shrink-0" />
+        <span className="truncate">{value}</span>
       </span>
     </label>
   )
 }
 
-function SettingRow({ design, icon: Icon, label, value }: { design: Design; icon: typeof Download; label: string; value: string }) {
+function Progress({ value, accent }: { value: number; accent: string }) {
   return (
-    <div className={cn("flex items-center gap-3 rounded-3xl border p-4", design.panel)}>
-      <div className={cn("grid size-10 place-items-center rounded-2xl", design.subtle)}>
-        <Icon className="size-4" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="text-sm font-semibold">{label}</div>
-        <div className="truncate text-xs opacity-60">{value}</div>
-      </div>
+    <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/[0.07]">
+      <div
+        className={cn("h-full rounded-full bg-gradient-to-r", accent)}
+        style={{ width: `${value}%` }}
+      />
     </div>
   )
 }
 
-function FileRow({ design, name, size, progress }: { design: Design; name: string; size: string; progress: number }) {
+function StatusBadge({ status }: { status: TaskStatus }) {
   return (
-    <div className={cn("grid grid-cols-[1fr_7rem] items-center gap-3 border-t py-3", design.border)}>
-      <div className="min-w-0">
-        <div className="truncate text-sm font-medium">{name}</div>
-        <div className="mt-1 text-xs opacity-55">{progress}% complete</div>
-      </div>
-      <div className="text-right text-sm opacity-70">{size}</div>
-    </div>
+    <span
+      className={cn(
+        "w-fit rounded-full px-2.5 py-1 text-xs font-semibold ring-1",
+        statusClasses[status]
+      )}
+    >
+      {statusLabels[status]}
+    </span>
   )
 }
 
-function isLight(design: Design) {
+function IconAction({
+  icon: Icon,
+  label,
+  danger,
+}: {
+  icon: ComponentType<{ className?: string }>
+  label: string
+  danger?: boolean
+}) {
   return (
-    design.surface.includes("bg-stone") ||
-    design.surface.includes("bg-emerald-50") ||
-    design.surface.includes("bg-orange-50") ||
-    design.surface.includes("bg-slate-100")
+    <button
+      className={cn(
+        "flex flex-col items-center gap-1 rounded-2xl border border-white/10 bg-white/[0.03] px-2 py-3 text-xs text-slate-400 transition hover:bg-white/10 hover:text-white",
+        danger && "hover:text-red-200"
+      )}
+      type="button"
+    >
+      <Icon className="size-4" />
+      {label}
+    </button>
   )
 }
 

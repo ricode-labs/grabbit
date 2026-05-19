@@ -15,7 +15,8 @@ import {
 const downloads: DownloadApi = {
   startService: () => ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.startService),
   stopService: () => ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.stopService),
-  restartService: () => ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.restartService),
+  restartService: () =>
+    ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.restartService),
   getServiceStatus: () =>
     ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.getServiceStatus),
   getVersion: () => ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.getVersion),
@@ -25,7 +26,8 @@ const downloads: DownloadApi = {
     ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.addTorrent, input),
   addMetalink: (input: AddMetalinkInput) =>
     ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.addMetalink, input),
-  remove: (gid: string) => ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.remove, gid),
+  remove: (gid: string) =>
+    ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.remove, gid),
   forceRemove: (gid: string) =>
     ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.forceRemove, gid),
   pause: (gid: string) => ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.pause, gid),
@@ -33,7 +35,8 @@ const downloads: DownloadApi = {
     ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.forcePause, gid),
   pauseAll: () => ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.pauseAll),
   forcePauseAll: () => ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.forcePauseAll),
-  resume: (gid: string) => ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.resume, gid),
+  resume: (gid: string) =>
+    ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.resume, gid),
   resumeAll: () => ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.resumeAll),
   getStatus: (gid: string, keys?: string[]) =>
     ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.getStatus, gid, keys),
@@ -44,9 +47,12 @@ const downloads: DownloadApi = {
   tellStopped: (offset?: number, count?: number, keys?: string[]) =>
     ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.tellStopped, offset, count, keys),
   list: () => ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.list),
-  getUris: (gid: string) => ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.getUris, gid),
-  getFiles: (gid: string) => ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.getFiles, gid),
-  getPeers: (gid: string) => ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.getPeers, gid),
+  getUris: (gid: string) =>
+    ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.getUris, gid),
+  getFiles: (gid: string) =>
+    ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.getFiles, gid),
+  getPeers: (gid: string) =>
+    ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.getPeers, gid),
   getServers: (gid: string) =>
     ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.getServers, gid),
   changePosition: (input: ChangePositionInput) =>

@@ -187,7 +187,10 @@ class DownloadService {
 
     return this.call<string>(
       "aria2.addUri",
-      withOptionalPosition([input.uris, normalizeOptions(input.options)], input.position)
+      withOptionalPosition(
+        [input.uris, normalizeOptions(input.options)],
+        input.position
+      )
     )
   }
 
@@ -195,7 +198,11 @@ class DownloadService {
     return this.call<string>(
       "aria2.addTorrent",
       withOptionalPosition(
-        [input.torrentBase64, input.uris ?? [], normalizeOptions(input.options)],
+        [
+          input.torrentBase64,
+          input.uris ?? [],
+          normalizeOptions(input.options),
+        ],
         input.position
       )
     )
@@ -314,7 +321,13 @@ class DownloadService {
       "aria2.changeUri",
       input.position === undefined
         ? [input.gid, input.fileIndex, input.delUris, input.addUris]
-        : [input.gid, input.fileIndex, input.delUris, input.addUris, input.position]
+        : [
+            input.gid,
+            input.fileIndex,
+            input.delUris,
+            input.addUris,
+            input.position,
+          ]
     )
   }
 
@@ -323,7 +336,10 @@ class DownloadService {
   }
 
   async changeOption(gid: string, options: Aria2Options) {
-    return this.call<"OK">("aria2.changeOption", [gid, normalizeOptions(options)])
+    return this.call<"OK">("aria2.changeOption", [
+      gid,
+      normalizeOptions(options),
+    ])
   }
 
   async getGlobalOption() {
@@ -331,7 +347,9 @@ class DownloadService {
   }
 
   async changeGlobalOption(options: Aria2Options) {
-    return this.call<"OK">("aria2.changeGlobalOption", [normalizeOptions(options)])
+    return this.call<"OK">("aria2.changeGlobalOption", [
+      normalizeOptions(options),
+    ])
   }
 
   async getGlobalStat() {
@@ -480,7 +498,9 @@ async function waitForRpcReady(check: () => Promise<void>) {
     }
   }
 
-  throw lastError instanceof Error ? lastError : new Error("aria2 RPC did not start")
+  throw lastError instanceof Error
+    ? lastError
+    : new Error("aria2 RPC did not start")
 }
 
 function withOptionalPosition(params: unknown[], position: number | undefined) {
@@ -626,7 +646,9 @@ function toBoolean(value: string | undefined) {
 export function registerDownloadApi() {
   const service = new DownloadService()
 
-  ipcMain.handle(DOWNLOAD_API_CHANNELS.startService, () => service.startService())
+  ipcMain.handle(DOWNLOAD_API_CHANNELS.startService, () =>
+    service.startService()
+  )
   ipcMain.handle(DOWNLOAD_API_CHANNELS.stopService, () => service.stopService())
   ipcMain.handle(DOWNLOAD_API_CHANNELS.restartService, () =>
     service.restartService()
