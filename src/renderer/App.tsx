@@ -1,4 +1,4 @@
-import type { ComponentType, ReactNode } from "react"
+import type { ComponentType } from "react"
 
 import {
   Activity,
@@ -6,18 +6,13 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock3,
-  Command,
   Download,
   FileArchive,
   FileDown,
   Files,
-  FolderDown,
-  Gauge,
   Globe2,
   HardDrive,
   History,
-  Info,
-  Link2,
   ListFilter,
   Magnet,
   MoreHorizontal,
@@ -28,16 +23,13 @@ import {
   RotateCcw,
   Search,
   Settings2,
-  ShieldCheck,
-  SlidersHorizontal,
   Sparkles,
   Trash2,
   Upload,
-  Wifi,
 } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Card,
   CardContent,
@@ -45,6 +37,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
@@ -52,7 +52,15 @@ import {
   ProgressIndicator,
   ProgressTrack,
 } from "@/components/ui/progress"
-import { Separator } from "@/components/ui/separator"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Slider } from "@/components/ui/slider"
 import {
   Table,
   TableBody,
@@ -61,6 +69,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Textarea } from "@/components/ui/textarea"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
 type TaskStatus = "downloading" | "queued" | "paused" | "seeding" | "completed"
@@ -182,36 +197,78 @@ function App() {
     <main className="min-h-svh overflow-hidden bg-[#071014] text-slate-50">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(34,211,238,0.20),transparent_34%),radial-gradient(circle_at_90%_10%,rgba(168,85,247,0.16),transparent_32%),linear-gradient(135deg,rgba(15,23,42,0.2),rgba(2,6,23,0.82))]" />
       <div className="relative mx-auto flex min-h-svh w-full max-w-[96rem] flex-col p-3 sm:p-4 lg:p-5">
-        <AppChrome>
+        <Card className="flex min-h-[calc(100svh-1.5rem)] flex-row overflow-hidden rounded-[2rem] border-white/10 bg-slate-950/72 text-slate-50 shadow-2xl shadow-black/50 backdrop-blur-2xl sm:min-h-[calc(100svh-2rem)] lg:min-h-[calc(100svh-2.5rem)]">
           <Sidebar />
           <section className="flex min-w-0 flex-1 flex-col">
             <Topbar />
-            <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto p-3 sm:p-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
-              <div className="grid min-w-0 gap-4">
-                <Hero />
-                <StatsGrid />
-                <TaskPanel />
+            <Tabs
+              defaultValue="overview"
+              className="flex min-h-0 flex-1 flex-col gap-0"
+            >
+              <div className="border-b border-white/10 px-3 py-3 sm:px-5">
+                <TabsList className="bg-white/5">
+                  <TabsTrigger value="overview">Overview</TabsTrigger>
+                  <TabsTrigger value="queue">Queue</TabsTrigger>
+                  <TabsTrigger value="history">History</TabsTrigger>
+                  <TabsTrigger value="settings">Settings</TabsTrigger>
+                </TabsList>
               </div>
-              <aside className="grid content-start gap-4">
-                <AddDownloadCard />
-                <TaskDetails task={activeTask} />
-                <SettingsCard />
-                <HistoryCard />
-              </aside>
-            </div>
-            <StatusBar />
+
+              <ScrollArea className="min-h-0 flex-1">
+                <div className="grid gap-4 p-3 sm:p-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
+                  <div className="grid min-w-0 gap-4">
+                    <TabsContent
+                      value="overview"
+                      className="mt-0 grid gap-4 outline-none"
+                    >
+                      <Hero />
+                      <StatsGrid />
+                      <TaskPanel />
+                    </TabsContent>
+                    <TabsContent
+                      value="queue"
+                      className="mt-0 grid gap-4 outline-none"
+                    >
+                      <TaskPanel />
+                      <QueueSummary />
+                    </TabsContent>
+                    <TabsContent
+                      value="history"
+                      className="mt-0 grid gap-4 outline-none"
+                    >
+                      <HistoryPanel />
+                    </TabsContent>
+                    <TabsContent
+                      value="settings"
+                      className="mt-0 grid gap-4 outline-none"
+                    >
+                      <SettingsPanel />
+                    </TabsContent>
+                  </div>
+
+                  <aside className="grid content-start gap-4">
+                    <AddDownloadDialog />
+                    <TaskDetails task={activeTask} />
+                    <QuickControls />
+                    <LiveLog />
+                  </aside>
+                </div>
+              </ScrollArea>
+
+              <footer className="border-t border-white/10 px-4 py-3 text-xs text-slate-500">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="inline-flex items-center gap-2">
+                    <span className="size-2 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.8)]" />
+                    aria2c running · session saved 8s ago
+                  </span>
+                  <span>Down 51 MB/s · Up 8.2 MB/s · 304 peers · 5 active</span>
+                </div>
+              </footer>
+            </Tabs>
           </section>
-        </AppChrome>
+        </Card>
       </div>
     </main>
-  )
-}
-
-function AppChrome({ children }: { children: ReactNode }) {
-  return (
-    <Card className="flex min-h-[calc(100svh-1.5rem)] flex-row overflow-hidden rounded-[2rem] border-white/10 bg-slate-950/72 text-slate-50 shadow-2xl shadow-black/50 backdrop-blur-2xl sm:min-h-[calc(100svh-2rem)] lg:min-h-[calc(100svh-2.5rem)]">
-      {children}
-    </Card>
   )
 }
 
@@ -231,20 +288,26 @@ function Sidebar() {
       </div>
       <nav className="mt-8 flex flex-1 flex-col gap-2">
         {navItems.map((item) => (
-          <Button
-            key={item.label}
-            aria-label={item.label}
-            variant="ghost"
-            size="icon-lg"
-            className={cn(
-              "size-11 rounded-2xl text-slate-400 hover:bg-white/10 hover:text-white",
-              item.active &&
-                "bg-white/12 text-cyan-100 shadow-inner shadow-white/5"
-            )}
-            type="button"
-          >
-            <item.icon className="size-5" />
-          </Button>
+          <Tooltip key={item.label}>
+            <TooltipTrigger
+              render={
+                <Button
+                  aria-label={item.label}
+                  variant="ghost"
+                  size="icon-lg"
+                  className={cn(
+                    "size-11 rounded-2xl text-slate-400 hover:bg-white/10 hover:text-white",
+                    item.active &&
+                      "bg-white/12 text-cyan-100 shadow-inner shadow-white/5"
+                  )}
+                  type="button"
+                />
+              }
+            >
+              <item.icon className="size-5" />
+            </TooltipTrigger>
+            <TooltipContent>{item.label}</TooltipContent>
+          </Tooltip>
         ))}
       </nav>
       <Badge
@@ -275,19 +338,31 @@ function Topbar() {
         <Plus />
         New task
       </Button>
-      <Button variant="ghost" size="icon" aria-label="Filters">
-        <ListFilter />
-      </Button>
-      <Button variant="ghost" size="icon" aria-label="Notifications">
-        <Bell />
-      </Button>
+      <Tooltip>
+        <TooltipTrigger
+          render={<Button variant="ghost" size="icon" aria-label="Filters" />}
+        >
+          <ListFilter />
+        </TooltipTrigger>
+        <TooltipContent>Filters</TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button variant="ghost" size="icon" aria-label="Notifications" />
+          }
+        >
+          <Bell />
+        </TooltipTrigger>
+        <TooltipContent>Notifications</TooltipContent>
+      </Tooltip>
     </header>
   )
 }
 
 function Hero() {
   return (
-    <Card className="overflow-hidden rounded-[1.75rem] border-white/10 bg-white/[0.04] text-slate-50 shadow-xl shadow-black/20">
+    <Card className="overflow-hidden border-white/10 bg-white/[0.04] text-slate-50 shadow-xl shadow-black/20">
       <CardContent className="flex flex-col gap-5 p-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <Badge
@@ -301,8 +376,8 @@ function Hero() {
             Grab files, torrents, and mirrors without losing control.
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
-            A complete Grabbit workspace for managing active downloads, queue
-            limits, task details, history, and local RPC health from one screen.
+            A shadcn-first Grabbit workspace for active downloads, queue policy,
+            task detail, history, and local RPC health.
           </p>
         </div>
         <div className="grid grid-cols-3 gap-2 rounded-3xl border border-white/10 bg-slate-950/60 p-2 text-center">
@@ -317,7 +392,7 @@ function Hero() {
 
 function MiniMetric({ value, label }: { value: string; label: string }) {
   return (
-    <Card className="min-w-20 rounded-2xl border-transparent bg-white/[0.05] text-center text-slate-50 shadow-none">
+    <Card className="min-w-20 border-transparent bg-white/[0.05] text-center text-slate-50 shadow-none">
       <CardContent className="px-3 py-3">
         <div className="text-lg font-semibold text-white">{value}</div>
         <div className="text-xs text-slate-500">{label}</div>
@@ -375,6 +450,7 @@ function TaskPanel() {
           </Button>
         </div>
       </CardHeader>
+
       <Table>
         <TableHeader className="hidden lg:table-header-group">
           <TableRow className="border-white/10 hover:bg-transparent">
@@ -397,7 +473,100 @@ function TaskPanel() {
         </TableHeader>
         <TableBody>
           {tasks.map((task) => (
-            <TaskRow key={task.id} task={task} />
+            <TableRow
+              key={task.id}
+              className="grid border-white/10 hover:bg-white/[0.03] lg:table-row"
+            >
+              <TableCell className="min-w-0 p-4 lg:w-auto">
+                <div className="flex items-center gap-3">
+                  <div
+                    className={cn(
+                      "grid size-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br text-slate-950",
+                      task.accent
+                    )}
+                  >
+                    {task.source.startsWith("magnet") ? (
+                      <Magnet className="size-5" />
+                    ) : (
+                      <Globe2 className="size-5" />
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="truncate text-sm font-semibold text-white">
+                      {task.name}
+                    </h3>
+                    <p className="truncate text-xs text-slate-500">
+                      {task.source}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center gap-3">
+                  <Progress value={task.progress} className="flex-1">
+                    <ProgressTrack className="h-2 bg-white/[0.07]">
+                      <ProgressIndicator
+                        className={cn(
+                          "rounded-full bg-gradient-to-r",
+                          task.accent
+                        )}
+                      />
+                    </ProgressTrack>
+                  </Progress>
+                  <span className="w-10 text-right text-xs text-slate-500">
+                    {task.progress}%
+                  </span>
+                </div>
+                <div className="mt-2 text-xs text-slate-500 lg:hidden">
+                  {task.speed} · {task.size} · {task.eta}
+                </div>
+              </TableCell>
+              <TableCell className="px-4 py-0 pb-3 lg:p-2">
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "w-fit border-transparent px-2.5 py-1 text-xs font-semibold ring-1",
+                    statusClasses[task.status]
+                  )}
+                >
+                  {statusLabels[task.status]}
+                </Badge>
+              </TableCell>
+              <TableCell className="hidden text-sm font-medium text-slate-200 lg:table-cell">
+                {task.speed}
+              </TableCell>
+              <TableCell className="hidden text-sm text-slate-400 lg:table-cell">
+                {task.eta}
+              </TableCell>
+              <TableCell className="flex gap-1 px-4 pb-4 lg:table-cell lg:p-2">
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label="Resume task"
+                      />
+                    }
+                  >
+                    <Play />
+                  </TooltipTrigger>
+                  <TooltipContent>Resume</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label="Task menu"
+                      />
+                    }
+                  >
+                    <MoreHorizontal />
+                  </TooltipTrigger>
+                  <TooltipContent>More actions</TooltipContent>
+                </Tooltip>
+              </TableCell>
+            </TableRow>
           ))}
         </TableBody>
       </Table>
@@ -405,88 +574,77 @@ function TaskPanel() {
   )
 }
 
-function TaskRow({ task }: { task: DownloadTask }) {
+function AddDownloadDialog() {
   return (
-    <TableRow className="grid border-white/10 hover:bg-white/[0.03] lg:table-row">
-      <TableCell className="min-w-0 p-4 lg:w-auto">
-        <div className="flex items-center gap-3">
-          <div
-            className={cn(
-              "grid size-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br text-slate-950",
-              task.accent
-            )}
-          >
-            {task.source.startsWith("magnet") ? (
-              <Magnet className="size-5" />
-            ) : (
-              <Globe2 className="size-5" />
-            )}
+    <Dialog>
+      <DialogTrigger
+        render={
+          <Button className="w-full bg-cyan-300 text-slate-950 hover:bg-cyan-200" />
+        }
+      >
+        <Plus />
+        Add download
+      </DialogTrigger>
+      <DialogContent className="max-w-xl border-white/10 bg-slate-950 text-slate-50">
+        <DialogHeader>
+          <DialogTitle>Queue a new download</DialogTitle>
+          <DialogDescription className="text-slate-400">
+            Paste a URL, magnet link, torrent path, or metalink.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <Label>Source</Label>
+            <Input
+              className="border-white/10 bg-white/[0.04]"
+              placeholder="https://... or magnet:?xt=..."
+            />
           </div>
-          <div className="min-w-0">
-            <h3 className="truncate text-sm font-semibold text-white">
-              {task.name}
-            </h3>
-            <p className="truncate text-xs text-slate-500">{task.source}</p>
+          <div className="grid gap-2">
+            <Label>Save to</Label>
+            <Input
+              className="border-white/10 bg-white/[0.04]"
+              defaultValue="~/Downloads/grabbit"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label>Comment</Label>
+            <Textarea
+              className="min-h-24 border-white/10 bg-white/[0.04]"
+              placeholder="Optional note for this task"
+            />
+          </div>
+          <div className="grid gap-2">
+            <div className="flex items-center justify-between text-sm text-slate-400">
+              <span>Connections</span>
+              <span>16</span>
+            </div>
+            <Slider defaultValue={[16]} max={32} step={1} />
+          </div>
+          <div className="grid gap-2">
+            <Label>Priority</Label>
+            <Select defaultValue="normal">
+              <SelectTrigger className="w-full border-white/10 bg-white/[0.04]">
+                <SelectValue placeholder="Choose priority" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="low">Low</SelectItem>
+                <SelectItem value="normal">Normal</SelectItem>
+                <SelectItem value="high">High</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1 border-white/10">
+              Cancel
+            </Button>
+            <Button className="flex-1 bg-cyan-300 text-slate-950 hover:bg-cyan-200">
+              Queue task
+            </Button>
           </div>
         </div>
-        <div className="mt-3 flex items-center gap-3">
-          <ProgressBar value={task.progress} accent={task.accent} />
-          <span className="w-10 text-right text-xs text-slate-500">
-            {task.progress}%
-          </span>
-        </div>
-        <div className="mt-2 text-xs text-slate-500 lg:hidden">
-          {task.speed} · {task.size} · {task.eta}
-        </div>
-      </TableCell>
-      <TableCell className="px-4 py-0 pb-3 lg:p-2">
-        <StatusBadge status={task.status} />
-      </TableCell>
-      <TableCell className="hidden text-sm font-medium text-slate-200 lg:table-cell">
-        {task.speed}
-      </TableCell>
-      <TableCell className="hidden text-sm text-slate-400 lg:table-cell">
-        {task.eta}
-      </TableCell>
-      <TableCell className="flex gap-1 px-4 pb-4 lg:table-cell lg:p-2">
-        <Button variant="ghost" size="icon-sm" aria-label="Resume task">
-          <Play />
-        </Button>
-        <Button variant="ghost" size="icon-sm" aria-label="Task menu">
-          <MoreHorizontal />
-        </Button>
-      </TableCell>
-    </TableRow>
-  )
-}
-
-function AddDownloadCard() {
-  return (
-    <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
-      <CardHeader className="flex flex-row items-start justify-between gap-3 p-4 pb-0">
-        <div>
-          <CardTitle className="text-lg text-white">Add download</CardTitle>
-          <CardDescription className="text-slate-500">
-            URL, magnet, torrent, or metalink
-          </CardDescription>
-        </div>
-        <div className="grid size-10 place-items-center rounded-2xl bg-cyan-300 text-slate-950">
-          <Plus className="size-5" />
-        </div>
-      </CardHeader>
-      <CardContent className="p-4">
-        <Field icon={Link2} label="Source" value="Paste a link or magnet URI" />
-        <Field icon={FolderDown} label="Save to" value="~/Downloads/grabbit" />
-        <div className="grid grid-cols-2 gap-3">
-          <Field icon={SlidersHorizontal} label="Split" value="16" />
-          <Field icon={Gauge} label="Limit" value="No cap" />
-        </div>
-        <Button className="mt-4 w-full bg-cyan-300 text-slate-950 hover:bg-cyan-200">
-          <Plus />
-          Queue task
-        </Button>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -501,10 +659,10 @@ function TaskDetails({ task }: { task: DownloadTask }) {
           </CardDescription>
         </div>
         <Button variant="ghost" size="icon-sm" aria-label="Task info">
-          <Info />
+          <ChevronRight />
         </Button>
       </CardHeader>
-      <CardContent className="p-4">
+      <CardContent className="grid gap-4 p-4">
         <Card className="rounded-2xl border-white/10 bg-white/[0.03] text-slate-50 shadow-none">
           <CardContent className="p-3">
             <div className="truncate text-sm font-semibold text-white">
@@ -518,11 +676,17 @@ function TaskDetails({ task }: { task: DownloadTask }) {
                 <span>{task.size}</span>
                 <span>{task.peers}</span>
               </div>
-              <ProgressBar value={task.progress} accent={task.accent} />
+              <Progress value={task.progress} className="flex-1">
+                <ProgressTrack className="h-2 bg-white/[0.07]">
+                  <ProgressIndicator
+                    className={cn("rounded-full bg-gradient-to-r", task.accent)}
+                  />
+                </ProgressTrack>
+              </Progress>
             </div>
           </CardContent>
         </Card>
-        <div className="mt-3 grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           <IconAction icon={Pause} label="Pause" />
           <IconAction icon={RotateCcw} label="Retry" />
           <IconAction icon={Trash2} label="Remove" danger />
@@ -532,137 +696,216 @@ function TaskDetails({ task }: { task: DownloadTask }) {
   )
 }
 
-function SettingsCard() {
-  const settings = [
-    ["RPC endpoint", "127.0.0.1 : dynamic", Wifi],
-    ["RPC secret", "Generated on launch", ShieldCheck],
-    ["Max active", "5 downloads", Command],
-  ] as const
-
+function QuickControls() {
   return (
     <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
-      <CardHeader className="flex flex-row items-center justify-between p-4 pb-0">
-        <CardTitle className="text-lg text-white">Settings</CardTitle>
-        <Button variant="ghost" size="icon-sm" aria-label="Open settings">
-          <ChevronRight />
-        </Button>
+      <CardHeader className="p-4 pb-0">
+        <CardTitle className="text-lg text-white">Quick controls</CardTitle>
+        <CardDescription className="text-slate-500">
+          Tune queue and network limits
+        </CardDescription>
       </CardHeader>
-      <CardContent className="p-4">
+      <CardContent className="grid gap-4 p-4">
         <div className="grid gap-2">
-          {settings.map(([label, value, Icon]) => (
-            <Card
-              key={label}
-              className="flex-row items-center gap-3 rounded-2xl border-white/10 bg-white/[0.03] p-3 text-slate-50 shadow-none"
-            >
-              <Icon className="size-4 text-slate-400" />
-              <div className="min-w-0">
-                <div className="text-sm font-medium text-slate-200">
-                  {label}
-                </div>
-                <div className="truncate text-xs text-slate-500">{value}</div>
-              </div>
-            </Card>
-          ))}
+          <div className="flex items-center justify-between text-sm text-slate-400">
+            <span>Queue limit</span>
+            <span>5 active</span>
+          </div>
+          <Slider defaultValue={[5]} max={10} step={1} />
+        </div>
+        <div className="grid gap-2">
+          <div className="flex items-center justify-between text-sm text-slate-400">
+            <span>Download cap</span>
+            <span>51 MB/s</span>
+          </div>
+          <Slider defaultValue={[51]} max={100} step={1} />
+        </div>
+        <div className="flex gap-2">
+          <Button variant="secondary" className="flex-1">
+            <Pause />
+            Pause all
+          </Button>
+          <Button variant="outline" className="flex-1 border-white/10">
+            <RotateCcw />
+            Resume all
+          </Button>
         </div>
       </CardContent>
     </Card>
   )
 }
 
-function HistoryCard() {
+function HistoryPanel() {
   return (
     <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
       <CardHeader className="flex flex-row items-center justify-between p-4 pb-0">
-        <CardTitle className="text-lg text-white">Recent history</CardTitle>
+        <div>
+          <CardTitle className="text-lg text-white">Recent history</CardTitle>
+          <CardDescription className="text-slate-500">
+            Completed and removed tasks
+          </CardDescription>
+        </div>
         <FileArchive className="size-5 text-slate-500" />
       </CardHeader>
       <CardContent className="p-4">
+        <Table>
+          <TableHeader>
+            <TableRow className="border-white/10 hover:bg-transparent">
+              <TableHead className="text-slate-500">Name</TableHead>
+              <TableHead className="text-slate-500">Size</TableHead>
+              <TableHead className="text-slate-500">When</TableHead>
+              <TableHead className="text-slate-500">Status</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {history.map(([name, size, date]) => (
+              <TableRow
+                key={name}
+                className="border-white/10 hover:bg-white/[0.03]"
+              >
+                <TableCell className="font-medium text-slate-200">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="size-4 text-emerald-300" />
+                    {name}
+                  </div>
+                </TableCell>
+                <TableCell className="text-slate-400">{size}</TableCell>
+                <TableCell className="text-slate-400">{date}</TableCell>
+                <TableCell>
+                  <Badge
+                    variant="outline"
+                    className="border-emerald-300/20 bg-emerald-400/10 text-emerald-200"
+                  >
+                    Completed
+                  </Badge>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  )
+}
+
+function SettingsPanel() {
+  return (
+    <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
+      <CardHeader className="p-4 pb-0">
+        <CardTitle className="text-lg text-white">Settings</CardTitle>
+        <CardDescription className="text-slate-500">
+          Core aria2 and UI preferences
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4 p-4">
         <div className="grid gap-2">
-          {history.map(([name, size, date]) => (
-            <Card
-              key={name}
-              className="flex-row items-center gap-3 rounded-2xl border-transparent bg-white/[0.03] p-3 text-slate-50 shadow-none"
-            >
-              <CheckCircle2 className="size-4 shrink-0 text-emerald-300" />
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-medium text-slate-200">
-                  {name}
-                </div>
-                <div className="text-xs text-slate-500">{date}</div>
-              </div>
-              <div className="text-xs text-slate-500">{size}</div>
-            </Card>
-          ))}
+          <Label>Theme</Label>
+          <Select defaultValue="system">
+            <SelectTrigger className="w-full border-white/10 bg-white/[0.04]">
+              <SelectValue placeholder="Choose theme" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="dark">Dark</SelectItem>
+              <SelectItem value="light">Light</SelectItem>
+              <SelectItem value="system">System</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid gap-2">
+          <Label>Default folder</Label>
+          <Input
+            className="border-white/10 bg-white/[0.04]"
+            defaultValue="~/Downloads/grabbit"
+          />
+        </div>
+        <div className="grid gap-2">
+          <Label>RPC secret</Label>
+          <Textarea
+            className="min-h-20 border-white/10 bg-white/[0.04]"
+            defaultValue="Generated on launch"
+          />
         </div>
       </CardContent>
     </Card>
   )
 }
 
-function StatusBar() {
+function LiveLog() {
+  const lines = [
+    ["aria2c", "RPC ready on 127.0.0.1"],
+    ["queue", "2 tasks waiting for slots"],
+    ["disk", "session saved successfully"],
+    ["net", "peer count steady at 304"],
+  ]
+
   return (
-    <>
-      <Separator className="bg-white/10" />
-      <footer className="flex flex-col gap-2 px-4 py-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-        <span className="inline-flex items-center gap-2">
-          <span className="size-2 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.8)]" />
-          aria2c running · session saved 8s ago
-        </span>
-        <span>Down 51 MB/s · Up 8.2 MB/s · 304 peers · 5 active</span>
-      </footer>
-    </>
+    <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
+      <CardHeader className="flex flex-row items-center justify-between p-4 pb-0">
+        <div>
+          <CardTitle className="text-lg text-white">Live log</CardTitle>
+          <CardDescription className="text-slate-500">
+            Recent local events
+          </CardDescription>
+        </div>
+        <MoreHorizontal className="size-5 text-slate-500" />
+      </CardHeader>
+      <CardContent className="grid gap-2 p-4">
+        {lines.map(([scope, message]) => (
+          <div
+            key={`${scope}-${message}`}
+            className="flex items-center gap-3 rounded-2xl bg-white/[0.03] px-3 py-2"
+          >
+            <Badge
+              variant="outline"
+              className="border-white/10 bg-white/[0.03] text-slate-300"
+            >
+              {scope}
+            </Badge>
+            <span className="text-sm text-slate-400">{message}</span>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
   )
 }
 
-function Field({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: ComponentType<{ className?: string }>
-  label: string
-  value: string
-}) {
+function QueueSummary() {
   return (
-    <div className="mb-3 block">
-      <Label className="mb-1 block text-xs font-medium text-slate-500">
-        {label}
-      </Label>
-      <div className="relative">
-        <Icon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-500" />
-        <Input
-          readOnly
-          className="h-10 rounded-2xl border-white/10 bg-slate-950/40 pl-9 text-slate-400"
-          value={value}
-        />
-      </div>
-    </div>
-  )
-}
-
-function ProgressBar({ value, accent }: { value: number; accent: string }) {
-  return (
-    <Progress value={value} className="flex-1">
-      <ProgressTrack className="h-2 bg-white/[0.07]">
-        <ProgressIndicator
-          className={cn("rounded-full bg-gradient-to-r", accent)}
-        />
-      </ProgressTrack>
-    </Progress>
-  )
-}
-
-function StatusBadge({ status }: { status: TaskStatus }) {
-  return (
-    <Badge
-      variant="outline"
-      className={cn(
-        "w-fit border-transparent px-2.5 py-1 text-xs font-semibold ring-1",
-        statusClasses[status]
-      )}
-    >
-      {statusLabels[status]}
-    </Badge>
+    <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
+      <CardHeader className="p-4 pb-0">
+        <CardTitle className="text-lg text-white">Queue summary</CardTitle>
+        <CardDescription className="text-slate-500">
+          Backlog and bandwidth controls
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4 p-4">
+        <div className="grid gap-2">
+          <div className="flex items-center justify-between text-sm text-slate-400">
+            <span>Waiting</span>
+            <span>2 tasks</span>
+          </div>
+          <Progress value={50} className="flex-1">
+            <ProgressTrack className="h-2 bg-white/[0.07]">
+              <ProgressIndicator className="rounded-full bg-gradient-to-r from-cyan-300 to-blue-500" />
+            </ProgressTrack>
+          </Progress>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <Card className="border-white/10 bg-white/[0.03] shadow-none">
+            <CardContent className="p-3">
+              <div className="text-xs text-slate-500">Retry wait</div>
+              <div className="text-base font-semibold text-white">10s</div>
+            </CardContent>
+          </Card>
+          <Card className="border-white/10 bg-white/[0.03] shadow-none">
+            <CardContent className="p-3">
+              <div className="text-xs text-slate-500">Disk cache</div>
+              <div className="text-base font-semibold text-white">128 MB</div>
+            </CardContent>
+          </Card>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
