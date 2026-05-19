@@ -37,6 +37,17 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Progress } from "@/components/ui/progress"
+import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
 
 type TaskStatus = "downloading" | "queued" | "paused" | "seeding" | "completed"
@@ -185,9 +196,9 @@ function App() {
 
 function AppChrome({ children }: { children: ReactNode }) {
   return (
-    <div className="flex min-h-[calc(100svh-1.5rem)] overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950/72 shadow-2xl shadow-black/50 backdrop-blur-2xl sm:min-h-[calc(100svh-2rem)] lg:min-h-[calc(100svh-2.5rem)]">
+    <Card className="flex min-h-[calc(100svh-1.5rem)] flex-row overflow-hidden rounded-[2rem] border-white/10 bg-slate-950/72 text-slate-50 shadow-2xl shadow-black/50 backdrop-blur-2xl sm:min-h-[calc(100svh-2rem)] lg:min-h-[calc(100svh-2.5rem)]">
       {children}
-    </div>
+    </Card>
   )
 }
 
@@ -221,9 +232,12 @@ function Sidebar() {
           </button>
         ))}
       </nav>
-      <div className="grid size-11 place-items-center rounded-2xl border border-emerald-300/20 bg-emerald-400/10 text-emerald-200">
+      <Badge
+        variant="outline"
+        className="grid size-11 place-items-center rounded-2xl border-emerald-300/20 bg-emerald-400/10 p-0 text-emerald-200"
+      >
         <Activity className="size-5" />
-      </div>
+      </Badge>
     </aside>
   )
 }
@@ -231,12 +245,14 @@ function Sidebar() {
 function Topbar() {
   return (
     <header className="flex min-h-16 items-center gap-3 border-b border-white/10 px-3 sm:px-5">
-      <div className="flex min-w-0 flex-1 items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-sm text-slate-400">
-        <Search className="size-4 shrink-0" />
-        <span className="truncate">
-          Search URL, magnet, file name, task id...
-        </span>
-        <kbd className="ml-auto hidden rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[0.65rem] text-slate-500 sm:block">
+      <div className="relative min-w-0 flex-1">
+        <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-500" />
+        <Input
+          aria-label="Search downloads"
+          className="h-11 rounded-2xl border-white/10 bg-white/[0.04] pr-12 pl-10 text-slate-200 placeholder:text-slate-500"
+          placeholder="Search URL, magnet, file name, task id..."
+        />
+        <kbd className="absolute top-1/2 right-3 hidden -translate-y-1/2 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[0.65rem] text-slate-500 sm:block">
           /
         </kbd>
       </div>
@@ -256,13 +272,16 @@ function Topbar() {
 
 function Hero() {
   return (
-    <section className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-5 shadow-xl shadow-black/20">
-      <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+    <Card className="overflow-hidden rounded-[1.75rem] border-white/10 bg-white/[0.04] text-slate-50 shadow-xl shadow-black/20">
+      <CardContent className="flex flex-col gap-5 p-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-medium text-cyan-100">
+          <Badge
+            variant="outline"
+            className="gap-2 border-cyan-300/20 bg-cyan-300/10 text-cyan-100"
+          >
             <Sparkles className="size-3.5" />
             aria2 powered desktop downloader
-          </div>
+          </Badge>
           <h1 className="mt-4 max-w-3xl text-3xl font-semibold tracking-tight text-white sm:text-5xl">
             Grab files, torrents, and mirrors without losing control.
           </h1>
@@ -276,8 +295,8 @@ function Hero() {
           <MiniMetric value="128" label="done" />
           <MiniMetric value="942 GB" label="saved" />
         </div>
-      </div>
-    </section>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -294,19 +313,24 @@ function StatsGrid() {
   return (
     <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {stats.map((stat) => (
-        <Card key={stat.label} className="p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <div className="text-sm text-slate-400">{stat.label}</div>
-              <div className="mt-2 text-2xl font-semibold text-white">
-                {stat.value}
+        <Card
+          key={stat.label}
+          className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15"
+        >
+          <CardContent className="p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-sm text-slate-400">{stat.label}</div>
+                <div className="mt-2 text-2xl font-semibold text-white">
+                  {stat.value}
+                </div>
+                <div className="mt-1 text-xs text-slate-500">{stat.detail}</div>
               </div>
-              <div className="mt-1 text-xs text-slate-500">{stat.detail}</div>
+              <div className="grid size-10 place-items-center rounded-2xl bg-white/[0.06] text-cyan-200">
+                <stat.icon className="size-5" />
+              </div>
             </div>
-            <div className="grid size-10 place-items-center rounded-2xl bg-white/[0.06] text-cyan-200">
-              <stat.icon className="size-5" />
-            </div>
-          </div>
+          </CardContent>
         </Card>
       ))}
     </section>
@@ -315,13 +339,13 @@ function StatsGrid() {
 
 function TaskPanel() {
   return (
-    <Card className="overflow-hidden">
-      <div className="flex flex-col gap-3 border-b border-white/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+    <Card className="overflow-hidden border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
+      <CardHeader className="flex flex-col gap-3 border-b border-white/10 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-white">Active downloads</h2>
-          <p className="text-sm text-slate-500">
+          <CardTitle className="text-lg text-white">Active downloads</CardTitle>
+          <CardDescription className="text-slate-500">
             4 tasks across HTTP, magnet, and mirrored sources
-          </p>
+          </CardDescription>
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" size="sm">
@@ -333,7 +357,7 @@ function TaskPanel() {
             Retry failed
           </Button>
         </div>
-      </div>
+      </CardHeader>
       <div className="hidden grid-cols-[1fr_8rem_8rem_7rem_5rem] gap-3 border-b border-white/10 px-4 py-3 text-xs font-semibold tracking-wide text-slate-500 uppercase lg:grid">
         <span>Name</span>
         <span>Status</span>
@@ -375,7 +399,7 @@ function TaskRow({ task }: { task: DownloadTask }) {
           </div>
         </div>
         <div className="mt-3 flex items-center gap-3">
-          <Progress value={task.progress} accent={task.accent} />
+          <ProgressBar value={task.progress} accent={task.accent} />
           <span className="w-10 text-right text-xs text-slate-500">
             {task.progress}%
           </span>
@@ -403,64 +427,72 @@ function TaskRow({ task }: { task: DownloadTask }) {
 
 function AddDownloadCard() {
   return (
-    <Card className="p-4">
-      <div className="mb-4 flex items-start justify-between gap-3">
+    <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
+      <CardHeader className="flex flex-row items-start justify-between gap-3 p-4 pb-0">
         <div>
-          <h2 className="text-lg font-semibold text-white">Add download</h2>
-          <p className="text-sm text-slate-500">
+          <CardTitle className="text-lg text-white">Add download</CardTitle>
+          <CardDescription className="text-slate-500">
             URL, magnet, torrent, or metalink
-          </p>
+          </CardDescription>
         </div>
         <div className="grid size-10 place-items-center rounded-2xl bg-cyan-300 text-slate-950">
           <Plus className="size-5" />
         </div>
-      </div>
-      <Field icon={Link2} label="Source" value="Paste a link or magnet URI" />
-      <Field icon={FolderDown} label="Save to" value="~/Downloads/grabbit" />
-      <div className="grid grid-cols-2 gap-3">
-        <Field icon={SlidersHorizontal} label="Split" value="16" />
-        <Field icon={Gauge} label="Limit" value="No cap" />
-      </div>
-      <Button className="mt-4 w-full bg-cyan-300 text-slate-950 hover:bg-cyan-200">
-        <Plus />
-        Queue task
-      </Button>
+      </CardHeader>
+      <CardContent className="p-4">
+        <Field icon={Link2} label="Source" value="Paste a link or magnet URI" />
+        <Field icon={FolderDown} label="Save to" value="~/Downloads/grabbit" />
+        <div className="grid grid-cols-2 gap-3">
+          <Field icon={SlidersHorizontal} label="Split" value="16" />
+          <Field icon={Gauge} label="Limit" value="No cap" />
+        </div>
+        <Button className="mt-4 w-full bg-cyan-300 text-slate-950 hover:bg-cyan-200">
+          <Plus />
+          Queue task
+        </Button>
+      </CardContent>
     </Card>
   )
 }
 
 function TaskDetails({ task }: { task: DownloadTask }) {
   return (
-    <Card className="p-4">
-      <div className="mb-4 flex items-center justify-between gap-3">
+    <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
+      <CardHeader className="flex flex-row items-center justify-between gap-3 p-4 pb-0">
         <div>
-          <h2 className="text-lg font-semibold text-white">Task details</h2>
-          <p className="text-xs text-slate-500">GID {task.id}b70d01ef</p>
+          <CardTitle className="text-lg text-white">Task details</CardTitle>
+          <CardDescription className="text-xs text-slate-500">
+            GID {task.id}b70d01ef
+          </CardDescription>
         </div>
         <Button variant="ghost" size="icon-sm" aria-label="Task info">
           <Info />
         </Button>
-      </div>
-      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-        <div className="truncate text-sm font-semibold text-white">
-          {task.name}
+      </CardHeader>
+      <CardContent className="p-4">
+        <Card className="rounded-2xl border-white/10 bg-white/[0.03] text-slate-50 shadow-none">
+          <CardContent className="p-3">
+            <div className="truncate text-sm font-semibold text-white">
+              {task.name}
+            </div>
+            <div className="mt-1 truncate text-xs text-slate-500">
+              {task.savePath}
+            </div>
+            <div className="mt-4">
+              <div className="mb-2 flex justify-between text-xs text-slate-400">
+                <span>{task.size}</span>
+                <span>{task.peers}</span>
+              </div>
+              <ProgressBar value={task.progress} accent={task.accent} />
+            </div>
+          </CardContent>
+        </Card>
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          <IconAction icon={Pause} label="Pause" />
+          <IconAction icon={RotateCcw} label="Retry" />
+          <IconAction icon={Trash2} label="Remove" danger />
         </div>
-        <div className="mt-1 truncate text-xs text-slate-500">
-          {task.savePath}
-        </div>
-        <div className="mt-4">
-          <div className="mb-2 flex justify-between text-xs text-slate-400">
-            <span>{task.size}</span>
-            <span>{task.peers}</span>
-          </div>
-          <Progress value={task.progress} accent={task.accent} />
-        </div>
-      </div>
-      <div className="mt-3 grid grid-cols-3 gap-2">
-        <IconAction icon={Pause} label="Pause" />
-        <IconAction icon={RotateCcw} label="Retry" />
-        <IconAction icon={Trash2} label="Remove" danger />
-      </div>
+      </CardContent>
     </Card>
   )
 }
@@ -473,87 +505,77 @@ function SettingsCard() {
   ] as const
 
   return (
-    <Card className="p-4">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-white">Settings</h2>
+    <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
+      <CardHeader className="flex flex-row items-center justify-between p-4 pb-0">
+        <CardTitle className="text-lg text-white">Settings</CardTitle>
         <Button variant="ghost" size="icon-sm" aria-label="Open settings">
           <ChevronRight />
         </Button>
-      </div>
-      <div className="grid gap-2">
-        {settings.map(([label, value, Icon]) => (
-          <div
-            key={label}
-            className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3"
-          >
-            <Icon className="size-4 text-slate-400" />
-            <div className="min-w-0">
-              <div className="text-sm font-medium text-slate-200">{label}</div>
-              <div className="truncate text-xs text-slate-500">{value}</div>
-            </div>
-          </div>
-        ))}
-      </div>
+      </CardHeader>
+      <CardContent className="p-4">
+        <div className="grid gap-2">
+          {settings.map(([label, value, Icon]) => (
+            <Card
+              key={label}
+              className="flex-row items-center gap-3 rounded-2xl border-white/10 bg-white/[0.03] p-3 text-slate-50 shadow-none"
+            >
+              <Icon className="size-4 text-slate-400" />
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-slate-200">
+                  {label}
+                </div>
+                <div className="truncate text-xs text-slate-500">{value}</div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </CardContent>
     </Card>
   )
 }
 
 function HistoryCard() {
   return (
-    <Card className="p-4">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-white">Recent history</h2>
+    <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
+      <CardHeader className="flex flex-row items-center justify-between p-4 pb-0">
+        <CardTitle className="text-lg text-white">Recent history</CardTitle>
         <FileArchive className="size-5 text-slate-500" />
-      </div>
-      <div className="grid gap-2">
-        {history.map(([name, size, date]) => (
-          <div
-            key={name}
-            className="flex items-center gap-3 rounded-2xl bg-white/[0.03] p-3"
-          >
-            <CheckCircle2 className="size-4 shrink-0 text-emerald-300" />
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-medium text-slate-200">
-                {name}
+      </CardHeader>
+      <CardContent className="p-4">
+        <div className="grid gap-2">
+          {history.map(([name, size, date]) => (
+            <Card
+              key={name}
+              className="flex-row items-center gap-3 rounded-2xl border-transparent bg-white/[0.03] p-3 text-slate-50 shadow-none"
+            >
+              <CheckCircle2 className="size-4 shrink-0 text-emerald-300" />
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-medium text-slate-200">
+                  {name}
+                </div>
+                <div className="text-xs text-slate-500">{date}</div>
               </div>
-              <div className="text-xs text-slate-500">{date}</div>
-            </div>
-            <div className="text-xs text-slate-500">{size}</div>
-          </div>
-        ))}
-      </div>
+              <div className="text-xs text-slate-500">{size}</div>
+            </Card>
+          ))}
+        </div>
+      </CardContent>
     </Card>
   )
 }
 
 function StatusBar() {
   return (
-    <footer className="flex flex-col gap-2 border-t border-white/10 px-4 py-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
-      <span className="inline-flex items-center gap-2">
-        <span className="size-2 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.8)]" />
-        aria2c running · session saved 8s ago
-      </span>
-      <span>Down 51 MB/s · Up 8.2 MB/s · 304 peers · 5 active</span>
-    </footer>
-  )
-}
-
-function Card({
-  className,
-  children,
-}: {
-  className?: string
-  children: ReactNode
-}) {
-  return (
-    <section
-      className={cn(
-        "rounded-[1.5rem] border border-white/10 bg-white/[0.045] shadow-lg shadow-black/15",
-        className
-      )}
-    >
-      {children}
-    </section>
+    <>
+      <Separator className="bg-white/10" />
+      <footer className="flex flex-col gap-2 px-4 py-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+        <span className="inline-flex items-center gap-2">
+          <span className="size-2 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.8)]" />
+          aria2c running · session saved 8s ago
+        </span>
+        <span>Down 51 MB/s · Up 8.2 MB/s · 304 peers · 5 active</span>
+      </footer>
+    </>
   )
 }
 
@@ -571,35 +593,39 @@ function Field({
       <span className="mb-1 block text-xs font-medium text-slate-500">
         {label}
       </span>
-      <span className="flex items-center gap-2 rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-2.5 text-sm text-slate-400">
-        <Icon className="size-4 shrink-0" />
-        <span className="truncate">{value}</span>
-      </span>
+      <div className="relative">
+        <Icon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-500" />
+        <Input
+          readOnly
+          className="h-10 rounded-2xl border-white/10 bg-slate-950/40 pl-9 text-slate-400"
+          value={value}
+        />
+      </div>
     </label>
   )
 }
 
-function Progress({ value, accent }: { value: number; accent: string }) {
+function ProgressBar({ value, accent }: { value: number; accent: string }) {
   return (
-    <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/[0.07]">
-      <div
-        className={cn("h-full rounded-full bg-gradient-to-r", accent)}
-        style={{ width: `${value}%` }}
-      />
-    </div>
+    <Progress
+      value={value}
+      className="h-2 flex-1 bg-white/[0.07]"
+      indicatorClassName={cn("rounded-full bg-gradient-to-r", accent)}
+    />
   )
 }
 
 function StatusBadge({ status }: { status: TaskStatus }) {
   return (
-    <span
+    <Badge
+      variant="outline"
       className={cn(
-        "w-fit rounded-full px-2.5 py-1 text-xs font-semibold ring-1",
+        "w-fit border-transparent px-2.5 py-1 text-xs font-semibold ring-1",
         statusClasses[status]
       )}
     >
       {statusLabels[status]}
-    </span>
+    </Badge>
   )
 }
 
@@ -613,16 +639,17 @@ function IconAction({
   danger?: boolean
 }) {
   return (
-    <button
+    <Button
+      variant="outline"
       className={cn(
-        "flex flex-col items-center gap-1 rounded-2xl border border-white/10 bg-white/[0.03] px-2 py-3 text-xs text-slate-400 transition hover:bg-white/10 hover:text-white",
+        "h-auto flex-col gap-1 rounded-2xl border-white/10 bg-white/[0.03] px-2 py-3 text-xs text-slate-400 hover:bg-white/10 hover:text-white",
         danger && "hover:text-red-200"
       )}
       type="button"
     >
       <Icon className="size-4" />
       {label}
-    </button>
+    </Button>
   )
 }
 
