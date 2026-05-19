@@ -46,8 +46,17 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { cn } from "@/lib/utils"
 
 type TaskStatus = "downloading" | "queued" | "paused" | "seeding" | "completed"
@@ -218,18 +227,20 @@ function Sidebar() {
       </div>
       <nav className="mt-8 flex flex-1 flex-col gap-2">
         {navItems.map((item) => (
-          <button
+          <Button
             key={item.label}
             aria-label={item.label}
+            variant="ghost"
+            size="icon-lg"
             className={cn(
-              "grid size-11 place-items-center rounded-2xl text-slate-400 transition hover:bg-white/10 hover:text-white",
+              "size-11 rounded-2xl text-slate-400 hover:bg-white/10 hover:text-white",
               item.active &&
                 "bg-white/12 text-cyan-100 shadow-inner shadow-white/5"
             )}
             type="button"
           >
             <item.icon className="size-5" />
-          </button>
+          </Button>
         ))}
       </nav>
       <Badge
@@ -302,10 +313,12 @@ function Hero() {
 
 function MiniMetric({ value, label }: { value: string; label: string }) {
   return (
-    <div className="min-w-20 rounded-2xl bg-white/[0.05] px-3 py-3">
-      <div className="text-lg font-semibold text-white">{value}</div>
-      <div className="text-xs text-slate-500">{label}</div>
-    </div>
+    <Card className="min-w-20 rounded-2xl border-transparent bg-white/[0.05] text-center text-slate-50 shadow-none">
+      <CardContent className="px-3 py-3">
+        <div className="text-lg font-semibold text-white">{value}</div>
+        <div className="text-xs text-slate-500">{label}</div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -358,26 +371,40 @@ function TaskPanel() {
           </Button>
         </div>
       </CardHeader>
-      <div className="hidden grid-cols-[1fr_8rem_8rem_7rem_5rem] gap-3 border-b border-white/10 px-4 py-3 text-xs font-semibold tracking-wide text-slate-500 uppercase lg:grid">
-        <span>Name</span>
-        <span>Status</span>
-        <span>Speed</span>
-        <span>ETA</span>
-        <span>Action</span>
-      </div>
-      <div>
-        {tasks.map((task) => (
-          <TaskRow key={task.id} task={task} />
-        ))}
-      </div>
+      <Table>
+        <TableHeader className="hidden lg:table-header-group">
+          <TableRow className="border-white/10 hover:bg-transparent">
+            <TableHead className="px-4 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+              Name
+            </TableHead>
+            <TableHead className="w-32 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+              Status
+            </TableHead>
+            <TableHead className="w-32 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+              Speed
+            </TableHead>
+            <TableHead className="w-28 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+              ETA
+            </TableHead>
+            <TableHead className="w-24 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+              Action
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {tasks.map((task) => (
+            <TaskRow key={task.id} task={task} />
+          ))}
+        </TableBody>
+      </Table>
     </Card>
   )
 }
 
 function TaskRow({ task }: { task: DownloadTask }) {
   return (
-    <article className="grid gap-3 border-b border-white/10 p-4 last:border-b-0 lg:grid-cols-[1fr_8rem_8rem_7rem_5rem] lg:items-center">
-      <div className="min-w-0">
+    <TableRow className="grid border-white/10 hover:bg-white/[0.03] lg:table-row">
+      <TableCell className="min-w-0 p-4 lg:w-auto">
         <div className="flex items-center gap-3">
           <div
             className={cn(
@@ -407,21 +434,25 @@ function TaskRow({ task }: { task: DownloadTask }) {
         <div className="mt-2 text-xs text-slate-500 lg:hidden">
           {task.speed} · {task.size} · {task.eta}
         </div>
-      </div>
-      <StatusBadge status={task.status} />
-      <div className="hidden text-sm font-medium text-slate-200 lg:block">
+      </TableCell>
+      <TableCell className="px-4 py-0 pb-3 lg:p-2">
+        <StatusBadge status={task.status} />
+      </TableCell>
+      <TableCell className="hidden text-sm font-medium text-slate-200 lg:table-cell">
         {task.speed}
-      </div>
-      <div className="hidden text-sm text-slate-400 lg:block">{task.eta}</div>
-      <div className="flex gap-1">
+      </TableCell>
+      <TableCell className="hidden text-sm text-slate-400 lg:table-cell">
+        {task.eta}
+      </TableCell>
+      <TableCell className="flex gap-1 px-4 pb-4 lg:table-cell lg:p-2">
         <Button variant="ghost" size="icon-sm" aria-label="Resume task">
           <Play />
         </Button>
         <Button variant="ghost" size="icon-sm" aria-label="Task menu">
           <MoreHorizontal />
         </Button>
-      </div>
-    </article>
+      </TableCell>
+    </TableRow>
   )
 }
 
@@ -589,10 +620,10 @@ function Field({
   value: string
 }) {
   return (
-    <label className="mb-3 block">
-      <span className="mb-1 block text-xs font-medium text-slate-500">
+    <div className="mb-3 block">
+      <Label className="mb-1 block text-xs font-medium text-slate-500">
         {label}
-      </span>
+      </Label>
       <div className="relative">
         <Icon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-500" />
         <Input
@@ -601,7 +632,7 @@ function Field({
           value={value}
         />
       </div>
-    </label>
+    </div>
   )
 }
 
