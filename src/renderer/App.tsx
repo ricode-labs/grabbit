@@ -76,6 +76,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { useI18n } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
 type TaskStatus = "downloading" | "queued" | "paused" | "seeding" | "completed"
@@ -156,31 +157,11 @@ const tasks: DownloadTask[] = [
   },
 ]
 
-const stats: StatItem[] = [
-  {
-    label: "Download",
-    value: "51.0 MB/s",
-    detail: "+12% from avg",
-    icon: Download,
-  },
-  { label: "Upload", value: "8.2 MB/s", detail: "304 peers", icon: Upload },
-  { label: "Disk", value: "128 MB", detail: "cache active", icon: HardDrive },
-  { label: "RPC", value: "4 ms", detail: "127.0.0.1", icon: RadioTower },
-]
-
 const history = [
   ["debian-live-13.0.iso", "3.7 GB", "Today 11:42"],
   ["node-v26-linux-x64.tar.xz", "48 MB", "Yesterday"],
   ["fedora-workstation.iso", "2.1 GB", "May 17"],
 ]
-
-const statusLabels: Record<TaskStatus, string> = {
-  downloading: "Downloading",
-  queued: "Queued",
-  paused: "Paused",
-  seeding: "Seeding",
-  completed: "Completed",
-}
 
 const statusClasses: Record<TaskStatus, string> = {
   downloading: "bg-cyan-400/10 text-cyan-200 ring-cyan-300/20",
@@ -191,6 +172,7 @@ const statusClasses: Record<TaskStatus, string> = {
 }
 
 function App() {
+  const { t } = useI18n()
   const activeTask = tasks[0]
 
   return (
@@ -207,10 +189,10 @@ function App() {
             >
               <div className="border-b border-white/10 px-3 py-3 sm:px-5">
                 <TabsList className="bg-white/5">
-                  <TabsTrigger value="overview">Overview</TabsTrigger>
-                  <TabsTrigger value="queue">Queue</TabsTrigger>
-                  <TabsTrigger value="history">History</TabsTrigger>
-                  <TabsTrigger value="settings">Settings</TabsTrigger>
+                  <TabsTrigger value="overview">{t.tabs.overview}</TabsTrigger>
+                  <TabsTrigger value="queue">{t.tabs.queue}</TabsTrigger>
+                  <TabsTrigger value="history">{t.tabs.history}</TabsTrigger>
+                  <TabsTrigger value="settings">{t.tabs.settings}</TabsTrigger>
                 </TabsList>
               </div>
 
@@ -259,9 +241,9 @@ function App() {
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <span className="inline-flex items-center gap-2">
                     <span className="size-2 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.8)]" />
-                    aria2c running · session saved 8s ago
+                    {t.footer.serviceStatus}
                   </span>
-                  <span>Down 51 MB/s · Up 8.2 MB/s · 304 peers · 5 active</span>
+                  <span>{t.footer.traffic}</span>
                 </div>
               </footer>
             </Tabs>
@@ -273,12 +255,13 @@ function App() {
 }
 
 function Sidebar() {
+  const { t } = useI18n()
   const navItems = [
-    { label: "Tasks", icon: Download, active: true },
-    { label: "Queue", icon: Clock3 },
-    { label: "Files", icon: Files },
-    { label: "History", icon: History },
-    { label: "Settings", icon: Settings2 },
+    { label: t.navigation.tasks, icon: Download, active: true },
+    { label: t.navigation.queue, icon: Clock3 },
+    { label: t.navigation.files, icon: Files },
+    { label: t.navigation.history, icon: History },
+    { label: t.navigation.settings, icon: Settings2 },
   ]
 
   return (
@@ -321,14 +304,16 @@ function Sidebar() {
 }
 
 function Topbar() {
+  const { t } = useI18n()
+
   return (
     <header className="flex min-h-16 items-center gap-3 border-b border-white/10 px-3 sm:px-5">
       <div className="relative min-w-0 flex-1">
         <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-500" />
         <Input
-          aria-label="Search downloads"
+          aria-label={t.topbar.searchAria}
           className="h-11 rounded-2xl border-white/10 bg-white/[0.04] pr-12 pl-10 text-slate-200 placeholder:text-slate-500"
-          placeholder="Search URL, magnet, file name, task id..."
+          placeholder={t.topbar.searchPlaceholder}
         />
         <kbd className="absolute top-1/2 right-3 hidden -translate-y-1/2 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[0.65rem] text-slate-500 sm:block">
           /
@@ -336,31 +321,33 @@ function Topbar() {
       </div>
       <Button className="hidden bg-cyan-300 text-slate-950 hover:bg-cyan-200 sm:inline-flex">
         <Plus />
-        New task
+        {t.topbar.newTask}
       </Button>
       <Tooltip>
         <TooltipTrigger
-          render={<Button variant="ghost" size="icon" aria-label="Filters" />}
+          render={<Button variant="ghost" size="icon" aria-label={t.topbar.filters} />}
         >
           <ListFilter />
         </TooltipTrigger>
-        <TooltipContent>Filters</TooltipContent>
+        <TooltipContent>{t.topbar.filters}</TooltipContent>
       </Tooltip>
       <Tooltip>
         <TooltipTrigger
           render={
-            <Button variant="ghost" size="icon" aria-label="Notifications" />
+            <Button variant="ghost" size="icon" aria-label={t.topbar.notifications} />
           }
         >
           <Bell />
         </TooltipTrigger>
-        <TooltipContent>Notifications</TooltipContent>
+        <TooltipContent>{t.topbar.notifications}</TooltipContent>
       </Tooltip>
     </header>
   )
 }
 
 function Hero() {
+  const { t } = useI18n()
+
   return (
     <Card className="overflow-hidden border-white/10 bg-white/[0.04] text-slate-50 shadow-xl shadow-black/20">
       <CardContent className="flex flex-col gap-5 p-5 lg:flex-row lg:items-end lg:justify-between">
@@ -370,20 +357,19 @@ function Hero() {
             className="gap-2 border-cyan-300/20 bg-cyan-300/10 text-cyan-100"
           >
             <Sparkles className="size-3.5" />
-            aria2 powered desktop downloader
+            {t.hero.badge}
           </Badge>
           <h1 className="mt-4 max-w-3xl text-3xl font-semibold tracking-tight text-white sm:text-5xl">
-            Grab files, torrents, and mirrors without losing control.
+            {t.hero.title}
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
-            A shadcn-first Grabbit workspace for active downloads, queue policy,
-            task detail, history, and local RPC health.
+            {t.hero.description}
           </p>
         </div>
         <div className="grid grid-cols-3 gap-2 rounded-3xl border border-white/10 bg-slate-950/60 p-2 text-center">
-          <MiniMetric value="5" label="active" />
-          <MiniMetric value="128" label="done" />
-          <MiniMetric value="942 GB" label="saved" />
+          <MiniMetric value="5" label={t.hero.metrics.active} />
+          <MiniMetric value="128" label={t.hero.metrics.done} />
+          <MiniMetric value="942 GB" label={t.hero.metrics.saved} />
         </div>
       </CardContent>
     </Card>
@@ -402,6 +388,34 @@ function MiniMetric({ value, label }: { value: string; label: string }) {
 }
 
 function StatsGrid() {
+  const { t } = useI18n()
+  const stats: StatItem[] = [
+    {
+      label: t.stats.download,
+      value: "51.0 MB/s",
+      detail: t.stats.downloadDetail,
+      icon: Download,
+    },
+    {
+      label: t.stats.upload,
+      value: "8.2 MB/s",
+      detail: t.stats.uploadDetail,
+      icon: Upload,
+    },
+    {
+      label: t.stats.disk,
+      value: "128 MB",
+      detail: t.stats.diskDetail,
+      icon: HardDrive,
+    },
+    {
+      label: t.stats.rpc,
+      value: "4 ms",
+      detail: t.stats.rpcDetail,
+      icon: RadioTower,
+    },
+  ]
+
   return (
     <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {stats.map((stat) => (
@@ -430,46 +444,55 @@ function StatsGrid() {
 }
 
 function TaskPanel() {
+  const { t } = useI18n()
+  const statusLabels: Record<TaskStatus, string> = {
+    downloading: t.status.downloading,
+    queued: t.status.queued,
+    paused: t.status.paused,
+    seeding: t.status.seeding,
+    completed: t.status.completed,
+  }
+
   return (
     <Card className="overflow-hidden border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
       <CardHeader className="flex flex-col gap-3 border-b border-white/10 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <CardTitle className="text-lg text-white">Active downloads</CardTitle>
+          <CardTitle className="text-lg text-white">{t.taskPanel.title}</CardTitle>
           <CardDescription className="text-slate-500">
-            4 tasks across HTTP, magnet, and mirrored sources
+            {t.taskPanel.description}
           </CardDescription>
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" size="sm">
             <Pause />
-            Pause all
+            {t.taskPanel.pauseAll}
           </Button>
           <Button variant="ghost" size="sm">
             <RotateCcw />
-            Retry failed
+            {t.taskPanel.retryFailed}
           </Button>
         </div>
       </CardHeader>
 
       <Table>
         <TableHeader className="hidden lg:table-header-group">
-          <TableRow className="border-white/10 hover:bg-transparent">
-            <TableHead className="px-4 text-xs font-semibold tracking-wide text-slate-500 uppercase">
-              Name
-            </TableHead>
-            <TableHead className="w-32 text-xs font-semibold tracking-wide text-slate-500 uppercase">
-              Status
-            </TableHead>
-            <TableHead className="w-32 text-xs font-semibold tracking-wide text-slate-500 uppercase">
-              Speed
-            </TableHead>
-            <TableHead className="w-28 text-xs font-semibold tracking-wide text-slate-500 uppercase">
-              ETA
-            </TableHead>
-            <TableHead className="w-24 text-xs font-semibold tracking-wide text-slate-500 uppercase">
-              Action
-            </TableHead>
-          </TableRow>
+            <TableRow className="border-white/10 hover:bg-transparent">
+                <TableHead className="px-4 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                  {t.taskPanel.columns.name}
+                </TableHead>
+                <TableHead className="w-32 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                  {t.taskPanel.columns.status}
+                </TableHead>
+                <TableHead className="w-32 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                  {t.taskPanel.columns.speed}
+                </TableHead>
+                <TableHead className="w-28 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                  {t.taskPanel.columns.eta}
+                </TableHead>
+                <TableHead className="w-24 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+                  {t.taskPanel.columns.action}
+                </TableHead>
+            </TableRow>
         </TableHeader>
         <TableBody>
           {tasks.map((task) => (
@@ -543,13 +566,13 @@ function TaskPanel() {
                       <Button
                         variant="ghost"
                         size="icon-sm"
-                        aria-label="Resume task"
+                        aria-label={t.taskPanel.resume}
                       />
                     }
                   >
                     <Play />
                   </TooltipTrigger>
-                  <TooltipContent>Resume</TooltipContent>
+                  <TooltipContent>{t.taskPanel.resume}</TooltipContent>
                 </Tooltip>
                 <Tooltip>
                   <TooltipTrigger
@@ -557,13 +580,13 @@ function TaskPanel() {
                       <Button
                         variant="ghost"
                         size="icon-sm"
-                        aria-label="Task menu"
+                        aria-label={t.taskPanel.moreActions}
                       />
                     }
                   >
                     <MoreHorizontal />
                   </TooltipTrigger>
-                  <TooltipContent>More actions</TooltipContent>
+                  <TooltipContent>{t.taskPanel.moreActions}</TooltipContent>
                 </Tooltip>
               </TableCell>
             </TableRow>
@@ -575,6 +598,8 @@ function TaskPanel() {
 }
 
 function AddDownloadDialog() {
+  const { t } = useI18n()
+
   return (
     <Dialog>
       <DialogTrigger
@@ -583,63 +608,57 @@ function AddDownloadDialog() {
         }
       >
         <Plus />
-        Add download
+        {t.addDialog.button}
       </DialogTrigger>
       <DialogContent className="max-w-xl border-white/10 bg-slate-950 text-slate-50">
         <DialogHeader>
-          <DialogTitle>Queue a new download</DialogTitle>
+          <DialogTitle>{t.addDialog.title}</DialogTitle>
           <DialogDescription className="text-slate-400">
-            Paste a URL, magnet link, torrent path, or metalink.
+            {t.addDialog.description}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4">
           <div className="grid gap-2">
-            <Label>Source</Label>
-            <Input
-              className="border-white/10 bg-white/[0.04]"
-              placeholder="https://... or magnet:?xt=..."
-            />
+            <Label>{t.addDialog.source}</Label>
+            <Input className="border-white/10 bg-white/[0.04]" placeholder={t.addDialog.sourcePlaceholder} />
           </div>
           <div className="grid gap-2">
-            <Label>Save to</Label>
+            <Label>{t.addDialog.saveTo}</Label>
             <Input
               className="border-white/10 bg-white/[0.04]"
               defaultValue="~/Downloads/grabbit"
             />
           </div>
           <div className="grid gap-2">
-            <Label>Comment</Label>
-            <Textarea
-              className="min-h-24 border-white/10 bg-white/[0.04]"
-              placeholder="Optional note for this task"
-            />
+            <Label>{t.addDialog.comment}</Label>
+            <Textarea className="min-h-24 border-white/10 bg-white/[0.04]" placeholder={t.addDialog.commentPlaceholder} />
           </div>
           <div className="grid gap-2">
             <div className="flex items-center justify-between text-sm text-slate-400">
-              <span>Connections</span>
+              <span>{t.addDialog.connections}</span>
               <span>16</span>
             </div>
             <Slider defaultValue={[16]} max={32} step={1} />
           </div>
           <div className="grid gap-2">
-            <Label>Priority</Label>
+            <Label>{t.addDialog.priority}</Label>
             <Select defaultValue="normal">
               <SelectTrigger className="w-full border-white/10 bg-white/[0.04]">
-                <SelectValue placeholder="Choose priority" />
+                <SelectValue placeholder={t.addDialog.priorityPlaceholder} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="low">Low</SelectItem>
-                <SelectItem value="normal">Normal</SelectItem>
-                <SelectItem value="high">High</SelectItem>
+                <SelectItem value="low">{t.addDialog.low}</SelectItem>
+                <SelectItem value="normal">{t.addDialog.normal}</SelectItem>
+                <SelectItem value="high">{t.addDialog.high}</SelectItem>
               </SelectContent>
             </Select>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1 border-white/10">
-              Cancel
+              {t.addDialog.cancel}
             </Button>
             <Button className="flex-1 bg-cyan-300 text-slate-950 hover:bg-cyan-200">
-              Queue task
+              {t.addDialog.queueTask}
             </Button>
           </div>
         </div>
@@ -649,16 +668,18 @@ function AddDownloadDialog() {
 }
 
 function TaskDetails({ task }: { task: DownloadTask }) {
+  const { t } = useI18n()
+
   return (
     <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
       <CardHeader className="flex flex-row items-center justify-between gap-3 p-4 pb-0">
         <div>
-          <CardTitle className="text-lg text-white">Task details</CardTitle>
+          <CardTitle className="text-lg text-white">{t.taskDetails.title}</CardTitle>
           <CardDescription className="text-xs text-slate-500">
             GID {task.id}b70d01ef
           </CardDescription>
         </div>
-        <Button variant="ghost" size="icon-sm" aria-label="Task info">
+        <Button variant="ghost" size="icon-sm" aria-label={t.taskDetails.actionLabel}>
           <ChevronRight />
         </Button>
       </CardHeader>
@@ -687,9 +708,9 @@ function TaskDetails({ task }: { task: DownloadTask }) {
           </CardContent>
         </Card>
         <div className="grid grid-cols-3 gap-2">
-          <IconAction icon={Pause} label="Pause" />
-          <IconAction icon={RotateCcw} label="Retry" />
-          <IconAction icon={Trash2} label="Remove" danger />
+          <IconAction icon={Pause} label={t.taskDetails.pause} />
+          <IconAction icon={RotateCcw} label={t.taskDetails.retry} />
+          <IconAction icon={Trash2} label={t.taskDetails.remove} danger />
         </div>
       </CardContent>
     </Card>
@@ -697,25 +718,27 @@ function TaskDetails({ task }: { task: DownloadTask }) {
 }
 
 function QuickControls() {
+  const { t } = useI18n()
+
   return (
     <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
       <CardHeader className="p-4 pb-0">
-        <CardTitle className="text-lg text-white">Quick controls</CardTitle>
+        <CardTitle className="text-lg text-white">{t.quickControls.title}</CardTitle>
         <CardDescription className="text-slate-500">
-          Tune queue and network limits
+          {t.quickControls.description}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 p-4">
         <div className="grid gap-2">
           <div className="flex items-center justify-between text-sm text-slate-400">
-            <span>Queue limit</span>
-            <span>5 active</span>
+            <span>{t.quickControls.queueLimit}</span>
+            <span>5 {t.quickControls.active}</span>
           </div>
           <Slider defaultValue={[5]} max={10} step={1} />
         </div>
         <div className="grid gap-2">
           <div className="flex items-center justify-between text-sm text-slate-400">
-            <span>Download cap</span>
+            <span>{t.quickControls.downloadCap}</span>
             <span>51 MB/s</span>
           </div>
           <Slider defaultValue={[51]} max={100} step={1} />
@@ -723,11 +746,11 @@ function QuickControls() {
         <div className="flex gap-2">
           <Button variant="secondary" className="flex-1">
             <Pause />
-            Pause all
+            {t.quickControls.pauseAll}
           </Button>
           <Button variant="outline" className="flex-1 border-white/10">
             <RotateCcw />
-            Resume all
+            {t.quickControls.resumeAll}
           </Button>
         </div>
       </CardContent>
@@ -736,13 +759,15 @@ function QuickControls() {
 }
 
 function HistoryPanel() {
+  const { t } = useI18n()
+
   return (
     <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
       <CardHeader className="flex flex-row items-center justify-between p-4 pb-0">
         <div>
-          <CardTitle className="text-lg text-white">Recent history</CardTitle>
+          <CardTitle className="text-lg text-white">{t.history.title}</CardTitle>
           <CardDescription className="text-slate-500">
-            Completed and removed tasks
+            {t.history.description}
           </CardDescription>
         </div>
         <FileArchive className="size-5 text-slate-500" />
@@ -751,10 +776,10 @@ function HistoryPanel() {
         <Table>
           <TableHeader>
             <TableRow className="border-white/10 hover:bg-transparent">
-              <TableHead className="text-slate-500">Name</TableHead>
-              <TableHead className="text-slate-500">Size</TableHead>
-              <TableHead className="text-slate-500">When</TableHead>
-              <TableHead className="text-slate-500">Status</TableHead>
+              <TableHead className="text-slate-500">{t.history.columns.name}</TableHead>
+              <TableHead className="text-slate-500">{t.history.columns.size}</TableHead>
+              <TableHead className="text-slate-500">{t.history.columns.when}</TableHead>
+              <TableHead className="text-slate-500">{t.history.columns.status}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -776,7 +801,7 @@ function HistoryPanel() {
                     variant="outline"
                     className="border-emerald-300/20 bg-emerald-400/10 text-emerald-200"
                   >
-                    Completed
+                    {t.history.completed}
                   </Badge>
                 </TableCell>
               </TableRow>
@@ -789,37 +814,55 @@ function HistoryPanel() {
 }
 
 function SettingsPanel() {
+  const { locale, setLocale, t } = useI18n()
+
   return (
-    <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
+      <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
       <CardHeader className="p-4 pb-0">
-        <CardTitle className="text-lg text-white">Settings</CardTitle>
-        <CardDescription className="text-slate-500">
-          Core aria2 and UI preferences
-        </CardDescription>
+        <CardTitle className="text-lg text-white">{t.settings.title}</CardTitle>
+        <CardDescription className="text-slate-500">{t.settings.description}</CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 p-4">
         <div className="grid gap-2">
-          <Label>Theme</Label>
+          <Label>{t.settings.theme}</Label>
           <Select defaultValue="system">
             <SelectTrigger className="w-full border-white/10 bg-white/[0.04]">
-              <SelectValue placeholder="Choose theme" />
+              <SelectValue placeholder={t.settings.themePlaceholder} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="dark">Dark</SelectItem>
-              <SelectItem value="light">Light</SelectItem>
-              <SelectItem value="system">System</SelectItem>
+              <SelectItem value="dark">{t.settings.dark}</SelectItem>
+              <SelectItem value="light">{t.settings.light}</SelectItem>
+              <SelectItem value="system">{t.settings.system}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="grid gap-2">
-          <Label>Default folder</Label>
+          <Label>{t.settings.language}</Label>
+          <Select
+            value={locale}
+            onValueChange={(value) => setLocale(value as typeof locale)}
+          >
+            <SelectTrigger className="w-full border-white/10 bg-white/[0.04]">
+              <SelectValue placeholder={t.settings.language} />
+            </SelectTrigger>
+            <SelectContent>
+              {Object.entries(t.languageOptions).map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid gap-2">
+          <Label>{t.settings.defaultFolder}</Label>
           <Input
             className="border-white/10 bg-white/[0.04]"
             defaultValue="~/Downloads/grabbit"
           />
         </div>
         <div className="grid gap-2">
-          <Label>RPC secret</Label>
+          <Label>{t.settings.rpcSecret}</Label>
           <Textarea
             className="min-h-20 border-white/10 bg-white/[0.04]"
             defaultValue="Generated on launch"
@@ -831,20 +874,22 @@ function SettingsPanel() {
 }
 
 function LiveLog() {
+  const { t } = useI18n()
+
   const lines = [
-    ["aria2c", "RPC ready on 127.0.0.1"],
-    ["queue", "2 tasks waiting for slots"],
-    ["disk", "session saved successfully"],
-    ["net", "peer count steady at 304"],
+    [t.liveLog.scopes.aria2c, t.liveLog.messages.rpcReady],
+    [t.liveLog.scopes.queue, t.liveLog.messages.tasksWaiting],
+    [t.liveLog.scopes.disk, t.liveLog.messages.sessionSaved],
+    [t.liveLog.scopes.net, t.liveLog.messages.peerCount],
   ]
 
   return (
     <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
       <CardHeader className="flex flex-row items-center justify-between p-4 pb-0">
         <div>
-          <CardTitle className="text-lg text-white">Live log</CardTitle>
+          <CardTitle className="text-lg text-white">{t.liveLog.title}</CardTitle>
           <CardDescription className="text-slate-500">
-            Recent local events
+            {t.liveLog.description}
           </CardDescription>
         </div>
         <MoreHorizontal className="size-5 text-slate-500" />
@@ -870,19 +915,21 @@ function LiveLog() {
 }
 
 function QueueSummary() {
+  const { t } = useI18n()
+
   return (
     <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
       <CardHeader className="p-4 pb-0">
-        <CardTitle className="text-lg text-white">Queue summary</CardTitle>
+        <CardTitle className="text-lg text-white">{t.queueSummary.title}</CardTitle>
         <CardDescription className="text-slate-500">
-          Backlog and bandwidth controls
+          {t.queueSummary.description}
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 p-4">
         <div className="grid gap-2">
           <div className="flex items-center justify-between text-sm text-slate-400">
-            <span>Waiting</span>
-            <span>2 tasks</span>
+            <span>{t.queueSummary.waiting}</span>
+            <span>2 {t.queueSummary.tasks}</span>
           </div>
           <Progress value={50} className="flex-1">
             <ProgressTrack className="h-2 bg-white/[0.07]">
@@ -893,13 +940,13 @@ function QueueSummary() {
         <div className="grid grid-cols-2 gap-3">
           <Card className="border-white/10 bg-white/[0.03] shadow-none">
             <CardContent className="p-3">
-              <div className="text-xs text-slate-500">Retry wait</div>
+              <div className="text-xs text-slate-500">{t.queueSummary.retryWait}</div>
               <div className="text-base font-semibold text-white">10s</div>
             </CardContent>
           </Card>
           <Card className="border-white/10 bg-white/[0.03] shadow-none">
             <CardContent className="p-3">
-              <div className="text-xs text-slate-500">Disk cache</div>
+              <div className="text-xs text-slate-500">{t.queueSummary.diskCache}</div>
               <div className="text-base font-semibold text-white">128 MB</div>
             </CardContent>
           </Card>
