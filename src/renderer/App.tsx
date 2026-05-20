@@ -184,10 +184,9 @@ function App() {
   }, [])
 
   return (
-    <main className="min-h-svh overflow-hidden bg-[#071014] text-slate-50">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(34,211,238,0.20),transparent_34%),radial-gradient(circle_at_90%_10%,rgba(168,85,247,0.16),transparent_32%),linear-gradient(135deg,rgba(15,23,42,0.2),rgba(2,6,23,0.82))]" />
-      <div className="relative mx-auto flex min-h-svh w-full max-w-[96rem] flex-col p-3 sm:p-4 lg:p-5">
-        <Card className="flex min-h-[calc(100svh-1.5rem)] flex-row overflow-hidden rounded-[2rem] border-white/10 bg-slate-950/72 text-slate-50 shadow-2xl shadow-black/50 backdrop-blur-2xl sm:min-h-[calc(100svh-2rem)] lg:min-h-[calc(100svh-2.5rem)]">
+    <main className="min-h-svh overflow-hidden bg-slate-950 text-slate-50">
+      <div className="relative flex min-h-svh w-full flex-col">
+        <Card className="flex min-h-svh flex-row overflow-hidden rounded-none border-0 border-r border-slate-800 bg-slate-950 text-slate-50 shadow-none">
           <Sidebar />
           <section className="flex min-w-0 flex-1 flex-col">
             <Topbar />
@@ -195,8 +194,8 @@ function App() {
               defaultValue="overview"
               className="flex min-h-0 flex-1 flex-col gap-0"
             >
-              <div className="border-b border-white/10 px-3 py-3 sm:px-5">
-                <TabsList className="bg-white/5">
+              <div className="border-b border-slate-800 px-3 py-2 sm:px-4">
+                <TabsList className="bg-slate-900">
                   <TabsTrigger value="overview">
                     {t("tabs.overview")}
                   </TabsTrigger>
@@ -209,7 +208,7 @@ function App() {
               </div>
 
               <ScrollArea className="min-h-0 flex-1">
-                <div className="grid gap-4 p-3 sm:p-4 xl:grid-cols-[minmax(0,1fr)_24rem]">
+                <div className="grid gap-4 p-3 sm:p-4 xl:grid-cols-[minmax(0,1fr)_21rem]">
                   <div className="grid min-w-0 gap-4">
                     <TabsContent
                       value="overview"
@@ -316,7 +315,7 @@ function App() {
                 </div>
               </ScrollArea>
 
-              <footer className="border-t border-white/10 px-4 py-3 text-xs text-slate-500">
+              <footer className="border-t border-slate-800 px-4 py-2 text-xs text-slate-500">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <span className="inline-flex items-center gap-2">
                     <span className="size-2 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.8)]" />
@@ -346,8 +345,8 @@ function Sidebar() {
   ]
 
   return (
-    <aside className="hidden w-20 shrink-0 flex-col items-center border-r border-white/10 bg-white/[0.03] px-3 py-4 md:flex">
-      <div className="grid size-12 place-items-center rounded-2xl bg-gradient-to-br from-cyan-300 via-blue-400 to-violet-500 text-slate-950 shadow-lg shadow-cyan-500/20">
+    <aside className="hidden w-20 shrink-0 flex-col items-center border-r border-slate-800 bg-slate-900/80 px-3 py-4 md:flex">
+      <div className="grid size-11 place-items-center rounded-xl bg-slate-100 text-slate-950 shadow-sm">
         <FileDown className="size-6" />
       </div>
       <nav className="mt-8 flex flex-1 flex-col gap-2">
@@ -360,9 +359,9 @@ function Sidebar() {
                   variant="ghost"
                   size="icon-lg"
                   className={cn(
-                    "size-11 rounded-2xl text-slate-400 hover:bg-white/10 hover:text-white",
+                    "size-11 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white",
                     item.active &&
-                      "bg-white/12 text-cyan-100 shadow-inner shadow-white/5"
+                      "bg-slate-800 text-slate-50"
                   )}
                   type="button"
                 />
@@ -376,7 +375,7 @@ function Sidebar() {
       </nav>
       <Badge
         variant="outline"
-        className="grid size-11 place-items-center rounded-2xl border-emerald-300/20 bg-emerald-400/10 p-0 text-emerald-200"
+        className="grid size-11 place-items-center rounded-xl border-emerald-900/30 bg-emerald-950/30 p-0 text-emerald-200"
       >
         <Activity className="size-5" />
       </Badge>
@@ -396,19 +395,19 @@ function Topbar() {
   const nextTheme = resolvedTheme === "dark" ? "light" : "dark"
 
   return (
-    <header className="flex min-h-16 items-center gap-3 border-b border-white/10 px-3 sm:px-5">
+    <header className="flex min-h-14 items-center gap-3 border-b border-slate-800 bg-slate-950/95 px-3 sm:px-4">
       <div className="relative min-w-0 flex-1">
         <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-500" />
         <Input
           aria-label={t("topbar.searchAria")}
-          className="h-11 rounded-2xl border-white/10 bg-white/[0.04] pr-12 pl-10 text-slate-200 placeholder:text-slate-500"
+          className="h-10 rounded-xl border-slate-800 bg-slate-900 pr-12 pl-10 text-slate-200 placeholder:text-slate-500"
           placeholder={t("topbar.searchPlaceholder")}
         />
-        <kbd className="absolute top-1/2 right-3 hidden -translate-y-1/2 rounded-lg border border-white/10 bg-white/5 px-2 py-1 text-[0.65rem] text-slate-500 sm:block">
+        <kbd className="absolute top-1/2 right-3 hidden -translate-y-1/2 rounded-lg border border-slate-800 bg-slate-900 px-2 py-1 text-[0.65rem] text-slate-500 sm:block">
           /
         </kbd>
       </div>
-      <Button className="hidden bg-cyan-300 text-slate-950 hover:bg-cyan-200 sm:inline-flex">
+      <Button className="hidden bg-slate-100 text-slate-950 hover:bg-white sm:inline-flex">
         <Plus />
         {t("topbar.newTask")}
       </Button>
@@ -456,24 +455,24 @@ function Hero({
   }, 0)
 
   return (
-    <Card className="overflow-hidden border-white/10 bg-white/[0.04] text-slate-50 shadow-xl shadow-black/20">
+    <Card className="overflow-hidden border-slate-800 bg-slate-900 text-slate-50 shadow-none">
       <CardContent className="flex flex-col gap-5 p-5 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <Badge
             variant="outline"
-            className="gap-2 border-cyan-300/20 bg-cyan-300/10 text-cyan-100"
+            className="gap-2 border-slate-700 bg-slate-800 text-slate-200"
           >
             <Sparkles className="size-3.5" />
             {t("hero.badge")}
           </Badge>
-          <h1 className="mt-4 max-w-3xl text-3xl font-semibold tracking-tight text-white sm:text-5xl">
+          <h1 className="mt-4 max-w-3xl text-3xl font-semibold tracking-tight text-white sm:text-4xl">
             {t("hero.title")}
           </h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
             {t("hero.description")}
           </p>
         </div>
-        <div className="grid grid-cols-3 gap-2 rounded-3xl border border-white/10 bg-slate-950/60 p-2 text-center">
+        <div className="grid grid-cols-3 gap-2 rounded-2xl border border-slate-800 bg-slate-950 p-2 text-center">
           <MiniMetric
             value={`${globalStat?.numActive ?? 0}`}
             label={t("hero.metrics.active")}
@@ -494,7 +493,7 @@ function Hero({
 
 function MiniMetric({ value, label }: { value: string; label: string }) {
   return (
-    <Card className="min-w-20 border-transparent bg-white/[0.05] text-center text-slate-50 shadow-none">
+    <Card className="min-w-20 border-slate-800 bg-slate-950 text-center text-slate-50 shadow-none">
       <CardContent className="px-3 py-3">
         <div className="text-lg font-semibold text-white">{value}</div>
         <div className="text-xs text-slate-500">{label}</div>
@@ -547,7 +546,7 @@ function StatsGrid({
       {stats.map((stat) => (
         <Card
           key={stat.label}
-          className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15"
+          className="border-slate-800 bg-slate-900 text-slate-50 shadow-none"
         >
           <CardContent className="p-4">
             <div className="flex items-start justify-between gap-3">
@@ -558,7 +557,7 @@ function StatsGrid({
                 </div>
                 <div className="mt-1 text-xs text-slate-500">{stat.detail}</div>
               </div>
-              <div className="grid size-10 place-items-center rounded-2xl bg-white/[0.06] text-cyan-200">
+                <div className="grid size-10 place-items-center rounded-xl bg-slate-800 text-slate-200">
                 <stat.icon className="size-5" />
               </div>
             </div>
@@ -571,7 +570,7 @@ function StatsGrid({
 
 function RpcError({ message }: { message: string }) {
   return (
-    <Card className="border-red-400/20 bg-red-400/10 text-red-100 shadow-lg shadow-black/15">
+    <Card className="border-red-900/40 bg-red-950/40 text-red-100 shadow-none">
       <CardContent className="p-4 text-sm">
         aria2 RPC error: {message}
       </CardContent>
@@ -602,8 +601,8 @@ function TaskPanel({
   }
 
   return (
-    <Card className="overflow-hidden border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
-      <CardHeader className="flex flex-col gap-3 border-b border-white/10 p-4 sm:flex-row sm:items-center sm:justify-between">
+    <Card className="overflow-hidden border-slate-800 bg-slate-900 text-slate-50 shadow-none">
+      <CardHeader className="flex flex-col gap-3 border-b border-slate-800 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <CardTitle className="text-lg text-white">
             {t("taskPanel.title")}
@@ -622,7 +621,7 @@ function TaskPanel({
 
       <Table>
         <TableHeader className="hidden lg:table-header-group">
-          <TableRow className="border-white/10 hover:bg-transparent">
+          <TableRow className="border-slate-800 hover:bg-transparent">
             <TableHead className="px-4 text-xs font-semibold tracking-wide text-slate-500 uppercase">
               {t("taskPanel.columns.name")}
             </TableHead>
@@ -642,7 +641,7 @@ function TaskPanel({
         </TableHeader>
         <TableBody>
           {tasks.length === 0 ? (
-            <TableRow className="border-white/10 hover:bg-transparent">
+            <TableRow className="border-slate-800 hover:bg-transparent">
               <TableCell
                 className="p-6 text-center text-sm text-slate-500 lg:table-cell"
                 colSpan={5}
@@ -654,13 +653,13 @@ function TaskPanel({
           {tasks.map((task) => (
             <TableRow
               key={task.id}
-              className="grid border-white/10 hover:bg-white/[0.03] lg:table-row"
+              className="grid border-slate-800 hover:bg-white/[0.02] lg:table-row"
             >
               <TableCell className="min-w-0 p-4 lg:w-auto">
                 <div className="flex items-center gap-3">
                   <div
                     className={cn(
-                      "grid size-11 shrink-0 place-items-center rounded-2xl bg-gradient-to-br text-slate-950",
+                      "grid size-11 shrink-0 place-items-center rounded-xl bg-slate-800 text-slate-950",
                       task.accent
                     )}
                   >
@@ -688,7 +687,7 @@ function TaskPanel({
                 </div>
                 <div className="mt-3 flex items-center gap-3">
                   <Progress value={task.progress} className="flex-1">
-                    <ProgressTrack className="h-2 bg-white/[0.07]">
+                    <ProgressTrack className="h-2 bg-slate-800">
                       <ProgressIndicator
                         className={cn(
                           "rounded-full bg-gradient-to-r",
@@ -776,13 +775,13 @@ function AddDownloadDialog({
     <Dialog>
       <DialogTrigger
         render={
-          <Button className="w-full bg-cyan-300 text-slate-950 hover:bg-cyan-200" />
+          <Button className="w-full bg-slate-100 text-slate-950 hover:bg-white" />
         }
       >
         <Plus />
         {t("addDialog.button")}
       </DialogTrigger>
-      <DialogContent className="max-w-xl border-white/10 bg-slate-950 text-slate-50">
+      <DialogContent className="max-w-xl border-slate-800 bg-slate-950 text-slate-50">
         <DialogHeader>
           <DialogTitle>{t("addDialog.title")}</DialogTitle>
           <DialogDescription className="text-slate-400">
@@ -793,7 +792,7 @@ function AddDownloadDialog({
           <div className="grid gap-2">
             <Label>{t("addDialog.source")}</Label>
             <Input
-              className="border-white/10 bg-white/[0.04]"
+              className="border-slate-800 bg-slate-900"
               placeholder={t("addDialog.sourcePlaceholder")}
               value={source}
               onChange={(event) => setSource(event.target.value)}
@@ -802,7 +801,7 @@ function AddDownloadDialog({
           <div className="grid gap-2">
             <Label>{t("addDialog.saveTo")}</Label>
             <Input
-              className="border-white/10 bg-white/[0.04]"
+              className="border-slate-800 bg-slate-900"
               value={savePath}
               onChange={(event) => setSavePath(event.target.value)}
             />
@@ -822,11 +821,11 @@ function AddDownloadDialog({
             />
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" className="flex-1 border-white/10">
+            <Button variant="outline" className="flex-1 border-slate-800">
               {t("addDialog.cancel")}
             </Button>
             <Button
-              className="flex-1 bg-cyan-300 text-slate-950 hover:bg-cyan-200"
+              className="flex-1 bg-slate-100 text-slate-950 hover:bg-white"
               disabled={!source.trim()}
               onClick={() => {
                 onAdd(source.trim(), savePath.trim(), connections[0] ?? 16)
@@ -846,7 +845,7 @@ function TaskDetails({ task }: { task: DownloadTask | null }) {
   const { t } = useI18n()
 
   return (
-    <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
+    <Card className="border-slate-800 bg-slate-900 text-slate-50 shadow-none">
       <CardHeader className="flex flex-row items-center justify-between gap-3 p-4 pb-0">
         <div>
           <CardTitle className="text-lg text-white">
@@ -865,7 +864,7 @@ function TaskDetails({ task }: { task: DownloadTask | null }) {
         </Button>
       </CardHeader>
       <CardContent className="grid gap-4 p-4">
-        <Card className="rounded-2xl border-white/10 bg-white/[0.03] text-slate-50 shadow-none">
+        <Card className="rounded-2xl border-slate-800 bg-slate-950 text-slate-50 shadow-none">
           <CardContent className="p-3">
             {task ? (
               <>
@@ -881,7 +880,7 @@ function TaskDetails({ task }: { task: DownloadTask | null }) {
                     <span>{task.peers}</span>
                   </div>
                   <Progress value={task.progress} className="flex-1">
-                    <ProgressTrack className="h-2 bg-white/[0.07]">
+                    <ProgressTrack className="h-2 bg-slate-800">
                       <ProgressIndicator
                         className={cn(
                           "rounded-full bg-gradient-to-r",
@@ -930,7 +929,7 @@ function QuickControls({
   const { t } = useI18n()
 
   return (
-    <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
+    <Card className="border-slate-800 bg-slate-900 text-slate-50 shadow-none">
       <CardHeader className="p-4 pb-0">
         <CardTitle className="text-lg text-white">
           {t("quickControls.title")}
@@ -961,11 +960,11 @@ function QuickControls({
             <Pause />
             {t("quickControls.pauseAll")}
           </Button>
-          <Button
-            variant="outline"
-            className="flex-1 border-white/10"
-            onClick={onResumeAll}
-          >
+            <Button
+              variant="outline"
+              className="flex-1 border-slate-800"
+              onClick={onResumeAll}
+            >
             <RotateCcw />
             {t("quickControls.resumeAll")}
           </Button>
@@ -980,7 +979,7 @@ function HistoryPanel({ tasks }: { tasks: DownloadTask[] }) {
   const completedTasks = tasks.filter((task) => task.status === "completed")
 
   return (
-    <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
+    <Card className="border-slate-800 bg-slate-900 text-slate-50 shadow-none">
       <CardHeader className="flex flex-row items-center justify-between p-4 pb-0">
         <div>
           <CardTitle className="text-lg text-white">
@@ -995,7 +994,7 @@ function HistoryPanel({ tasks }: { tasks: DownloadTask[] }) {
       <CardContent className="p-4">
         <Table>
           <TableHeader>
-            <TableRow className="border-white/10 hover:bg-transparent">
+            <TableRow className="border-slate-800 hover:bg-transparent">
               <TableHead className="text-slate-500">
                 {t("history.columns.name")}
               </TableHead>
@@ -1012,7 +1011,7 @@ function HistoryPanel({ tasks }: { tasks: DownloadTask[] }) {
           </TableHeader>
           <TableBody>
             {completedTasks.length === 0 ? (
-              <TableRow className="border-white/10 hover:bg-transparent">
+              <TableRow className="border-slate-800 hover:bg-transparent">
                 <TableCell
                   className="p-6 text-center text-sm text-slate-500"
                   colSpan={4}
@@ -1024,7 +1023,7 @@ function HistoryPanel({ tasks }: { tasks: DownloadTask[] }) {
             {completedTasks.map((task) => (
               <TableRow
                 key={task.id}
-                className="border-white/10 hover:bg-white/[0.03]"
+                className="border-slate-800 hover:bg-white/[0.02]"
               >
                 <TableCell className="font-medium text-slate-200">
                   <div className="flex items-center gap-2">
@@ -1106,7 +1105,7 @@ function SettingsPanel({
   ]
 
   return (
-    <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
+    <Card className="border-slate-800 bg-slate-900 text-slate-50 shadow-none">
       <CardHeader className="p-4 pb-0">
         <CardTitle className="text-lg text-white">
           {t("settings.title")}
@@ -1122,7 +1121,7 @@ function SettingsPanel({
             value={theme}
             onValueChange={(value) => setTheme(value as typeof theme)}
           >
-            <SelectTrigger className="w-full border-white/10 bg-white/[0.04]">
+            <SelectTrigger className="w-full border-slate-800 bg-slate-950">
               <SelectValue placeholder={t("settings.themePlaceholder")} />
             </SelectTrigger>
             <SelectContent>
@@ -1138,7 +1137,7 @@ function SettingsPanel({
             value={locale}
             onValueChange={(value) => setLocale(value as typeof locale)}
           >
-            <SelectTrigger className="w-full border-white/10 bg-white/[0.04]">
+            <SelectTrigger className="w-full border-slate-800 bg-slate-950">
               <SelectValue placeholder={t("settings.language")} />
             </SelectTrigger>
             <SelectContent>
@@ -1153,7 +1152,7 @@ function SettingsPanel({
         <div className="grid gap-2">
           <Label>{t("settings.defaultFolder")}</Label>
           <Input
-            className="border-white/10 bg-white/[0.04]"
+            className="border-slate-800 bg-slate-950"
             value={globalOptions.dir ?? ""}
             readOnly
           />
@@ -1161,14 +1160,14 @@ function SettingsPanel({
         <div className="grid gap-2">
           <Label>{t("settings.rpcSecret")}</Label>
           <Input
-            className="min-h-20 border-white/10 bg-white/[0.04]"
+            className="min-h-20 border-slate-800 bg-slate-950"
             value={
               globalOptions["rpc-secret"] ? "Configured" : "Not configured"
             }
             readOnly
           />
         </div>
-        <section className="grid gap-3 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+        <section className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-950 p-4">
           <div>
             <div className="text-sm font-semibold text-white">Engine</div>
             <div className="text-xs text-slate-500">
@@ -1179,7 +1178,7 @@ function SettingsPanel({
             {engineProfiles.map(([label, value, detail]) => (
               <Card
                 key={label}
-                className="border-white/10 bg-white/[0.03] shadow-none"
+                className="border-slate-800 bg-slate-900 shadow-none"
               >
                 <CardContent className="p-3">
                   <div className="text-xs text-slate-500">{label}</div>
@@ -1192,7 +1191,7 @@ function SettingsPanel({
             ))}
           </div>
         </section>
-        <section className="grid gap-3 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+        <section className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-950 p-4">
           <div>
             <div className="text-sm font-semibold text-white">BitTorrent</div>
             <div className="text-xs text-slate-500">
@@ -1203,7 +1202,7 @@ function SettingsPanel({
             {btOptions.map(([label, value, detail]) => (
               <Card
                 key={label}
-                className="border-white/10 bg-white/[0.03] shadow-none"
+                className="border-slate-800 bg-slate-900 shadow-none"
               >
                 <CardContent className="p-3">
                   <div className="text-xs text-slate-500">{label}</div>
@@ -1216,7 +1215,7 @@ function SettingsPanel({
             ))}
           </div>
         </section>
-        <section className="grid gap-3 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+        <section className="grid gap-3 rounded-2xl border border-slate-800 bg-slate-950 p-4">
           <div>
             <div className="text-sm font-semibold text-white">Integration</div>
             <div className="text-xs text-slate-500">
@@ -1227,7 +1226,7 @@ function SettingsPanel({
             {integrationOptions.map(([label, value, detail]) => (
               <Card
                 key={label}
-                className="border-white/10 bg-white/[0.03] shadow-none"
+                className="border-slate-800 bg-slate-900 shadow-none"
               >
                 <CardContent className="p-3">
                   <div className="text-xs text-slate-500">{label}</div>
@@ -1247,7 +1246,7 @@ function SettingsPanel({
 
 function DetailStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2">
+    <div className="rounded-2xl border border-slate-800 bg-slate-950 px-3 py-2">
       <div className="text-[11px] tracking-wide text-slate-500 uppercase">
         {label}
       </div>
@@ -1286,7 +1285,7 @@ function LiveLog({
   ]
 
   return (
-    <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
+    <Card className="border-slate-800 bg-slate-900 text-slate-50 shadow-none">
       <CardHeader className="flex flex-row items-center justify-between p-4 pb-0">
         <div>
           <CardTitle className="text-lg text-white">
@@ -1302,11 +1301,11 @@ function LiveLog({
         {lines.map(([scope, message]) => (
           <div
             key={`${scope}-${message}`}
-            className="flex items-center gap-3 rounded-2xl bg-white/[0.03] px-3 py-2"
+            className="flex items-center gap-3 rounded-2xl bg-slate-950 px-3 py-2"
           >
             <Badge
               variant="outline"
-              className="border-white/10 bg-white/[0.03] text-slate-300"
+              className="border-slate-800 bg-slate-900 text-slate-300"
             >
               {scope}
             </Badge>
@@ -1332,7 +1331,7 @@ function QueueSummary({
   const waitingPercent = total > 0 ? Math.round((waiting / total) * 100) : 0
 
   return (
-    <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
+    <Card className="border-slate-800 bg-slate-900 text-slate-50 shadow-none">
       <CardHeader className="p-4 pb-0">
         <CardTitle className="text-lg text-white">
           {t("queueSummary.title")}
@@ -1350,13 +1349,13 @@ function QueueSummary({
             </span>
           </div>
           <Progress value={waitingPercent} className="flex-1">
-            <ProgressTrack className="h-2 bg-white/[0.07]">
-              <ProgressIndicator className="rounded-full bg-gradient-to-r from-cyan-300 to-blue-500" />
+            <ProgressTrack className="h-2 bg-slate-800">
+              <ProgressIndicator className="rounded-full bg-slate-200" />
             </ProgressTrack>
           </Progress>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          <Card className="border-white/10 bg-white/[0.03] shadow-none">
+          <Card className="border-slate-800 bg-slate-950 shadow-none">
             <CardContent className="p-3">
               <div className="text-xs text-slate-500">
                 {t("queueSummary.retryWait")}
@@ -1366,7 +1365,7 @@ function QueueSummary({
               </div>
             </CardContent>
           </Card>
-          <Card className="border-white/10 bg-white/[0.03] shadow-none">
+          <Card className="border-slate-800 bg-slate-950 shadow-none">
             <CardContent className="p-3">
               <div className="text-xs text-slate-500">
                 {t("queueSummary.diskCache")}
@@ -1394,8 +1393,8 @@ function IconAction({
   return (
     <Button
       variant="outline"
-      className={cn(
-        "h-auto flex-col gap-1 rounded-2xl border-white/10 bg-white/[0.03] px-2 py-3 text-xs text-slate-400 hover:bg-white/10 hover:text-white",
+        className={cn(
+        "h-auto flex-col gap-1 rounded-2xl border-slate-800 bg-slate-950 px-2 py-3 text-xs text-slate-400 hover:bg-slate-800 hover:text-white",
         danger && "hover:text-red-200"
       )}
       type="button"
