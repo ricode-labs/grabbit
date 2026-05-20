@@ -1,4 +1,4 @@
-import type { ComponentType } from "react"
+import { useEffect, useState, type ComponentType } from "react"
 
 import {
   Activity,
@@ -78,8 +78,21 @@ import {
 } from "@/components/ui/tooltip"
 import { useI18n } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
+import type {
+  DownloadGlobalStat,
+  DownloadServiceStatus,
+  DownloadTask as Aria2DownloadTask,
+  DownloadVersion,
+} from "../shared/download-api"
 
-type TaskStatus = "downloading" | "queued" | "paused" | "seeding" | "completed"
+type TaskStatus =
+  | "downloading"
+  | "queued"
+  | "paused"
+  | "seeding"
+  | "completed"
+  | "error"
+  | "removed"
 type TaskProtocol = "http" | "ftp" | "bt" | "magnet" | "metalink"
 
 type DownloadTask = {
@@ -108,7 +121,7 @@ type StatItem = {
   icon: ComponentType<{ className?: string }>
 }
 
-const tasks: DownloadTask[] = [
+const fallbackTasks: DownloadTask[] = [
   {
     id: "8f2c4a91",
     name: "ubuntu-26.04-desktop-amd64.iso",
@@ -243,11 +256,80 @@ const statusClasses: Record<TaskStatus, string> = {
   paused: "bg-amber-400/10 text-amber-200 ring-amber-300/20",
   seeding: "bg-violet-400/10 text-violet-200 ring-violet-300/20",
   completed: "bg-emerald-400/10 text-emerald-200 ring-emerald-300/20",
+  error: "bg-red-400/10 text-red-200 ring-red-300/20",
+  removed: "bg-slate-400/10 text-slate-400 ring-slate-300/20",
 }
 
 function App() {
   const { t } = useI18n()
-  const activeTask = tasks[0]
+  const [tasks, setTasks] = useState<DownloadTask[]>(fallbackTasks)
+  const [globalStat, setGlobalStat] = useState<DownloadGlobalStat | null>(null)
+  const [serviceStatus, setServiceStatus] = useState<DownloadServiceStatus>({
+    running: false,
+    rpcPort: null,
+  })
+  const [version, setVersion] = useState<DownloadVersion | null>(null)
+  const [rpcError, setRpcError] = useState<string | null>(null)
+  const activeTask = tasks[0] ?? fallbackTasks[0]
+
+  async function refreshDownloads() {
+    const [nextTasks, nextStat, nextStatus] = await Promise.all([
+      window.grabbit.downloads.list(),
+      window.grabbit.downloads.getGlobalStat(),
+      window.grabbit.downloads.getServiceStatus(),
+    ])
+
+    setTasks(nextTasks.map(toDownloadTask))
+    setGlobalStat(nextStat)
+    setServiceStatus(nextStatus)
+    setRpcError(null)
+  }
+
+  async function runDownloadAction(action: () => Promise<unknown>) {
+    try {
+      await action()
+      await refreshDownloads()
+    } catch (error) {
+      setRpcError(error instanceof Error ? error.message : String(error))
+    }
+  }
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function startAndPoll() {
+      try {
+        const [status, ariaVersion] = await Promise.all([
+          window.grabbit.downloads.startService(),
+          window.grabbit.downloads.getVersion(),
+        ])
+
+        if (cancelled) {
+          return
+        }
+
+        setServiceStatus(status)
+        setVersion(ariaVersion)
+        await refreshDownloads()
+      } catch (error) {
+        if (!cancelled) {
+          setRpcError(error instanceof Error ? error.message : String(error))
+        }
+      }
+    }
+
+    startAndPoll()
+    const interval = window.setInterval(() => {
+      refreshDownloads().catch((error: unknown) => {
+        setRpcError(error instanceof Error ? error.message : String(error))
+      })
+    }, 2_000)
+
+    return () => {
+      cancelled = true
+      window.clearInterval(interval)
+    }
+  }, [])
 
   return (
     <main className="min-h-svh overflow-hidden bg-[#071014] text-slate-50">
@@ -279,14 +361,25 @@ function App() {
                     >
                       <Hero />
                       <FeatureMatrix />
-                      <StatsGrid />
-                      <TaskPanel />
+                      <StatsGrid globalStat={globalStat} />
+                      {rpcError ? <RpcError message={rpcError} /> : null}
+                      <TaskPanel
+                        tasks={tasks}
+                        onPauseAll={() => runDownloadAction(() => window.grabbit.downloads.pauseAll())}
+                        onResume={(gid) => runDownloadAction(() => window.grabbit.downloads.resume(gid))}
+                        onRemove={(gid) => runDownloadAction(() => window.grabbit.downloads.forceRemove(gid))}
+                      />
                     </TabsContent>
                     <TabsContent
                       value="queue"
                       className="mt-0 grid gap-4 outline-none"
                     >
-                      <TaskPanel />
+                      <TaskPanel
+                        tasks={tasks}
+                        onPauseAll={() => runDownloadAction(() => window.grabbit.downloads.pauseAll())}
+                        onResume={(gid) => runDownloadAction(() => window.grabbit.downloads.resume(gid))}
+                        onRemove={(gid) => runDownloadAction(() => window.grabbit.downloads.forceRemove(gid))}
+                      />
                       <QueueSummary />
                     </TabsContent>
                     <TabsContent
@@ -304,9 +397,26 @@ function App() {
                   </div>
 
                   <aside className="grid content-start gap-4">
-                    <AddDownloadDialog />
+                    <AddDownloadDialog
+                      onAdd={(source, savePath, connections) =>
+                        runDownloadAction(() =>
+                          window.grabbit.downloads.addUri({
+                            uris: [source],
+                            options: {
+                              dir: savePath,
+                              split: connections,
+                              "max-connection-per-server": connections,
+                            },
+                          })
+                        )
+                      }
+                    />
                     <TaskDetails task={activeTask} />
-                    <QuickControls />
+                    <QuickControls
+                      globalStat={globalStat}
+                      onPauseAll={() => runDownloadAction(() => window.grabbit.downloads.pauseAll())}
+                      onResumeAll={() => runDownloadAction(() => window.grabbit.downloads.resumeAll())}
+                    />
                     <LiveLog />
                   </aside>
                 </div>
@@ -316,9 +426,11 @@ function App() {
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <span className="inline-flex items-center gap-2">
                     <span className="size-2 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(110,231,183,0.8)]" />
-                    {t("footer.serviceStatus")}
+                    {serviceStatus.running
+                      ? `aria2c ${version?.version ?? "running"} · RPC ${serviceStatus.rpcPort}`
+                      : t("footer.serviceStatus")}
                   </span>
-                  <span>{t("footer.traffic")}</span>
+                  <span>{formatTraffic(globalStat)}</span>
                 </div>
               </footer>
             </Tabs>
@@ -462,19 +574,19 @@ function MiniMetric({ value, label }: { value: string; label: string }) {
   )
 }
 
-function StatsGrid() {
+function StatsGrid({ globalStat }: { globalStat: DownloadGlobalStat | null }) {
   const { t } = useI18n()
   const stats: StatItem[] = [
     {
       label: t("stats.download"),
-      value: "51.0 MB/s",
+      value: formatSpeed(globalStat?.downloadSpeed ?? 0),
       detail: t("stats.downloadDetail"),
       icon: Download,
     },
     {
       label: t("stats.upload"),
-      value: "8.2 MB/s",
-      detail: t("stats.uploadDetail"),
+      value: formatSpeed(globalStat?.uploadSpeed ?? 0),
+      detail: `${globalStat?.numActive ?? 0} active`,
       icon: Upload,
     },
     {
@@ -485,8 +597,8 @@ function StatsGrid() {
     },
     {
       label: t("stats.rpc"),
-      value: "4 ms",
-      detail: t("stats.rpcDetail"),
+      value: `${globalStat?.numWaiting ?? 0}`,
+      detail: "waiting tasks",
       icon: RadioTower,
     },
   ]
@@ -515,6 +627,16 @@ function StatsGrid() {
         </Card>
       ))}
     </section>
+  )
+}
+
+function RpcError({ message }: { message: string }) {
+  return (
+    <Card className="border-red-400/20 bg-red-400/10 text-red-100 shadow-lg shadow-black/15">
+      <CardContent className="p-4 text-sm">
+        aria2 RPC error: {message}
+      </CardContent>
+    </Card>
   )
 }
 
@@ -547,7 +669,17 @@ function FeatureMatrix() {
   )
 }
 
-function TaskPanel() {
+function TaskPanel({
+  tasks,
+  onPauseAll,
+  onResume,
+  onRemove,
+}: {
+  tasks: DownloadTask[]
+  onPauseAll: () => void
+  onResume: (gid: string) => void
+  onRemove: (gid: string) => void
+}) {
   const { t } = useI18n()
   const statusLabels: Record<TaskStatus, string> = {
     downloading: t("status.downloading"),
@@ -555,6 +687,8 @@ function TaskPanel() {
     paused: t("status.paused"),
     seeding: t("status.seeding"),
     completed: t("status.completed"),
+    error: "Error",
+    removed: "Removed",
   }
 
   return (
@@ -567,7 +701,7 @@ function TaskPanel() {
           </CardDescription>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" size="sm">
+          <Button variant="secondary" size="sm" onClick={onPauseAll}>
             <Pause />
             {t("taskPanel.pauseAll")}
           </Button>
@@ -678,6 +812,7 @@ function TaskPanel() {
                         variant="ghost"
                         size="icon-sm"
                         aria-label={t("taskPanel.resume")}
+                        onClick={() => onResume(task.id)}
                       />
                     }
                   >
@@ -692,6 +827,7 @@ function TaskPanel() {
                         variant="ghost"
                         size="icon-sm"
                         aria-label={t("taskPanel.moreActions")}
+                        onClick={() => onRemove(task.id)}
                       />
                     }
                   >
@@ -708,8 +844,15 @@ function TaskPanel() {
   )
 }
 
-function AddDownloadDialog() {
+function AddDownloadDialog({
+  onAdd,
+}: {
+  onAdd: (source: string, savePath: string, connections: number) => void
+}) {
   const { t } = useI18n()
+  const [source, setSource] = useState("")
+  const [savePath, setSavePath] = useState("~/Downloads/grabbit")
+  const [connections, setConnections] = useState([16])
 
   return (
     <Dialog>
@@ -731,13 +874,19 @@ function AddDownloadDialog() {
         <div className="grid gap-4">
           <div className="grid gap-2">
             <Label>{t("addDialog.source")}</Label>
-            <Input className="border-white/10 bg-white/[0.04]" placeholder={t("addDialog.sourcePlaceholder")} />
+            <Input
+              className="border-white/10 bg-white/[0.04]"
+              placeholder={t("addDialog.sourcePlaceholder")}
+              value={source}
+              onChange={(event) => setSource(event.target.value)}
+            />
           </div>
           <div className="grid gap-2">
             <Label>{t("addDialog.saveTo")}</Label>
             <Input
               className="border-white/10 bg-white/[0.04]"
-              defaultValue="~/Downloads/grabbit"
+              value={savePath}
+              onChange={(event) => setSavePath(event.target.value)}
             />
           </div>
           <div className="grid gap-2">
@@ -747,9 +896,16 @@ function AddDownloadDialog() {
           <div className="grid gap-2">
             <div className="flex items-center justify-between text-sm text-slate-400">
               <span>{t("addDialog.connections")}</span>
-              <span>16</span>
+              <span>{connections[0]}</span>
             </div>
-            <Slider defaultValue={[16]} max={32} step={1} />
+            <Slider
+              value={connections}
+              max={32}
+              step={1}
+              onValueChange={(value) =>
+                setConnections(Array.isArray(value) ? [...value] : [value])
+              }
+            />
           </div>
           <div className="grid gap-2">
             <Label>{t("addDialog.priority")}</Label>
@@ -768,7 +924,14 @@ function AddDownloadDialog() {
             <Button variant="outline" className="flex-1 border-white/10">
               {t("addDialog.cancel")}
             </Button>
-            <Button className="flex-1 bg-cyan-300 text-slate-950 hover:bg-cyan-200">
+            <Button
+              className="flex-1 bg-cyan-300 text-slate-950 hover:bg-cyan-200"
+              disabled={!source.trim()}
+              onClick={() => {
+                onAdd(source.trim(), savePath.trim(), connections[0] ?? 16)
+                setSource("")
+              }}
+            >
               {t("addDialog.queueTask")}
             </Button>
           </div>
@@ -834,7 +997,15 @@ function TaskDetails({ task }: { task: DownloadTask }) {
   )
 }
 
-function QuickControls() {
+function QuickControls({
+  globalStat,
+  onPauseAll,
+  onResumeAll,
+}: {
+  globalStat: DownloadGlobalStat | null
+  onPauseAll: () => void
+  onResumeAll: () => void
+}) {
   const { t } = useI18n()
 
   return (
@@ -849,23 +1020,23 @@ function QuickControls() {
         <div className="grid gap-2">
           <div className="flex items-center justify-between text-sm text-slate-400">
             <span>{t("quickControls.queueLimit")}</span>
-            <span>5 {t("quickControls.active")}</span>
+            <span>{globalStat?.numActive ?? 0} {t("quickControls.active")}</span>
           </div>
           <Slider defaultValue={[5]} max={10} step={1} />
         </div>
         <div className="grid gap-2">
           <div className="flex items-center justify-between text-sm text-slate-400">
             <span>{t("quickControls.downloadCap")}</span>
-            <span>51 MB/s</span>
+            <span>{formatSpeed(globalStat?.downloadSpeed ?? 0)}</span>
           </div>
           <Slider defaultValue={[51]} max={100} step={1} />
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" className="flex-1">
+          <Button variant="secondary" className="flex-1" onClick={onPauseAll}>
             <Pause />
             {t("quickControls.pauseAll")}
           </Button>
-          <Button variant="outline" className="flex-1 border-white/10">
+          <Button variant="outline" className="flex-1 border-white/10" onClick={onResumeAll}>
             <RotateCcw />
             {t("quickControls.resumeAll")}
           </Button>
@@ -1155,6 +1326,106 @@ function IconAction({
       {label}
     </Button>
   )
+}
+
+function toDownloadTask(task: Aria2DownloadTask): DownloadTask {
+  const primaryFile = task.files[0]
+  const source = primaryFile?.uris[0]?.uri ?? task.infoHash ?? task.gid
+  const totalLength = task.totalLength || primaryFile?.length || 0
+  const completedLength = task.completedLength || primaryFile?.completedLength || 0
+  const protocol = getProtocol(task, source)
+  const name = getTaskName(task, primaryFile?.path)
+
+  return {
+    id: task.gid,
+    name,
+    source,
+    protocol,
+    status: getTaskStatus(task),
+    progress: totalLength > 0 ? Math.round((completedLength / totalLength) * 100) : 0,
+    size: `${formatBytes(completedLength)} / ${formatBytes(totalLength)}`,
+    speed:
+      task.status === "active"
+        ? formatSpeed(task.downloadSpeed || task.uploadSpeed)
+        : getTaskStatus(task),
+    eta: getEta(totalLength, completedLength, task.downloadSpeed),
+    peers: task.infoHash
+      ? `${task.numSeeders} seeders`
+      : `${task.connections} conns`,
+    connections: task.connections,
+    downloaded: formatBytes(completedLength),
+    uploaded: formatBytes(task.uploadLength),
+    ratio:
+      completedLength > 0 ? (task.uploadLength / completedLength).toFixed(2) : "0.00",
+    savePath: task.dir,
+    accent: getTaskAccent(protocol),
+  }
+}
+
+function getTaskStatus(task: Aria2DownloadTask): TaskStatus {
+  if (task.status === "active" && task.infoHash && task.seeder) return "seeding"
+  if (task.status === "active") return "downloading"
+  if (task.status === "waiting") return "queued"
+  if (task.status === "paused") return "paused"
+  if (task.status === "complete") return task.infoHash ? "seeding" : "completed"
+  if (task.status === "error") return "error"
+  return "removed"
+}
+
+function getProtocol(task: Aria2DownloadTask, source: string): TaskProtocol {
+  if (task.bittorrent) return "bt"
+  if (source.startsWith("magnet:")) return "magnet"
+  if (source.endsWith(".metalink") || source.endsWith(".meta4")) return "metalink"
+  if (source.startsWith("ftp:")) return "ftp"
+  return "http"
+}
+
+function getTaskName(task: Aria2DownloadTask, filePath: string | undefined) {
+  if (task.bittorrent?.info?.name) return task.bittorrent.info.name
+  if (!filePath) return task.gid
+
+  const parts = filePath.split(/[\\/]/).filter(Boolean)
+  return parts.at(-1) ?? task.gid
+}
+
+function getTaskAccent(protocol: TaskProtocol) {
+  if (protocol === "bt" || protocol === "magnet") return "from-violet-300 to-fuchsia-500"
+  if (protocol === "ftp") return "from-sky-300 to-indigo-500"
+  if (protocol === "metalink") return "from-amber-300 to-orange-500"
+  return "from-cyan-300 to-blue-500"
+}
+
+function getEta(totalLength: number, completedLength: number, speed: number) {
+  if (speed <= 0 || completedLength >= totalLength) return "--"
+
+  const seconds = Math.ceil((totalLength - completedLength) / speed)
+  const minutes = Math.floor(seconds / 60)
+  const remainingSeconds = seconds % 60
+  return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`
+}
+
+function formatTraffic(stat: DownloadGlobalStat | null) {
+  if (!stat) return "Down 0 B/s · Up 0 B/s · 0 waiting · 0 active"
+
+  return `Down ${formatSpeed(stat.downloadSpeed)} · Up ${formatSpeed(stat.uploadSpeed)} · ${stat.numWaiting} waiting · ${stat.numActive} active`
+}
+
+function formatSpeed(bytesPerSecond: number) {
+  return `${formatBytes(bytesPerSecond)}/s`
+}
+
+function formatBytes(bytes: number) {
+  const units = ["B", "KB", "MB", "GB", "TB"]
+  let value = bytes
+  let unitIndex = 0
+
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024
+    unitIndex += 1
+  }
+
+  const precision = value >= 10 || unitIndex === 0 ? 0 : 1
+  return `${value.toFixed(precision)} ${units[unitIndex]}`
 }
 
 export default App
