@@ -100,6 +100,11 @@ const messages = {
   settings: {
     title: "Einstellungen",
     description: "Kern-aria2- und UI-Einstellungen",
+    theme: "Design",
+    themePlaceholder: "Design wählen",
+    dark: "Dunkel",
+    light: "Hell",
+    system: "System",
     defaultFolder: "Standardordner",
     rpcSecret: "RPC-Geheimnis",
     language: "Sprache",

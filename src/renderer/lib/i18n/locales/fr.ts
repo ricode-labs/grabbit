@@ -99,6 +99,11 @@ const messages = {
   settings: {
     title: "Réglages",
     description: "Préférences aria2 et interface principales",
+    theme: "Thème",
+    themePlaceholder: "Choisir un thème",
+    dark: "Sombre",
+    light: "Clair",
+    system: "Système",
     defaultFolder: "Dossier par défaut",
     rpcSecret: "Secret RPC",
     language: "Langue",

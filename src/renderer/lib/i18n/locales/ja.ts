@@ -99,6 +99,11 @@ const messages = {
   settings: {
     title: "設定",
     description: "aria2 と UI の基本設定",
+    theme: "テーマ",
+    themePlaceholder: "テーマを選択",
+    dark: "ダーク",
+    light: "ライト",
+    system: "システム",
     defaultFolder: "既定フォルダー",
     rpcSecret: "RPC シークレット",
     language: "言語",

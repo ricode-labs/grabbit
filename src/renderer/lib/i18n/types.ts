@@ -109,6 +109,11 @@ export type Messages = {
   settings: {
     title: string
     description: string
+    theme: string
+    themePlaceholder: string
+    dark: string
+    light: string
+    system: string
     defaultFolder: string
     rpcSecret: string
     language: string

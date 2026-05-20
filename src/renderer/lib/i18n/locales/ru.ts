@@ -98,6 +98,11 @@ const messages = {
   settings: {
     title: "Настройки",
     description: "Основные параметры aria2 и интерфейса",
+    theme: "Тема",
+    themePlaceholder: "Выберите тему",
+    dark: "Тёмная",
+    light: "Светлая",
+    system: "Система",
     defaultFolder: "Папка по умолчанию",
     rpcSecret: "Секрет RPC",
     language: "Язык",

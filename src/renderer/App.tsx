@@ -22,6 +22,7 @@ import {
   Search,
   Settings2,
   Sparkles,
+  SunMoon,
   Trash2,
   Upload,
 } from "lucide-react"
@@ -83,6 +84,7 @@ import {
   type DownloadTask,
   type TaskStatus,
 } from "@/lib/downloads"
+import { useTheme } from "@/components/theme-provider"
 import type {
   DownloadGlobalStat,
   DownloadServiceStatus,
@@ -383,6 +385,16 @@ function Sidebar() {
 
 function Topbar() {
   const { t } = useI18n()
+  const { theme, setTheme } = useTheme()
+
+  const nextTheme =
+    theme === "dark"
+      ? "light"
+      : theme === "light"
+        ? "dark"
+        : document.documentElement.classList.contains("dark")
+          ? "light"
+          : "dark"
 
   return (
     <header className="flex min-h-16 items-center gap-3 border-b border-white/10 px-3 sm:px-5">
@@ -401,6 +413,23 @@ function Topbar() {
         <Plus />
         {t("topbar.newTask")}
       </Button>
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={t("settings.theme")}
+              onClick={() => setTheme(nextTheme)}
+            />
+          }
+        >
+          <SunMoon />
+        </TooltipTrigger>
+        <TooltipContent>
+          {t("settings.theme")} · {theme}
+        </TooltipContent>
+      </Tooltip>
     </header>
   )
 }
@@ -1029,6 +1058,7 @@ function SettingsPanel({
   globalOptions: Record<string, string>
 }) {
   const { locale, setLocale, t, labels } = useI18n()
+  const { theme, setTheme } = useTheme()
   const engineProfiles = [
     [
       "Concurrent tasks",
@@ -1087,6 +1117,22 @@ function SettingsPanel({
         </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 p-4">
+        <div className="grid gap-2">
+          <Label>{t("settings.theme")}</Label>
+          <Select
+            value={theme}
+            onValueChange={(value) => setTheme(value as typeof theme)}
+          >
+            <SelectTrigger className="w-full border-white/10 bg-white/[0.04]">
+              <SelectValue placeholder={t("settings.themePlaceholder")} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="dark">{t("settings.dark")}</SelectItem>
+              <SelectItem value="light">{t("settings.light")}</SelectItem>
+              <SelectItem value="system">{t("settings.system")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
         <div className="grid gap-2">
           <Label>{t("settings.language")}</Label>
           <Select

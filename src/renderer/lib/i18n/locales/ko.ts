@@ -98,6 +98,11 @@ const messages = {
   settings: {
     title: "설정",
     description: "aria2 핵심 및 UI 환경 설정",
+    theme: "테마",
+    themePlaceholder: "테마 선택",
+    dark: "어두움",
+    light: "밝음",
+    system: "시스템",
     defaultFolder: "기본 폴더",
     rpcSecret: "RPC 비밀키",
     language: "언어",

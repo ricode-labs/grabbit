@@ -98,6 +98,11 @@ const messages = {
   settings: {
     title: "设置",
     description: "aria2 核心与界面偏好",
+    theme: "主题",
+    themePlaceholder: "选择主题",
+    dark: "深色",
+    light: "浅色",
+    system: "跟随系统",
     defaultFolder: "默认文件夹",
     rpcSecret: "RPC 密钥",
     language: "语言",
