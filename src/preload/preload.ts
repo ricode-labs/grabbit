@@ -83,6 +83,7 @@ const windowApi: WindowApi = {
   toggleMaximize: () =>
     ipcRenderer.invoke(WINDOW_API_CHANNELS.toggleMaximize) as Promise<boolean>,
   close: () => ipcRenderer.invoke(WINDOW_API_CHANNELS.close),
+  platform: process.platform as WindowApi["platform"],
 }
 
 contextBridge.exposeInMainWorld("grabbit", {

@@ -390,6 +390,8 @@ function Sidebar() {
 function WindowBar() {
   const { t } = useI18n()
   const [maximized, setMaximized] = useState(false)
+  const platform = window.grabbit.window.platform
+  const isMac = platform === "darwin"
   const dragStyle = { WebkitAppRegion: "drag" } as CSSProperties
   const noDragStyle = { WebkitAppRegion: "no-drag" } as CSSProperties
 
@@ -405,56 +407,97 @@ function WindowBar() {
 
   return (
     <header className="flex h-12 items-center border-b border-slate-800 bg-slate-950/95">
-      <div
-        className="flex min-w-0 flex-1 items-center gap-3 px-3"
-        style={dragStyle}
-      >
-        <div className="grid size-7 place-items-center rounded-md bg-slate-100 text-slate-950">
-          <FileDown className="size-4" />
-        </div>
-        <div className="min-w-0">
-          <div className="truncate text-sm font-medium text-slate-100">
-            Grabbit
+      {isMac ? (
+        <div
+          className="flex min-w-0 flex-1 items-center justify-center gap-3 px-3"
+          style={dragStyle}
+        >
+          <div className="min-w-0 text-center">
+            <div className="truncate text-sm font-medium text-slate-100">
+              Grabbit
+            </div>
+            <div className="truncate text-[11px] text-slate-500">
+              {t("hero.badge")}
+            </div>
           </div>
-          <div className="truncate text-[11px] text-slate-500">
-            {t("hero.badge")}
+        </div>
+      ) : (
+        <div
+          className="flex min-w-0 flex-1 items-center gap-3 px-3"
+          style={dragStyle}
+        >
+          <div className="grid size-7 place-items-center rounded-md bg-slate-100 text-slate-950">
+            <FileDown className="size-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="truncate text-sm font-medium text-slate-100">
+              Grabbit
+            </div>
+            <div className="truncate text-[11px] text-slate-500">
+              {t("hero.badge")}
+            </div>
           </div>
         </div>
-      </div>
-      <div
-        className="flex items-center border-l border-slate-800"
-        style={noDragStyle}
-      >
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className="h-12 w-12 rounded-none text-slate-400 hover:bg-slate-800 hover:text-white"
-          aria-label="Minimize"
-          onClick={() => window.grabbit.window.minimize()}
+      )}
+      {isMac ? (
+        <div className="flex items-center gap-2 px-3" style={noDragStyle}>
+          <button
+            className="size-3 rounded-full bg-red-500 ring-1 ring-red-400/40 hover:bg-red-400"
+            aria-label="Close"
+            type="button"
+            onClick={() => window.grabbit.window.close()}
+          />
+          <button
+            className="size-3 rounded-full bg-amber-400 ring-1 ring-amber-300/40 hover:bg-amber-300"
+            aria-label="Minimize"
+            type="button"
+            onClick={() => window.grabbit.window.minimize()}
+          />
+          <button
+            className="size-3 rounded-full bg-emerald-400 ring-1 ring-emerald-300/40 hover:bg-emerald-300"
+            aria-label={maximized ? "Restore" : "Maximize"}
+            type="button"
+            onClick={async () =>
+              setMaximized(await window.grabbit.window.toggleMaximize())
+            }
+          />
+        </div>
+      ) : (
+        <div
+          className="flex items-center border-l border-slate-800"
+          style={noDragStyle}
         >
-          <Minus className="size-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className="h-12 w-12 rounded-none text-slate-400 hover:bg-slate-800 hover:text-white"
-          aria-label={maximized ? "Restore" : "Maximize"}
-          onClick={async () =>
-            setMaximized(await window.grabbit.window.toggleMaximize())
-          }
-        >
-          <Square className="size-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className="h-12 w-12 rounded-none text-slate-400 hover:bg-red-500/15 hover:text-red-200"
-          aria-label="Close"
-          onClick={() => window.grabbit.window.close()}
-        >
-          <X className="size-4" />
-        </Button>
-      </div>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="h-12 w-12 rounded-none text-slate-400 hover:bg-slate-800 hover:text-white"
+            aria-label="Minimize"
+            onClick={() => window.grabbit.window.minimize()}
+          >
+            <Minus className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="h-12 w-12 rounded-none text-slate-400 hover:bg-slate-800 hover:text-white"
+            aria-label={maximized ? "Restore" : "Maximize"}
+            onClick={async () =>
+              setMaximized(await window.grabbit.window.toggleMaximize())
+            }
+          >
+            <Square className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="h-12 w-12 rounded-none text-slate-400 hover:bg-red-500/15 hover:text-red-200"
+            aria-label="Close"
+            onClick={() => window.grabbit.window.close()}
+          >
+            <X className="size-4" />
+          </Button>
+        </div>
+      )}
     </header>
   )
 }
