@@ -30,6 +30,7 @@ import {
   type DownloadVersion,
   type RawRpcInput,
 } from "../shared/download-api"
+import { ARIA2_ERROR_CODES } from "../shared/aria2-error-codes"
 
 type Aria2Uri = {
   uri?: string
@@ -192,23 +193,30 @@ class DownloadService {
       throw new Error("At least one URI is required")
     }
 
+    const options = sanitizeTaskOptions(input.options)
+
     return this.call<string>(
       "aria2.addUri",
       withOptionalPosition(
-        [input.uris, normalizeOptions(input.options)],
+        [input.uris, normalizeOptions(options)],
         input.position
       )
     )
   }
 
   async addTorrent(input: AddTorrentInput) {
+    const options = sanitizeTaskOptions({
+      "force-save": true,
+      ...input.options,
+    })
+
     return this.call<string>(
       "aria2.addTorrent",
       withOptionalPosition(
         [
           input.torrentBase64,
           input.uris ?? [],
-          normalizeOptions(input.options),
+          normalizeOptions(options),
         ],
         input.position
       )
@@ -216,10 +224,15 @@ class DownloadService {
   }
 
   async addMetalink(input: AddMetalinkInput) {
+    const options = sanitizeTaskOptions({
+      "force-save": true,
+      ...input.options,
+    })
+
     return this.call<string[]>(
       "aria2.addMetalink",
       withOptionalPosition(
-        [input.metalinkBase64, normalizeOptions(input.options)],
+        [input.metalinkBase64, normalizeOptions(options)],
         input.position
       )
     )
@@ -542,6 +555,59 @@ function normalizeOptions(options: Aria2Options | undefined) {
   )
 }
 
+function sanitizeTaskOptions(options: Aria2Options | undefined) {
+  if (!options) {
+    return options
+  }
+
+  const nextOptions = { ...options }
+  const out = nextOptions.out
+
+  if (typeof out === "string") {
+    const sanitizedOut = sanitizeOutputFileName(out)
+
+    if (sanitizedOut) {
+      nextOptions.out = sanitizedOut
+    } else {
+      delete nextOptions.out
+    }
+  }
+
+  return nextOptions
+}
+
+function sanitizeOutputFileName(value: string) {
+  const basename = value.split(/[\\/]/).at(-1)?.trim()
+
+  if (!basename || basename === "." || basename === ".." || basename.includes("\0")) {
+    return null
+  }
+
+  const sanitized = basename
+    .split("")
+    .map((character) =>
+      isInvalidFileNameCharacter(character) ? "_" : character
+    )
+    .join("")
+    .replace(/[. ]+$/g, "")
+    .slice(0, 255)
+
+  if (!sanitized || sanitized === "." || sanitized === "..") {
+    return null
+  }
+
+  if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\..*)?$/i.test(sanitized)) {
+    return `_${sanitized}`
+  }
+
+  return sanitized
+}
+
+function isInvalidFileNameCharacter(character: string) {
+  const code = character.charCodeAt(0)
+  return code < 32 || code === 127 || /[<>:"/\\|?*]/.test(character)
+}
+
 function normalizeTask(task: Aria2Task): DownloadTask {
   return {
     gid: task.gid,
@@ -559,7 +625,7 @@ function normalizeTask(task: Aria2Task): DownloadTask {
     numPieces: toNumber(task.numPieces),
     connections: toNumber(task.connections),
     errorCode: task.errorCode,
-    errorMessage: task.errorMessage,
+    errorMessage: getAria2ErrorMessage(task.errorCode, task.errorMessage),
     followedBy: task.followedBy ?? [],
     following: task.following ?? null,
     belongsTo: task.belongsTo ?? null,
@@ -656,6 +722,22 @@ function toNumber(value: string | undefined) {
 
 function toBoolean(value: string | undefined) {
   return value === "true"
+}
+
+function getAria2ErrorMessage(
+  errorCode: string | undefined,
+  errorMessage: string | undefined
+) {
+  if (!errorCode) {
+    return errorMessage
+  }
+
+  const mappedMessage = ARIA2_ERROR_CODES[errorCode]
+  if (!mappedMessage) {
+    return errorMessage
+  }
+
+  return errorMessage ? `${mappedMessage}: ${errorMessage}` : mappedMessage
 }
 
 export function registerDownloadApi() {
