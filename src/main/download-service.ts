@@ -5,6 +5,12 @@ import { mkdir } from "node:fs/promises"
 import path from "node:path"
 
 import {
+  loadUserAria2Options,
+  mergeAria2Options,
+  saveUserAria2Options,
+  toAria2Args,
+} from "./aria2-config"
+import {
   DOWNLOAD_API_CHANNELS,
   type AddMetalinkInput,
   type AddTorrentInput,
@@ -156,6 +162,7 @@ class DownloadService {
   private process: ChildProcessWithoutNullStreams | null = null
   private secret = randomBytes(24).toString("hex")
   private startPromise: Promise<void> | null = null
+  private userOptions: Aria2Options = {}
 
   async startService() {
     await this.ensureStarted()
@@ -347,9 +354,17 @@ class DownloadService {
   }
 
   async changeGlobalOption(options: Aria2Options) {
-    return this.call<"OK">("aria2.changeGlobalOption", [
+    const result = await this.call<"OK">("aria2.changeGlobalOption", [
       normalizeOptions(options),
     ])
+
+    this.userOptions = {
+      ...this.userOptions,
+      ...options,
+    }
+    await saveUserAria2Options(app.getPath("userData"), this.userOptions)
+
+    return result
   }
 
   async getGlobalStat() {
@@ -448,18 +463,17 @@ class DownloadService {
     const sessionDir = path.join(app.getPath("userData"), "aria2")
     const sessionFile = path.join(sessionDir, "session.txt")
     await mkdir(sessionDir, { recursive: true })
+    this.userOptions = await loadUserAria2Options(app.getPath("userData"))
+    const mergedOptions = mergeAria2Options(this.userOptions)
 
     this.process = spawn(getAria2Path(), [
-      `--conf-path=${getAria2ConfigPath()}`,
-      "--enable-rpc=true",
-      `--rpc-listen-port=${RPC_PORT}`,
-      `--rpc-secret=${this.secret}`,
-      "--rpc-listen-all=false",
-      "--disable-ipv6=true",
-      "--continue=true",
+      ...toAria2Args(mergedOptions),
       `--input-file=${sessionFile}`,
       `--save-session=${sessionFile}`,
-      "--save-session-interval=30",
+      "--enable-rpc=true",
+      "--rpc-listen-all=false",
+      `--rpc-listen-port=${RPC_PORT}`,
+      `--rpc-secret=${this.secret}`,
     ])
 
     this.process.once("exit", () => {
@@ -483,14 +497,6 @@ function getAria2Path() {
   }
 
   return path.join(process.cwd(), "resources", "aria2", "linux-x64", "aria2c")
-}
-
-function getAria2ConfigPath() {
-  if (app.isPackaged) {
-    return path.join(process.resourcesPath, "aria2", "aria2.conf")
-  }
-
-  return path.join(process.cwd(), "resources", "aria2", "aria2.conf")
 }
 
 async function waitForRpcReady(check: () => Promise<void>) {
