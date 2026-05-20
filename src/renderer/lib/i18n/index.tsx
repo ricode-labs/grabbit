@@ -1,5 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react"
 
 import { supportedLocales, type Locale, type Messages } from "./types"
 import en from "./locales/en"
@@ -52,7 +58,8 @@ function createTranslator(locale: Locale): Translator {
   const currentMessages = messages[locale]
   const fallbackMessages = messages.en
 
-  return (key) => getMessage(currentMessages, key) ?? getMessage(fallbackMessages, key) ?? key
+  return (key) =>
+    getMessage(currentMessages, key) ?? getMessage(fallbackMessages, key) ?? key
 }
 
 type I18nValue = {

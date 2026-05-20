@@ -214,11 +214,7 @@ class DownloadService {
     return this.call<string>(
       "aria2.addTorrent",
       withOptionalPosition(
-        [
-          input.torrentBase64,
-          input.uris ?? [],
-          normalizeOptions(options),
-        ],
+        [input.torrentBase64, input.uris ?? [], normalizeOptions(options)],
         input.position
       )
     )

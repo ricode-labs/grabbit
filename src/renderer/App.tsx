@@ -78,9 +78,8 @@ import {
 } from "@/components/ui/tooltip"
 import { useI18n } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
-import { btOptions, engineProfiles, history, integrationOptions } from "@/lib/dashboard-data"
 import {
-  fallbackTasks,
+  formatBytes,
   formatSpeed,
   formatTraffic,
   toDownloadTask,
@@ -100,33 +99,6 @@ type StatItem = {
   icon: ComponentType<{ className?: string }>
 }
 
-const featureGroups = [
-  {
-    title: "Download protocols",
-    description: "HTTP, FTP, BitTorrent, magnet links, and metalink sources.",
-    icon: Globe2,
-    items: ["HTTP/HTTPS", "FTP/SFTP", "BitTorrent", "Magnet URI", "Metalink"],
-  },
-  {
-    title: "Task management",
-    description: "Start, pause, resume, retry, remove, filter, and inspect tasks.",
-    icon: Download,
-    items: ["Active queue", "Completed history", "Per-task detail", "Batch actions"],
-  },
-  {
-    title: "BT engine",
-    description: "Tracker lists, DHT, PEX, local peer discovery, and seeding ratio.",
-    icon: Magnet,
-    items: ["Tracker sync", "DHT", "PEX", "LPD", "Seed ratio"],
-  },
-  {
-    title: "System integration",
-    description: "Browser capture, notifications, tray behavior, and RPC health.",
-    icon: RadioTower,
-    items: ["Browser extension", "System tray", "Notifications", "RPC secret"],
-  },
-]
-
 const statusClasses: Record<TaskStatus, string> = {
   downloading: "bg-cyan-400/10 text-cyan-200 ring-cyan-300/20",
   queued: "bg-slate-400/10 text-slate-300 ring-slate-300/20",
@@ -139,26 +111,29 @@ const statusClasses: Record<TaskStatus, string> = {
 
 function App() {
   const { t } = useI18n()
-  const [tasks, setTasks] = useState<DownloadTask[]>(fallbackTasks)
+  const [tasks, setTasks] = useState<DownloadTask[]>([])
   const [globalStat, setGlobalStat] = useState<DownloadGlobalStat | null>(null)
   const [serviceStatus, setServiceStatus] = useState<DownloadServiceStatus>({
     running: false,
     rpcPort: null,
   })
   const [version, setVersion] = useState<DownloadVersion | null>(null)
+  const [globalOptions, setGlobalOptions] = useState<Record<string, string>>({})
   const [rpcError, setRpcError] = useState<string | null>(null)
-  const activeTask = tasks[0] ?? fallbackTasks[0]
+  const activeTask = tasks[0] ?? null
 
   async function refreshDownloads() {
-    const [nextTasks, nextStat, nextStatus] = await Promise.all([
+    const [nextTasks, nextStat, nextStatus, nextOptions] = await Promise.all([
       window.grabbit.downloads.list(),
       window.grabbit.downloads.getGlobalStat(),
       window.grabbit.downloads.getServiceStatus(),
+      window.grabbit.downloads.getGlobalOption(),
     ])
 
     setTasks(nextTasks.map(toDownloadTask))
     setGlobalStat(nextStat)
     setServiceStatus(nextStatus)
+    setGlobalOptions(nextOptions)
     setRpcError(null)
   }
 
@@ -222,10 +197,14 @@ function App() {
             >
               <div className="border-b border-white/10 px-3 py-3 sm:px-5">
                 <TabsList className="bg-white/5">
-                  <TabsTrigger value="overview">{t("tabs.overview")}</TabsTrigger>
+                  <TabsTrigger value="overview">
+                    {t("tabs.overview")}
+                  </TabsTrigger>
                   <TabsTrigger value="queue">{t("tabs.queue")}</TabsTrigger>
                   <TabsTrigger value="history">{t("tabs.history")}</TabsTrigger>
-                  <TabsTrigger value="settings">{t("tabs.settings")}</TabsTrigger>
+                  <TabsTrigger value="settings">
+                    {t("tabs.settings")}
+                  </TabsTrigger>
                 </TabsList>
               </div>
 
@@ -236,15 +215,26 @@ function App() {
                       value="overview"
                       className="mt-0 grid gap-4 outline-none"
                     >
-                      <Hero />
-                      <FeatureMatrix />
-                      <StatsGrid globalStat={globalStat} />
+                      <Hero tasks={tasks} globalStat={globalStat} />
+                      <StatsGrid globalStat={globalStat} tasks={tasks} />
                       {rpcError ? <RpcError message={rpcError} /> : null}
                       <TaskPanel
                         tasks={tasks}
-                        onPauseAll={() => runDownloadAction(() => window.grabbit.downloads.pauseAll())}
-                        onResume={(gid) => runDownloadAction(() => window.grabbit.downloads.resume(gid))}
-                        onRemove={(gid) => runDownloadAction(() => window.grabbit.downloads.forceRemove(gid))}
+                        onPauseAll={() =>
+                          runDownloadAction(() =>
+                            window.grabbit.downloads.pauseAll()
+                          )
+                        }
+                        onResume={(gid) =>
+                          runDownloadAction(() =>
+                            window.grabbit.downloads.resume(gid)
+                          )
+                        }
+                        onRemove={(gid) =>
+                          runDownloadAction(() =>
+                            window.grabbit.downloads.forceRemove(gid)
+                          )
+                        }
                       />
                     </TabsContent>
                     <TabsContent
@@ -253,23 +243,38 @@ function App() {
                     >
                       <TaskPanel
                         tasks={tasks}
-                        onPauseAll={() => runDownloadAction(() => window.grabbit.downloads.pauseAll())}
-                        onResume={(gid) => runDownloadAction(() => window.grabbit.downloads.resume(gid))}
-                        onRemove={(gid) => runDownloadAction(() => window.grabbit.downloads.forceRemove(gid))}
+                        onPauseAll={() =>
+                          runDownloadAction(() =>
+                            window.grabbit.downloads.pauseAll()
+                          )
+                        }
+                        onResume={(gid) =>
+                          runDownloadAction(() =>
+                            window.grabbit.downloads.resume(gid)
+                          )
+                        }
+                        onRemove={(gid) =>
+                          runDownloadAction(() =>
+                            window.grabbit.downloads.forceRemove(gid)
+                          )
+                        }
                       />
-                      <QueueSummary />
+                      <QueueSummary
+                        globalStat={globalStat}
+                        globalOptions={globalOptions}
+                      />
                     </TabsContent>
                     <TabsContent
                       value="history"
                       className="mt-0 grid gap-4 outline-none"
                     >
-                      <HistoryPanel />
+                      <HistoryPanel tasks={tasks} />
                     </TabsContent>
                     <TabsContent
                       value="settings"
                       className="mt-0 grid gap-4 outline-none"
                     >
-                      <SettingsPanel />
+                      <SettingsPanel globalOptions={globalOptions} />
                     </TabsContent>
                   </div>
 
@@ -291,10 +296,22 @@ function App() {
                     <TaskDetails task={activeTask} />
                     <QuickControls
                       globalStat={globalStat}
-                      onPauseAll={() => runDownloadAction(() => window.grabbit.downloads.pauseAll())}
-                      onResumeAll={() => runDownloadAction(() => window.grabbit.downloads.resumeAll())}
+                      onPauseAll={() =>
+                        runDownloadAction(() =>
+                          window.grabbit.downloads.pauseAll()
+                        )
+                      }
+                      onResumeAll={() =>
+                        runDownloadAction(() =>
+                          window.grabbit.downloads.resumeAll()
+                        )
+                      }
                     />
-                    <LiveLog />
+                    <LiveLog
+                      serviceStatus={serviceStatus}
+                      globalStat={globalStat}
+                      tasks={tasks}
+                    />
                   </aside>
                 </div>
               </ScrollArea>
@@ -389,7 +406,13 @@ function Topbar() {
       </Button>
       <Tooltip>
         <TooltipTrigger
-          render={<Button variant="ghost" size="icon" aria-label={t("topbar.filters")} />}
+          render={
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={t("topbar.filters")}
+            />
+          }
         >
           <ListFilter />
         </TooltipTrigger>
@@ -398,7 +421,11 @@ function Topbar() {
       <Tooltip>
         <TooltipTrigger
           render={
-            <Button variant="ghost" size="icon" aria-label={t("topbar.notifications")} />
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={t("topbar.notifications")}
+            />
           }
         >
           <Bell />
@@ -409,8 +436,27 @@ function Topbar() {
   )
 }
 
-function Hero() {
+function Hero({
+  tasks,
+  globalStat,
+}: {
+  tasks: DownloadTask[]
+  globalStat: DownloadGlobalStat | null
+}) {
   const { t } = useI18n()
+  const completedCount = tasks.filter(
+    (task) => task.status === "completed"
+  ).length
+  const downloadedBytes = tasks.reduce((total, task) => {
+    const value = Number.parseFloat(task.downloaded)
+    if (!Number.isFinite(value)) return total
+
+    if (task.downloaded.endsWith("TB")) return total + value * 1024 ** 4
+    if (task.downloaded.endsWith("GB")) return total + value * 1024 ** 3
+    if (task.downloaded.endsWith("MB")) return total + value * 1024 ** 2
+    if (task.downloaded.endsWith("KB")) return total + value * 1024
+    return total + value
+  }, 0)
 
   return (
     <Card className="overflow-hidden border-white/10 bg-white/[0.04] text-slate-50 shadow-xl shadow-black/20">
@@ -431,9 +477,18 @@ function Hero() {
           </p>
         </div>
         <div className="grid grid-cols-3 gap-2 rounded-3xl border border-white/10 bg-slate-950/60 p-2 text-center">
-          <MiniMetric value="5" label={t("hero.metrics.active")} />
-          <MiniMetric value="128" label={t("hero.metrics.done")} />
-          <MiniMetric value="942 GB" label={t("hero.metrics.saved")} />
+          <MiniMetric
+            value={`${globalStat?.numActive ?? 0}`}
+            label={t("hero.metrics.active")}
+          />
+          <MiniMetric
+            value={`${completedCount}`}
+            label={t("hero.metrics.done")}
+          />
+          <MiniMetric
+            value={formatBytes(downloadedBytes)}
+            label={t("hero.metrics.saved")}
+          />
         </div>
       </CardContent>
     </Card>
@@ -451,25 +506,35 @@ function MiniMetric({ value, label }: { value: string; label: string }) {
   )
 }
 
-function StatsGrid({ globalStat }: { globalStat: DownloadGlobalStat | null }) {
+function StatsGrid({
+  globalStat,
+  tasks,
+}: {
+  globalStat: DownloadGlobalStat | null
+  tasks: DownloadTask[]
+}) {
   const { t } = useI18n()
+  const totalConnections = tasks.reduce(
+    (total, task) => total + task.connections,
+    0
+  )
   const stats: StatItem[] = [
     {
       label: t("stats.download"),
       value: formatSpeed(globalStat?.downloadSpeed ?? 0),
-      detail: t("stats.downloadDetail"),
+      detail: `${globalStat?.numActive ?? 0} active`,
       icon: Download,
     },
     {
       label: t("stats.upload"),
       value: formatSpeed(globalStat?.uploadSpeed ?? 0),
-      detail: `${globalStat?.numActive ?? 0} active`,
+      detail: `${totalConnections} connections`,
       icon: Upload,
     },
     {
       label: t("stats.disk"),
-      value: "128 MB",
-      detail: t("stats.diskDetail"),
+      value: `${tasks.length}`,
+      detail: "total tasks",
       icon: HardDrive,
     },
     {
@@ -517,35 +582,6 @@ function RpcError({ message }: { message: string }) {
   )
 }
 
-function FeatureMatrix() {
-  return (
-    <section className="grid gap-3 xl:grid-cols-2">
-      {featureGroups.map((group) => (
-        <Card key={group.title} className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
-          <CardContent className="p-4">
-            <div className="flex items-start gap-3">
-              <div className="grid size-10 place-items-center rounded-2xl bg-white/[0.06] text-cyan-200">
-                <group.icon className="size-5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-semibold text-white">{group.title}</div>
-                <div className="mt-1 text-sm text-slate-500">{group.description}</div>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {group.items.map((item) => (
-                    <Badge key={item} variant="outline" className="border-white/10 bg-white/[0.03] text-slate-300">
-                      {item}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </section>
-  )
-}
-
 function TaskPanel({
   tasks,
   onPauseAll,
@@ -572,7 +608,9 @@ function TaskPanel({
     <Card className="overflow-hidden border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
       <CardHeader className="flex flex-col gap-3 border-b border-white/10 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <CardTitle className="text-lg text-white">{t("taskPanel.title")}</CardTitle>
+          <CardTitle className="text-lg text-white">
+            {t("taskPanel.title")}
+          </CardTitle>
           <CardDescription className="text-slate-500">
             {t("taskPanel.description")}
           </CardDescription>
@@ -592,24 +630,34 @@ function TaskPanel({
       <Table>
         <TableHeader className="hidden lg:table-header-group">
           <TableRow className="border-white/10 hover:bg-transparent">
-                <TableHead className="px-4 text-xs font-semibold tracking-wide text-slate-500 uppercase">
-                  {t("taskPanel.columns.name")}
-                </TableHead>
-                <TableHead className="w-32 text-xs font-semibold tracking-wide text-slate-500 uppercase">
-                  {t("taskPanel.columns.status")}
-                </TableHead>
-                <TableHead className="w-32 text-xs font-semibold tracking-wide text-slate-500 uppercase">
-                  {t("taskPanel.columns.speed")}
-                </TableHead>
-                <TableHead className="w-28 text-xs font-semibold tracking-wide text-slate-500 uppercase">
-                  {t("taskPanel.columns.eta")}
-                </TableHead>
-                <TableHead className="w-24 text-xs font-semibold tracking-wide text-slate-500 uppercase">
-                  {t("taskPanel.columns.action")}
-                </TableHead>
+            <TableHead className="px-4 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+              {t("taskPanel.columns.name")}
+            </TableHead>
+            <TableHead className="w-32 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+              {t("taskPanel.columns.status")}
+            </TableHead>
+            <TableHead className="w-32 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+              {t("taskPanel.columns.speed")}
+            </TableHead>
+            <TableHead className="w-28 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+              {t("taskPanel.columns.eta")}
+            </TableHead>
+            <TableHead className="w-24 text-xs font-semibold tracking-wide text-slate-500 uppercase">
+              {t("taskPanel.columns.action")}
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
+          {tasks.length === 0 ? (
+            <TableRow className="border-white/10 hover:bg-transparent">
+              <TableCell
+                className="p-6 text-center text-sm text-slate-500 lg:table-cell"
+                colSpan={5}
+              >
+                No downloads yet. Add a URL or magnet link to start.
+              </TableCell>
+            </TableRow>
+          ) : null}
           {tasks.map((task) => (
             <TableRow
               key={task.id}
@@ -768,7 +816,10 @@ function AddDownloadDialog({
           </div>
           <div className="grid gap-2">
             <Label>{t("addDialog.comment")}</Label>
-            <Textarea className="min-h-24 border-white/10 bg-white/[0.04]" placeholder={t("addDialog.commentPlaceholder")} />
+            <Textarea
+              className="min-h-24 border-white/10 bg-white/[0.04]"
+              placeholder={t("addDialog.commentPlaceholder")}
+            />
           </div>
           <div className="grid gap-2">
             <div className="flex items-center justify-between text-sm text-slate-400">
@@ -818,50 +869,70 @@ function AddDownloadDialog({
   )
 }
 
-function TaskDetails({ task }: { task: DownloadTask }) {
+function TaskDetails({ task }: { task: DownloadTask | null }) {
   const { t } = useI18n()
 
   return (
     <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
       <CardHeader className="flex flex-row items-center justify-between gap-3 p-4 pb-0">
         <div>
-          <CardTitle className="text-lg text-white">{t("taskDetails.title")}</CardTitle>
+          <CardTitle className="text-lg text-white">
+            {t("taskDetails.title")}
+          </CardTitle>
           <CardDescription className="text-xs text-slate-500">
-            GID {task.id}b70d01ef
+            {task ? `GID ${task.id}` : "No selected task"}
           </CardDescription>
         </div>
-        <Button variant="ghost" size="icon-sm" aria-label={t("taskDetails.actionLabel")}>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label={t("taskDetails.actionLabel")}
+        >
           <ChevronRight />
         </Button>
       </CardHeader>
       <CardContent className="grid gap-4 p-4">
         <Card className="rounded-2xl border-white/10 bg-white/[0.03] text-slate-50 shadow-none">
           <CardContent className="p-3">
-            <div className="truncate text-sm font-semibold text-white">
-              {task.name}
-            </div>
-            <div className="mt-1 truncate text-xs text-slate-500">
-              {task.savePath}
-            </div>
-            <div className="mt-4">
-              <div className="mb-2 flex justify-between text-xs text-slate-400">
-                <span>{task.size}</span>
-                <span>{task.peers}</span>
-              </div>
-              <Progress value={task.progress} className="flex-1">
-                <ProgressTrack className="h-2 bg-white/[0.07]">
-                  <ProgressIndicator
-                    className={cn("rounded-full bg-gradient-to-r", task.accent)}
+            {task ? (
+              <>
+                <div className="truncate text-sm font-semibold text-white">
+                  {task.name}
+                </div>
+                <div className="mt-1 truncate text-xs text-slate-500">
+                  {task.savePath}
+                </div>
+                <div className="mt-4">
+                  <div className="mb-2 flex justify-between text-xs text-slate-400">
+                    <span>{task.size}</span>
+                    <span>{task.peers}</span>
+                  </div>
+                  <Progress value={task.progress} className="flex-1">
+                    <ProgressTrack className="h-2 bg-white/[0.07]">
+                      <ProgressIndicator
+                        className={cn(
+                          "rounded-full bg-gradient-to-r",
+                          task.accent
+                        )}
+                      />
+                    </ProgressTrack>
+                  </Progress>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-400">
+                  <DetailStat label="Downloaded" value={task.downloaded} />
+                  <DetailStat label="Uploaded" value={task.uploaded} />
+                  <DetailStat
+                    label="Protocol"
+                    value={task.protocol.toUpperCase()}
                   />
-                </ProgressTrack>
-              </Progress>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-400">
-              <DetailStat label="Downloaded" value={task.downloaded} />
-              <DetailStat label="Uploaded" value={task.uploaded} />
-              <DetailStat label="Protocol" value={task.protocol.toUpperCase()} />
-              <DetailStat label="Ratio" value={task.ratio} />
-            </div>
+                  <DetailStat label="Ratio" value={task.ratio} />
+                </div>
+              </>
+            ) : (
+              <div className="py-6 text-center text-sm text-slate-500">
+                Real task details will appear after aria2 returns a download.
+              </div>
+            )}
           </CardContent>
         </Card>
         <div className="grid grid-cols-3 gap-2">
@@ -888,7 +959,9 @@ function QuickControls({
   return (
     <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
       <CardHeader className="p-4 pb-0">
-        <CardTitle className="text-lg text-white">{t("quickControls.title")}</CardTitle>
+        <CardTitle className="text-lg text-white">
+          {t("quickControls.title")}
+        </CardTitle>
         <CardDescription className="text-slate-500">
           {t("quickControls.description")}
         </CardDescription>
@@ -897,7 +970,9 @@ function QuickControls({
         <div className="grid gap-2">
           <div className="flex items-center justify-between text-sm text-slate-400">
             <span>{t("quickControls.queueLimit")}</span>
-            <span>{globalStat?.numActive ?? 0} {t("quickControls.active")}</span>
+            <span>
+              {globalStat?.numActive ?? 0} {t("quickControls.active")}
+            </span>
           </div>
           <Slider defaultValue={[5]} max={10} step={1} />
         </div>
@@ -913,7 +988,11 @@ function QuickControls({
             <Pause />
             {t("quickControls.pauseAll")}
           </Button>
-          <Button variant="outline" className="flex-1 border-white/10" onClick={onResumeAll}>
+          <Button
+            variant="outline"
+            className="flex-1 border-white/10"
+            onClick={onResumeAll}
+          >
             <RotateCcw />
             {t("quickControls.resumeAll")}
           </Button>
@@ -923,14 +1002,17 @@ function QuickControls({
   )
 }
 
-function HistoryPanel() {
+function HistoryPanel({ tasks }: { tasks: DownloadTask[] }) {
   const { t } = useI18n()
+  const completedTasks = tasks.filter((task) => task.status === "completed")
 
   return (
     <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
       <CardHeader className="flex flex-row items-center justify-between p-4 pb-0">
         <div>
-          <CardTitle className="text-lg text-white">{t("history.title")}</CardTitle>
+          <CardTitle className="text-lg text-white">
+            {t("history.title")}
+          </CardTitle>
           <CardDescription className="text-slate-500">
             {t("history.description")}
           </CardDescription>
@@ -941,26 +1023,44 @@ function HistoryPanel() {
         <Table>
           <TableHeader>
             <TableRow className="border-white/10 hover:bg-transparent">
-              <TableHead className="text-slate-500">{t("history.columns.name")}</TableHead>
-              <TableHead className="text-slate-500">{t("history.columns.size")}</TableHead>
-              <TableHead className="text-slate-500">{t("history.columns.when")}</TableHead>
-              <TableHead className="text-slate-500">{t("history.columns.status")}</TableHead>
+              <TableHead className="text-slate-500">
+                {t("history.columns.name")}
+              </TableHead>
+              <TableHead className="text-slate-500">
+                {t("history.columns.size")}
+              </TableHead>
+              <TableHead className="text-slate-500">
+                {t("history.columns.when")}
+              </TableHead>
+              <TableHead className="text-slate-500">
+                {t("history.columns.status")}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {history.map(([name, size, date]) => (
+            {completedTasks.length === 0 ? (
+              <TableRow className="border-white/10 hover:bg-transparent">
+                <TableCell
+                  className="p-6 text-center text-sm text-slate-500"
+                  colSpan={4}
+                >
+                  No completed downloads returned by aria2.
+                </TableCell>
+              </TableRow>
+            ) : null}
+            {completedTasks.map((task) => (
               <TableRow
-                key={name}
+                key={task.id}
                 className="border-white/10 hover:bg-white/[0.03]"
               >
                 <TableCell className="font-medium text-slate-200">
                   <div className="flex items-center gap-2">
                     <CheckCircle2 className="size-4 text-emerald-300" />
-                    {name}
+                    {task.name}
                   </div>
                 </TableCell>
-                <TableCell className="text-slate-400">{size}</TableCell>
-                <TableCell className="text-slate-400">{date}</TableCell>
+                <TableCell className="text-slate-400">{task.size}</TableCell>
+                <TableCell className="text-slate-400">--</TableCell>
                 <TableCell>
                   <Badge
                     variant="outline"
@@ -978,14 +1078,68 @@ function HistoryPanel() {
   )
 }
 
-function SettingsPanel() {
+function SettingsPanel({
+  globalOptions,
+}: {
+  globalOptions: Record<string, string>
+}) {
   const { locale, setLocale, t, labels } = useI18n()
+  const engineProfiles = [
+    [
+      "Concurrent tasks",
+      globalOptions["max-concurrent-downloads"] ?? "--",
+      "aria2 max-concurrent-downloads",
+    ],
+    [
+      "Connections per server",
+      globalOptions["max-connection-per-server"] ?? "--",
+      "aria2 max-connection-per-server",
+    ],
+    [
+      "Download limit",
+      globalOptions["max-overall-download-limit"] ?? "0",
+      "0 means unlimited",
+    ],
+    [
+      "Upload limit",
+      globalOptions["max-overall-upload-limit"] ?? "0",
+      "0 means unlimited",
+    ],
+  ]
+  const btOptions = [
+    ["DHT network", globalOptions["enable-dht"] ?? "--", "aria2 enable-dht"],
+    [
+      "Peer exchange",
+      globalOptions["enable-peer-exchange"] ?? "--",
+      "aria2 enable-peer-exchange",
+    ],
+    [
+      "Local peer discovery",
+      globalOptions["bt-enable-lpd"] ?? "--",
+      "aria2 bt-enable-lpd",
+    ],
+    ["Seed ratio", globalOptions["seed-ratio"] ?? "--", "aria2 seed-ratio"],
+  ]
+  const integrationOptions = [
+    ["User agent", globalOptions["user-agent"] ?? "--", "aria2 user-agent"],
+    ["Referer", globalOptions.referer ?? "--", "aria2 referer"],
+    ["Continue", globalOptions.continue ?? "--", "aria2 continue"],
+    [
+      "Auto file renaming",
+      globalOptions["auto-file-renaming"] ?? "--",
+      "aria2 auto-file-renaming",
+    ],
+  ]
 
   return (
-      <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
+    <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
       <CardHeader className="p-4 pb-0">
-        <CardTitle className="text-lg text-white">{t("settings.title")}</CardTitle>
-        <CardDescription className="text-slate-500">{t("settings.description")}</CardDescription>
+        <CardTitle className="text-lg text-white">
+          {t("settings.title")}
+        </CardTitle>
+        <CardDescription className="text-slate-500">
+          {t("settings.description")}
+        </CardDescription>
       </CardHeader>
       <CardContent className="grid gap-4 p-4">
         <div className="grid gap-2">
@@ -1023,27 +1177,38 @@ function SettingsPanel() {
           <Label>{t("settings.defaultFolder")}</Label>
           <Input
             className="border-white/10 bg-white/[0.04]"
-            defaultValue="~/Downloads/grabbit"
+            value={globalOptions.dir ?? ""}
+            readOnly
           />
         </div>
         <div className="grid gap-2">
           <Label>{t("settings.rpcSecret")}</Label>
           <Textarea
             className="min-h-20 border-white/10 bg-white/[0.04]"
-            defaultValue="Generated on launch"
+            value={
+              globalOptions["rpc-secret"] ? "Configured" : "Not configured"
+            }
+            readOnly
           />
         </div>
         <section className="grid gap-3 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
           <div>
             <div className="text-sm font-semibold text-white">Engine</div>
-            <div className="text-xs text-slate-500">Queue, speed, and concurrency controls</div>
+            <div className="text-xs text-slate-500">
+              Queue, speed, and concurrency controls
+            </div>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             {engineProfiles.map(([label, value, detail]) => (
-              <Card key={label} className="border-white/10 bg-white/[0.03] shadow-none">
+              <Card
+                key={label}
+                className="border-white/10 bg-white/[0.03] shadow-none"
+              >
                 <CardContent className="p-3">
                   <div className="text-xs text-slate-500">{label}</div>
-                  <div className="text-base font-semibold text-white">{value}</div>
+                  <div className="text-base font-semibold text-white">
+                    {value}
+                  </div>
                   <div className="text-xs text-slate-500">{detail}</div>
                 </CardContent>
               </Card>
@@ -1053,14 +1218,21 @@ function SettingsPanel() {
         <section className="grid gap-3 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
           <div>
             <div className="text-sm font-semibold text-white">BitTorrent</div>
-            <div className="text-xs text-slate-500">Tracker, DHT, and swarm discovery</div>
+            <div className="text-xs text-slate-500">
+              Tracker, DHT, and swarm discovery
+            </div>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             {btOptions.map(([label, value, detail]) => (
-              <Card key={label} className="border-white/10 bg-white/[0.03] shadow-none">
+              <Card
+                key={label}
+                className="border-white/10 bg-white/[0.03] shadow-none"
+              >
                 <CardContent className="p-3">
                   <div className="text-xs text-slate-500">{label}</div>
-                  <div className="text-base font-semibold text-white">{value}</div>
+                  <div className="text-base font-semibold text-white">
+                    {value}
+                  </div>
                   <div className="text-xs text-slate-500">{detail}</div>
                 </CardContent>
               </Card>
@@ -1070,14 +1242,21 @@ function SettingsPanel() {
         <section className="grid gap-3 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
           <div>
             <div className="text-sm font-semibold text-white">Integration</div>
-            <div className="text-xs text-slate-500">Browser, tray, and notifications</div>
+            <div className="text-xs text-slate-500">
+              Browser, tray, and notifications
+            </div>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             {integrationOptions.map(([label, value, detail]) => (
-              <Card key={label} className="border-white/10 bg-white/[0.03] shadow-none">
+              <Card
+                key={label}
+                className="border-white/10 bg-white/[0.03] shadow-none"
+              >
                 <CardContent className="p-3">
                   <div className="text-xs text-slate-500">{label}</div>
-                  <div className="text-base font-semibold text-white">{value}</div>
+                  <div className="text-base font-semibold text-white">
+                    {value}
+                  </div>
                   <div className="text-xs text-slate-500">{detail}</div>
                 </CardContent>
               </Card>
@@ -1092,27 +1271,50 @@ function SettingsPanel() {
 function DetailStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2">
-      <div className="text-[11px] uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="text-[11px] tracking-wide text-slate-500 uppercase">
+        {label}
+      </div>
       <div className="mt-1 text-sm font-semibold text-white">{value}</div>
     </div>
   )
 }
 
-function LiveLog() {
+function LiveLog({
+  serviceStatus,
+  globalStat,
+  tasks,
+}: {
+  serviceStatus: DownloadServiceStatus
+  globalStat: DownloadGlobalStat | null
+  tasks: DownloadTask[]
+}) {
   const { t } = useI18n()
 
   const lines = [
-    [t("liveLog.scopes.aria2c"), t("liveLog.messages.rpcReady")],
-    [t("liveLog.scopes.queue"), t("liveLog.messages.tasksWaiting")],
-    [t("liveLog.scopes.disk"), t("liveLog.messages.sessionSaved")],
-    [t("liveLog.scopes.net"), t("liveLog.messages.peerCount")],
+    [
+      t("liveLog.scopes.aria2c"),
+      serviceStatus.running
+        ? `RPC ready on port ${serviceStatus.rpcPort ?? "--"}`
+        : "aria2c service stopped",
+    ],
+    [
+      t("liveLog.scopes.queue"),
+      `${globalStat?.numWaiting ?? 0} tasks waiting, ${globalStat?.numActive ?? 0} active`,
+    ],
+    [t("liveLog.scopes.disk"), `${tasks.length} tasks loaded from aria2`],
+    [
+      t("liveLog.scopes.net"),
+      `${tasks.reduce((total, task) => total + task.connections, 0)} active connections`,
+    ],
   ]
 
   return (
     <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
       <CardHeader className="flex flex-row items-center justify-between p-4 pb-0">
         <div>
-          <CardTitle className="text-lg text-white">{t("liveLog.title")}</CardTitle>
+          <CardTitle className="text-lg text-white">
+            {t("liveLog.title")}
+          </CardTitle>
           <CardDescription className="text-slate-500">
             {t("liveLog.description")}
           </CardDescription>
@@ -1139,13 +1341,25 @@ function LiveLog() {
   )
 }
 
-function QueueSummary() {
+function QueueSummary({
+  globalStat,
+  globalOptions,
+}: {
+  globalStat: DownloadGlobalStat | null
+  globalOptions: Record<string, string>
+}) {
   const { t } = useI18n()
+  const waiting = globalStat?.numWaiting ?? 0
+  const active = globalStat?.numActive ?? 0
+  const total = waiting + active
+  const waitingPercent = total > 0 ? Math.round((waiting / total) * 100) : 0
 
   return (
     <Card className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
       <CardHeader className="p-4 pb-0">
-        <CardTitle className="text-lg text-white">{t("queueSummary.title")}</CardTitle>
+        <CardTitle className="text-lg text-white">
+          {t("queueSummary.title")}
+        </CardTitle>
         <CardDescription className="text-slate-500">
           {t("queueSummary.description")}
         </CardDescription>
@@ -1154,9 +1368,11 @@ function QueueSummary() {
         <div className="grid gap-2">
           <div className="flex items-center justify-between text-sm text-slate-400">
             <span>{t("queueSummary.waiting")}</span>
-            <span>2 {t("queueSummary.tasks")}</span>
+            <span>
+              {waiting} {t("queueSummary.tasks")}
+            </span>
           </div>
-          <Progress value={50} className="flex-1">
+          <Progress value={waitingPercent} className="flex-1">
             <ProgressTrack className="h-2 bg-white/[0.07]">
               <ProgressIndicator className="rounded-full bg-gradient-to-r from-cyan-300 to-blue-500" />
             </ProgressTrack>
@@ -1165,14 +1381,22 @@ function QueueSummary() {
         <div className="grid grid-cols-2 gap-3">
           <Card className="border-white/10 bg-white/[0.03] shadow-none">
             <CardContent className="p-3">
-              <div className="text-xs text-slate-500">{t("queueSummary.retryWait")}</div>
-              <div className="text-base font-semibold text-white">10s</div>
+              <div className="text-xs text-slate-500">
+                {t("queueSummary.retryWait")}
+              </div>
+              <div className="text-base font-semibold text-white">
+                {globalOptions["retry-wait"] ?? "--"}
+              </div>
             </CardContent>
           </Card>
           <Card className="border-white/10 bg-white/[0.03] shadow-none">
             <CardContent className="p-3">
-              <div className="text-xs text-slate-500">{t("queueSummary.diskCache")}</div>
-              <div className="text-base font-semibold text-white">128 MB</div>
+              <div className="text-xs text-slate-500">
+                {t("queueSummary.diskCache")}
+              </div>
+              <div className="text-base font-semibold text-white">
+                {globalOptions["disk-cache"] ?? "--"}
+              </div>
             </CardContent>
           </Card>
         </div>

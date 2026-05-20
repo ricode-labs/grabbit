@@ -56,7 +56,10 @@ export function getUserAria2ConfigPath(userDataPath: string) {
 
 export async function loadUserAria2Options(userDataPath: string) {
   try {
-    const rawConfig = await readFile(getUserAria2ConfigPath(userDataPath), "utf8")
+    const rawConfig = await readFile(
+      getUserAria2ConfigPath(userDataPath),
+      "utf8"
+    )
     const parsedConfig = JSON.parse(rawConfig) as unknown
 
     if (!isAria2Options(parsedConfig)) {
@@ -105,7 +108,9 @@ export function toAria2Args(options: Aria2Options) {
 
 function removeRuntimeOnlyOptions(options: Aria2Options) {
   return Object.fromEntries(
-    Object.entries(options).filter(([key]) => !runtimeOnlyAria2OptionKeys.has(key))
+    Object.entries(options).filter(
+      ([key]) => !runtimeOnlyAria2OptionKeys.has(key)
+    )
   )
 }
 

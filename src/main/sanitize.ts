@@ -24,7 +24,12 @@ export function sanitizeTaskOptions(options: Aria2Options | undefined) {
 function sanitizeOutputFileName(value: string) {
   const basename = value.split(/[\\/]/).at(-1)?.trim()
 
-  if (!basename || basename === "." || basename === ".." || basename.includes("\0")) {
+  if (
+    !basename ||
+    basename === "." ||
+    basename === ".." ||
+    basename.includes("\0")
+  ) {
     return null
   }
 
