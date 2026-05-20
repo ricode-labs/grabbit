@@ -1,4 +1,9 @@
-import { useEffect, useState, type ComponentType } from "react"
+import {
+  useEffect,
+  useState,
+  type CSSProperties,
+  type ComponentType,
+} from "react"
 
 import {
   Activity,
@@ -19,13 +24,13 @@ import {
   Plus,
   RadioTower,
   RotateCcw,
-  Moon,
-  Search,
   Settings2,
   Sparkles,
-  Sun,
   Trash2,
   Upload,
+  Minus,
+  Square,
+  X,
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -189,7 +194,7 @@ function App() {
         <Card className="flex min-h-svh flex-row overflow-hidden rounded-none border-0 border-r border-slate-800 bg-slate-950 text-slate-50 shadow-none">
           <Sidebar />
           <section className="flex min-w-0 flex-1 flex-col">
-            <Topbar />
+            <WindowBar />
             <Tabs
               defaultValue="overview"
               className="flex min-h-0 flex-1 flex-col gap-0"
@@ -360,8 +365,7 @@ function Sidebar() {
                   size="icon-lg"
                   className={cn(
                     "size-11 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white",
-                    item.active &&
-                      "bg-slate-800 text-slate-50"
+                    item.active && "bg-slate-800 text-slate-50"
                   )}
                   type="button"
                 />
@@ -383,51 +387,74 @@ function Sidebar() {
   )
 }
 
-function Topbar() {
+function WindowBar() {
   const { t } = useI18n()
-  const { theme, setTheme } = useTheme()
-  const resolvedTheme =
-    theme === "system"
-      ? document.documentElement.classList.contains("dark")
-        ? "dark"
-        : "light"
-      : theme
-  const nextTheme = resolvedTheme === "dark" ? "light" : "dark"
+  const [maximized, setMaximized] = useState(false)
+  const dragStyle = { WebkitAppRegion: "drag" } as CSSProperties
+  const noDragStyle = { WebkitAppRegion: "no-drag" } as CSSProperties
+
+  useEffect(() => {
+    const update = () => {
+      setMaximized(window.outerWidth >= window.screen.availWidth - 8)
+    }
+
+    update()
+    window.addEventListener("resize", update)
+    return () => window.removeEventListener("resize", update)
+  }, [])
 
   return (
-    <header className="flex min-h-14 items-center gap-3 border-b border-slate-800 bg-slate-950/95 px-3 sm:px-4">
-      <div className="relative min-w-0 flex-1">
-        <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-500" />
-        <Input
-          aria-label={t("topbar.searchAria")}
-          className="h-10 rounded-xl border-slate-800 bg-slate-900 pr-12 pl-10 text-slate-200 placeholder:text-slate-500"
-          placeholder={t("topbar.searchPlaceholder")}
-        />
-        <kbd className="absolute top-1/2 right-3 hidden -translate-y-1/2 rounded-lg border border-slate-800 bg-slate-900 px-2 py-1 text-[0.65rem] text-slate-500 sm:block">
-          /
-        </kbd>
+    <header className="flex h-12 items-center border-b border-slate-800 bg-slate-950/95">
+      <div
+        className="flex min-w-0 flex-1 items-center gap-3 px-3"
+        style={dragStyle}
+      >
+        <div className="grid size-7 place-items-center rounded-md bg-slate-100 text-slate-950">
+          <FileDown className="size-4" />
+        </div>
+        <div className="min-w-0">
+          <div className="truncate text-sm font-medium text-slate-100">
+            Grabbit
+          </div>
+          <div className="truncate text-[11px] text-slate-500">
+            {t("hero.badge")}
+          </div>
+        </div>
       </div>
-      <Button className="hidden bg-slate-100 text-slate-950 hover:bg-white sm:inline-flex">
-        <Plus />
-        {t("topbar.newTask")}
-      </Button>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={t("settings.theme")}
-              onClick={() => setTheme(nextTheme)}
-            />
+      <div
+        className="flex items-center border-l border-slate-800"
+        style={noDragStyle}
+      >
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="h-12 w-12 rounded-none text-slate-400 hover:bg-slate-800 hover:text-white"
+          aria-label="Minimize"
+          onClick={() => window.grabbit.window.minimize()}
+        >
+          <Minus className="size-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="h-12 w-12 rounded-none text-slate-400 hover:bg-slate-800 hover:text-white"
+          aria-label={maximized ? "Restore" : "Maximize"}
+          onClick={async () =>
+            setMaximized(await window.grabbit.window.toggleMaximize())
           }
         >
-          {resolvedTheme === "dark" ? <Moon /> : <Sun />}
-        </TooltipTrigger>
-        <TooltipContent>
-          {t("settings.theme")} · {resolvedTheme}
-        </TooltipContent>
-      </Tooltip>
+          <Square className="size-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="h-12 w-12 rounded-none text-slate-400 hover:bg-red-500/15 hover:text-red-200"
+          aria-label="Close"
+          onClick={() => window.grabbit.window.close()}
+        >
+          <X className="size-4" />
+        </Button>
+      </div>
     </header>
   )
 }
@@ -557,7 +584,7 @@ function StatsGrid({
                 </div>
                 <div className="mt-1 text-xs text-slate-500">{stat.detail}</div>
               </div>
-                <div className="grid size-10 place-items-center rounded-xl bg-slate-800 text-slate-200">
+              <div className="grid size-10 place-items-center rounded-xl bg-slate-800 text-slate-200">
                 <stat.icon className="size-5" />
               </div>
             </div>
@@ -960,11 +987,11 @@ function QuickControls({
             <Pause />
             {t("quickControls.pauseAll")}
           </Button>
-            <Button
-              variant="outline"
-              className="flex-1 border-slate-800"
-              onClick={onResumeAll}
-            >
+          <Button
+            variant="outline"
+            className="flex-1 border-slate-800"
+            onClick={onResumeAll}
+          >
             <RotateCcw />
             {t("quickControls.resumeAll")}
           </Button>
@@ -1393,7 +1420,7 @@ function IconAction({
   return (
     <Button
       variant="outline"
-        className={cn(
+      className={cn(
         "h-auto flex-col gap-1 rounded-2xl border-slate-800 bg-slate-950 px-2 py-3 text-xs text-slate-400 hover:bg-slate-800 hover:text-white",
         danger && "hover:text-red-200"
       )}

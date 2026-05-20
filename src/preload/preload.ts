@@ -11,6 +11,7 @@ import {
   type DownloadApi,
   type RawRpcInput,
 } from "../shared/download-api"
+import { WINDOW_API_CHANNELS, type WindowApi } from "../shared/window-api"
 
 const downloads: DownloadApi = {
   startService: () => ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.startService),
@@ -77,6 +78,14 @@ const downloads: DownloadApi = {
     ipcRenderer.invoke(DOWNLOAD_API_CHANNELS.rawRpc, input) as Promise<T>,
 }
 
+const windowApi: WindowApi = {
+  minimize: () => ipcRenderer.invoke(WINDOW_API_CHANNELS.minimize),
+  toggleMaximize: () =>
+    ipcRenderer.invoke(WINDOW_API_CHANNELS.toggleMaximize) as Promise<boolean>,
+  close: () => ipcRenderer.invoke(WINDOW_API_CHANNELS.close),
+}
+
 contextBridge.exposeInMainWorld("grabbit", {
   downloads,
+  window: windowApi,
 })
