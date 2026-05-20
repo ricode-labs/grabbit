@@ -19,10 +19,11 @@ import {
   Plus,
   RadioTower,
   RotateCcw,
+  Moon,
   Search,
   Settings2,
   Sparkles,
-  SunMoon,
+  Sun,
   Trash2,
   Upload,
 } from "lucide-react"
@@ -386,15 +387,13 @@ function Sidebar() {
 function Topbar() {
   const { t } = useI18n()
   const { theme, setTheme } = useTheme()
-
-  const nextTheme =
-    theme === "dark"
-      ? "light"
-      : theme === "light"
+  const resolvedTheme =
+    theme === "system"
+      ? document.documentElement.classList.contains("dark")
         ? "dark"
-        : document.documentElement.classList.contains("dark")
-          ? "light"
-          : "dark"
+        : "light"
+      : theme
+  const nextTheme = resolvedTheme === "dark" ? "light" : "dark"
 
   return (
     <header className="flex min-h-16 items-center gap-3 border-b border-white/10 px-3 sm:px-5">
@@ -424,10 +423,10 @@ function Topbar() {
             />
           }
         >
-          <SunMoon />
+          {resolvedTheme === "dark" ? <Moon /> : <Sun />}
         </TooltipTrigger>
         <TooltipContent>
-          {t("settings.theme")} · {theme}
+          {t("settings.theme")} · {resolvedTheme}
         </TooltipContent>
       </Tooltip>
     </header>
