@@ -166,6 +166,20 @@ type Messages = {
   languageOptions: Record<Locale, string>
 }
 
+type Primitive = string | number | boolean | null | undefined
+
+type Paths<T> = {
+  [K in keyof T & string]: T[K] extends Primitive
+    ? K
+    : T[K] extends Record<string, unknown>
+      ? K | `${K}.${Paths<T[K]>}`
+      : K
+}[keyof T & string]
+
+type TranslationKey = Paths<Messages>
+
+type Translator = (key: TranslationKey) => string
+
 const messages: Record<Locale, Messages> = {
   en: {
     navigation: {
@@ -1618,6 +1632,31 @@ const messages: Record<Locale, Messages> = {
   },
 }
 
+function getMessage(messagesForLocale: Messages, key: TranslationKey) {
+  return key.split(".").reduce<unknown>((value, part) => {
+    if (value && typeof value === "object" && part in value) {
+      return (value as Record<string, unknown>)[part]
+    }
+
+    return undefined
+  }, messagesForLocale) as string
+}
+
+function createTranslator(locale: Locale): Translator {
+  const currentMessages = messages[locale]
+  const fallbackMessages = messages.en
+
+  return (key) => {
+    const value = getMessage(currentMessages, key)
+
+    if (value) {
+      return value
+    }
+
+    return getMessage(fallbackMessages, key)
+  }
+}
+
 const storageKey = "grabbit.locale"
 
 function isLocale(value: string): value is Locale {
@@ -1656,7 +1695,8 @@ function resolveLocale() {
 type I18nValue = {
   locale: Locale
   setLocale: (locale: Locale) => void
-  t: Messages
+  t: Translator
+  labels: Messages["languageOptions"]
 }
 
 const I18nContext = createContext<I18nValue | null>(null)
@@ -1670,7 +1710,14 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, [locale])
 
   return (
-    <I18nContext.Provider value={{ locale, setLocale, t: messages[locale] }}>
+    <I18nContext.Provider
+      value={{
+        locale,
+        setLocale,
+        labels: messages[locale].languageOptions,
+        t: createTranslator(locale),
+      }}
+    >
       {children}
     </I18nContext.Provider>
   )
