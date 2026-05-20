@@ -24,8 +24,6 @@ export type Messages = {
     searchAria: string
     searchPlaceholder: string
     newTask: string
-    filters: string
-    notifications: string
   }
   tabs: {
     overview: string
@@ -52,19 +50,14 @@ export type Messages = {
   }
   stats: {
     download: string
-    downloadDetail: string
     upload: string
-    uploadDetail: string
     disk: string
-    diskDetail: string
     rpc: string
-    rpcDetail: string
   }
   taskPanel: {
     title: string
     description: string
     pauseAll: string
-    retryFailed: string
     columns: {
       name: string
       status: string
@@ -82,14 +75,7 @@ export type Messages = {
     source: string
     sourcePlaceholder: string
     saveTo: string
-    comment: string
-    commentPlaceholder: string
     connections: string
-    priority: string
-    priorityPlaceholder: string
-    low: string
-    normal: string
-    high: string
     cancel: string
     queueTask: string
   }
@@ -123,11 +109,6 @@ export type Messages = {
   settings: {
     title: string
     description: string
-    theme: string
-    themePlaceholder: string
-    dark: string
-    light: string
-    system: string
     defaultFolder: string
     rpcSecret: string
     language: string
@@ -141,12 +122,6 @@ export type Messages = {
       disk: string
       net: string
     }
-    messages: {
-      rpcReady: string
-      tasksWaiting: string
-      sessionSaved: string
-      peerCount: string
-    }
   }
   queueSummary: {
     title: string
@@ -158,7 +133,6 @@ export type Messages = {
   }
   footer: {
     serviceStatus: string
-    traffic: string
   }
   languageOptions: Record<Locale, string>
 }

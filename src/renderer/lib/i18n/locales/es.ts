@@ -12,8 +12,6 @@ const messages = {
     searchAria: "Buscar descargas",
     searchPlaceholder: "Buscar URL, magnet, nombre de archivo, ID de tarea...",
     newTask: "Nueva tarea",
-    filters: "Filtros",
-    notifications: "Notificaciones",
   },
   tabs: {
     overview: "Resumen",
@@ -41,19 +39,14 @@ const messages = {
   },
   stats: {
     download: "Descarga",
-    downloadDetail: "+12% sobre el promedio",
     upload: "Subida",
-    uploadDetail: "304 pares",
     disk: "Disco",
-    diskDetail: "caché activa",
     rpc: "RPC",
-    rpcDetail: "127.0.0.1",
   },
   taskPanel: {
     title: "Descargas activas",
     description: "4 tareas en HTTP, magnet y fuentes espejo",
     pauseAll: "Pausar todo",
-    retryFailed: "Reintentar fallidas",
     columns: {
       name: "Nombre",
       status: "Estado",
@@ -71,14 +64,7 @@ const messages = {
     source: "Origen",
     sourcePlaceholder: "https://... o magnet:?xt=...",
     saveTo: "Guardar en",
-    comment: "Comentario",
-    commentPlaceholder: "Nota opcional para esta tarea",
     connections: "Conexiones",
-    priority: "Prioridad",
-    priorityPlaceholder: "Elegir prioridad",
-    low: "Baja",
-    normal: "Normal",
-    high: "Alta",
     cancel: "Cancelar",
     queueTask: "Poner en cola",
   },
@@ -112,11 +98,6 @@ const messages = {
   settings: {
     title: "Ajustes",
     description: "Preferencias principales de aria2 y la interfaz",
-    theme: "Tema",
-    themePlaceholder: "Elegir tema",
-    dark: "Oscuro",
-    light: "Claro",
-    system: "Sistema",
     defaultFolder: "Carpeta predeterminada",
     rpcSecret: "Secreto RPC",
     language: "Idioma",
@@ -130,12 +111,6 @@ const messages = {
       disk: "disco",
       net: "red",
     },
-    messages: {
-      rpcReady: "RPC listo en 127.0.0.1",
-      tasksWaiting: "2 tareas esperando ranuras",
-      sessionSaved: "sesión guardada correctamente",
-      peerCount: "el número de pares se mantiene en 304",
-    },
   },
   queueSummary: {
     title: "Resumen de cola",
@@ -147,7 +122,6 @@ const messages = {
   },
   footer: {
     serviceStatus: "aria2c en ejecución · sesión guardada hace 8 s",
-    traffic: "Bajada 51 MB/s · Subida 8.2 MB/s · 304 pares · 5 activas",
   },
   languageOptions: {
     en: "English",

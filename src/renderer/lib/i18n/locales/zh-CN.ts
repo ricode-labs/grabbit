@@ -12,8 +12,6 @@ const messages = {
     searchAria: "搜索下载",
     searchPlaceholder: "搜索 URL、磁力、文件名、任务 ID...",
     newTask: "新建任务",
-    filters: "筛选",
-    notifications: "通知",
   },
   tabs: {
     overview: "概览",
@@ -41,19 +39,14 @@ const messages = {
   },
   stats: {
     download: "下载",
-    downloadDetail: "较平均值高 12%",
     upload: "上传",
-    uploadDetail: "304 个节点",
     disk: "磁盘",
-    diskDetail: "缓存已启用",
     rpc: "RPC",
-    rpcDetail: "127.0.0.1",
   },
   taskPanel: {
     title: "活跃下载",
     description: "4 个任务来自 HTTP、磁力和镜像源",
     pauseAll: "全部暂停",
-    retryFailed: "重试失败项",
     columns: {
       name: "名称",
       status: "状态",
@@ -71,14 +64,7 @@ const messages = {
     source: "来源",
     sourcePlaceholder: "https://... 或 magnet:?xt=...",
     saveTo: "保存到",
-    comment: "备注",
-    commentPlaceholder: "可选任务说明",
     connections: "连接数",
-    priority: "优先级",
-    priorityPlaceholder: "选择优先级",
-    low: "低",
-    normal: "中",
-    high: "高",
     cancel: "取消",
     queueTask: "加入队列",
   },
@@ -112,11 +98,6 @@ const messages = {
   settings: {
     title: "设置",
     description: "aria2 核心与界面偏好",
-    theme: "主题",
-    themePlaceholder: "选择主题",
-    dark: "深色",
-    light: "浅色",
-    system: "跟随系统",
     defaultFolder: "默认文件夹",
     rpcSecret: "RPC 密钥",
     language: "语言",
@@ -130,12 +111,6 @@ const messages = {
       disk: "磁盘",
       net: "网络",
     },
-    messages: {
-      rpcReady: "RPC 已在 127.0.0.1 就绪",
-      tasksWaiting: "2 个任务正在等待空位",
-      sessionSaved: "会话已成功保存",
-      peerCount: "节点数稳定在 304",
-    },
   },
   queueSummary: {
     title: "队列概览",
@@ -147,7 +122,6 @@ const messages = {
   },
   footer: {
     serviceStatus: "aria2c 正在运行 · 会话已在 8 秒前保存",
-    traffic: "下行 51 MB/s · 上行 8.2 MB/s · 304 个节点 · 5 个活跃任务",
   },
   languageOptions: {
     en: "English",

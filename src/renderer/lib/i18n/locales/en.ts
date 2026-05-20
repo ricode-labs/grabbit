@@ -12,8 +12,6 @@ const messages = {
     searchAria: "Search downloads",
     searchPlaceholder: "Search URL, magnet, file name, task id...",
     newTask: "New task",
-    filters: "Filters",
-    notifications: "Notifications",
   },
   tabs: {
     overview: "Overview",
@@ -41,19 +39,14 @@ const messages = {
   },
   stats: {
     download: "Download",
-    downloadDetail: "+12% from avg",
     upload: "Upload",
-    uploadDetail: "304 peers",
     disk: "Disk",
-    diskDetail: "cache active",
     rpc: "RPC",
-    rpcDetail: "127.0.0.1",
   },
   taskPanel: {
     title: "Active downloads",
     description: "4 tasks across HTTP, magnet, and mirrored sources",
     pauseAll: "Pause all",
-    retryFailed: "Retry failed",
     columns: {
       name: "Name",
       status: "Status",
@@ -71,14 +64,7 @@ const messages = {
     source: "Source",
     sourcePlaceholder: "https://... or magnet:?xt=...",
     saveTo: "Save to",
-    comment: "Comment",
-    commentPlaceholder: "Optional note for this task",
     connections: "Connections",
-    priority: "Priority",
-    priorityPlaceholder: "Choose priority",
-    low: "Low",
-    normal: "Normal",
-    high: "High",
     cancel: "Cancel",
     queueTask: "Queue task",
   },
@@ -112,11 +98,6 @@ const messages = {
   settings: {
     title: "Settings",
     description: "Core aria2 and UI preferences",
-    theme: "Theme",
-    themePlaceholder: "Choose theme",
-    dark: "Dark",
-    light: "Light",
-    system: "System",
     defaultFolder: "Default folder",
     rpcSecret: "RPC secret",
     language: "Language",
@@ -130,12 +111,6 @@ const messages = {
       disk: "disk",
       net: "net",
     },
-    messages: {
-      rpcReady: "RPC ready on 127.0.0.1",
-      tasksWaiting: "2 tasks waiting for slots",
-      sessionSaved: "session saved successfully",
-      peerCount: "peer count steady at 304",
-    },
   },
   queueSummary: {
     title: "Queue summary",
@@ -147,7 +122,6 @@ const messages = {
   },
   footer: {
     serviceStatus: "aria2c running · session saved 8s ago",
-    traffic: "Down 51 MB/s · Up 8.2 MB/s · 304 peers · 5 active",
   },
   languageOptions: {
     en: "English",

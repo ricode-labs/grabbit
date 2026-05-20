@@ -12,8 +12,6 @@ const messages = {
     searchAria: "Downloads suchen",
     searchPlaceholder: "URL, Magnet, Dateiname, Aufgaben-ID suchen...",
     newTask: "Neue Aufgabe",
-    filters: "Filter",
-    notifications: "Benachrichtigungen",
   },
   tabs: {
     overview: "Übersicht",
@@ -42,19 +40,14 @@ const messages = {
   },
   stats: {
     download: "Download",
-    downloadDetail: "+12 % über dem Durchschnitt",
     upload: "Upload",
-    uploadDetail: "304 Peers",
     disk: "Datenträger",
-    diskDetail: "Cache aktiv",
     rpc: "RPC",
-    rpcDetail: "127.0.0.1",
   },
   taskPanel: {
     title: "Aktive Downloads",
     description: "4 Aufgaben über HTTP, Magnet und Mirror-Quellen",
     pauseAll: "Alle pausieren",
-    retryFailed: "Fehlgeschlagene erneut versuchen",
     columns: {
       name: "Name",
       status: "Status",
@@ -73,14 +66,7 @@ const messages = {
     source: "Quelle",
     sourcePlaceholder: "https://... oder magnet:?xt=...",
     saveTo: "Speichern in",
-    comment: "Kommentar",
-    commentPlaceholder: "Optionale Notiz für diese Aufgabe",
     connections: "Verbindungen",
-    priority: "Priorität",
-    priorityPlaceholder: "Priorität wählen",
-    low: "Niedrig",
-    normal: "Normal",
-    high: "Hoch",
     cancel: "Abbrechen",
     queueTask: "In Warteschlange",
   },
@@ -114,11 +100,6 @@ const messages = {
   settings: {
     title: "Einstellungen",
     description: "Kern-aria2- und UI-Einstellungen",
-    theme: "Design",
-    themePlaceholder: "Design wählen",
-    dark: "Dunkel",
-    light: "Hell",
-    system: "System",
     defaultFolder: "Standardordner",
     rpcSecret: "RPC-Geheimnis",
     language: "Sprache",
@@ -132,12 +113,6 @@ const messages = {
       disk: "datenträger",
       net: "netzwerk",
     },
-    messages: {
-      rpcReady: "RPC bereit auf 127.0.0.1",
-      tasksWaiting: "2 Aufgaben warten auf Slots",
-      sessionSaved: "Sitzung erfolgreich gespeichert",
-      peerCount: "Peer-Anzahl stabil bei 304",
-    },
   },
   queueSummary: {
     title: "Warteschlangenübersicht",
@@ -149,7 +124,6 @@ const messages = {
   },
   footer: {
     serviceStatus: "aria2c läuft · Sitzung vor 8 s gespeichert",
-    traffic: "Runter 51 MB/s · Hoch 8.2 MB/s · 304 Peers · 5 aktiv",
   },
   languageOptions: {
     en: "English",

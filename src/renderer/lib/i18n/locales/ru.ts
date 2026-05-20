@@ -12,8 +12,6 @@ const messages = {
     searchAria: "Поиск загрузок",
     searchPlaceholder: "Поиск URL, magnet, имени файла, ID задачи...",
     newTask: "Новая задача",
-    filters: "Фильтры",
-    notifications: "Уведомления",
   },
   tabs: {
     overview: "Обзор",
@@ -41,19 +39,14 @@ const messages = {
   },
   stats: {
     download: "Загрузка",
-    downloadDetail: "+12% к среднему",
     upload: "Отдача",
-    uploadDetail: "304 пира",
     disk: "Диск",
-    diskDetail: "кэш активен",
     rpc: "RPC",
-    rpcDetail: "127.0.0.1",
   },
   taskPanel: {
     title: "Активные загрузки",
     description: "4 задачи по HTTP, magnet и зеркалам",
     pauseAll: "Приостановить всё",
-    retryFailed: "Повторить неудачные",
     columns: {
       name: "Имя",
       status: "Статус",
@@ -71,14 +64,7 @@ const messages = {
     source: "Источник",
     sourcePlaceholder: "https://... или magnet:?xt=...",
     saveTo: "Сохранить в",
-    comment: "Комментарий",
-    commentPlaceholder: "Необязательная заметка для этой задачи",
     connections: "Соединения",
-    priority: "Приоритет",
-    priorityPlaceholder: "Выберите приоритет",
-    low: "Низкий",
-    normal: "Обычный",
-    high: "Высокий",
     cancel: "Отмена",
     queueTask: "В очередь",
   },
@@ -112,11 +98,6 @@ const messages = {
   settings: {
     title: "Настройки",
     description: "Основные параметры aria2 и интерфейса",
-    theme: "Тема",
-    themePlaceholder: "Выберите тему",
-    dark: "Тёмная",
-    light: "Светлая",
-    system: "Система",
     defaultFolder: "Папка по умолчанию",
     rpcSecret: "Секрет RPC",
     language: "Язык",
@@ -130,12 +111,6 @@ const messages = {
       disk: "диск",
       net: "сеть",
     },
-    messages: {
-      rpcReady: "RPC готов на 127.0.0.1",
-      tasksWaiting: "2 задачи ждут слотов",
-      sessionSaved: "сеанс успешно сохранён",
-      peerCount: "число пиров стабильно на 304",
-    },
   },
   queueSummary: {
     title: "Сводка очереди",
@@ -147,7 +122,6 @@ const messages = {
   },
   footer: {
     serviceStatus: "aria2c запущен · сеанс сохранён 8 с назад",
-    traffic: "Скач. 51 MB/s · Отд. 8.2 MB/s · 304 пира · 5 активных",
   },
   languageOptions: {
     en: "English",

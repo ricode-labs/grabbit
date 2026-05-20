@@ -2,7 +2,6 @@ import { useEffect, useState, type ComponentType } from "react"
 
 import {
   Activity,
-  Bell,
   CheckCircle2,
   ChevronRight,
   Clock3,
@@ -13,7 +12,6 @@ import {
   Globe2,
   HardDrive,
   History,
-  ListFilter,
   Magnet,
   MoreHorizontal,
   Pause,
@@ -70,7 +68,6 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Tooltip,
   TooltipContent,
@@ -404,34 +401,6 @@ function Topbar() {
         <Plus />
         {t("topbar.newTask")}
       </Button>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={t("topbar.filters")}
-            />
-          }
-        >
-          <ListFilter />
-        </TooltipTrigger>
-        <TooltipContent>{t("topbar.filters")}</TooltipContent>
-      </Tooltip>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={t("topbar.notifications")}
-            />
-          }
-        >
-          <Bell />
-        </TooltipTrigger>
-        <TooltipContent>{t("topbar.notifications")}</TooltipContent>
-      </Tooltip>
     </header>
   )
 }
@@ -619,10 +588,6 @@ function TaskPanel({
           <Button variant="secondary" size="sm" onClick={onPauseAll}>
             <Pause />
             {t("taskPanel.pauseAll")}
-          </Button>
-          <Button variant="ghost" size="sm">
-            <RotateCcw />
-            {t("taskPanel.retryFailed")}
           </Button>
         </div>
       </CardHeader>
@@ -815,13 +780,6 @@ function AddDownloadDialog({
             />
           </div>
           <div className="grid gap-2">
-            <Label>{t("addDialog.comment")}</Label>
-            <Textarea
-              className="min-h-24 border-white/10 bg-white/[0.04]"
-              placeholder={t("addDialog.commentPlaceholder")}
-            />
-          </div>
-          <div className="grid gap-2">
             <div className="flex items-center justify-between text-sm text-slate-400">
               <span>{t("addDialog.connections")}</span>
               <span>{connections[0]}</span>
@@ -834,19 +792,6 @@ function AddDownloadDialog({
                 setConnections(Array.isArray(value) ? [...value] : [value])
               }
             />
-          </div>
-          <div className="grid gap-2">
-            <Label>{t("addDialog.priority")}</Label>
-            <Select defaultValue="normal">
-              <SelectTrigger className="w-full border-white/10 bg-white/[0.04]">
-                <SelectValue placeholder={t("addDialog.priorityPlaceholder")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="low">{t("addDialog.low")}</SelectItem>
-                <SelectItem value="normal">{t("addDialog.normal")}</SelectItem>
-                <SelectItem value="high">{t("addDialog.high")}</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" className="flex-1 border-white/10">
@@ -1143,19 +1088,6 @@ function SettingsPanel({
       </CardHeader>
       <CardContent className="grid gap-4 p-4">
         <div className="grid gap-2">
-          <Label>{t("settings.theme")}</Label>
-          <Select defaultValue="system">
-            <SelectTrigger className="w-full border-white/10 bg-white/[0.04]">
-              <SelectValue placeholder={t("settings.themePlaceholder")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="dark">{t("settings.dark")}</SelectItem>
-              <SelectItem value="light">{t("settings.light")}</SelectItem>
-              <SelectItem value="system">{t("settings.system")}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="grid gap-2">
           <Label>{t("settings.language")}</Label>
           <Select
             value={locale}
@@ -1183,7 +1115,7 @@ function SettingsPanel({
         </div>
         <div className="grid gap-2">
           <Label>{t("settings.rpcSecret")}</Label>
-          <Textarea
+          <Input
             className="min-h-20 border-white/10 bg-white/[0.04]"
             value={
               globalOptions["rpc-secret"] ? "Configured" : "Not configured"

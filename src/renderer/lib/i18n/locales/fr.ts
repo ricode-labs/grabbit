@@ -12,8 +12,6 @@ const messages = {
     searchAria: "Rechercher des téléchargements",
     searchPlaceholder: "Rechercher URL, magnet, nom de fichier, ID de tâche...",
     newTask: "Nouvelle tâche",
-    filters: "Filtres",
-    notifications: "Notifications",
   },
   tabs: {
     overview: "Vue d'ensemble",
@@ -41,19 +39,14 @@ const messages = {
   },
   stats: {
     download: "Téléchargement",
-    downloadDetail: "+12 % par rapport à la moyenne",
     upload: "Envoi",
-    uploadDetail: "304 pairs",
     disk: "Disque",
-    diskDetail: "cache actif",
     rpc: "RPC",
-    rpcDetail: "127.0.0.1",
   },
   taskPanel: {
     title: "Téléchargements actifs",
     description: "4 tâches via HTTP, magnet et sources miroir",
     pauseAll: "Tout mettre en pause",
-    retryFailed: "Réessayer les échecs",
     columns: {
       name: "Nom",
       status: "État",
@@ -72,14 +65,7 @@ const messages = {
     source: "Source",
     sourcePlaceholder: "https://... ou magnet:?xt=...",
     saveTo: "Enregistrer dans",
-    comment: "Commentaire",
-    commentPlaceholder: "Note facultative pour cette tâche",
     connections: "Connexions",
-    priority: "Priorité",
-    priorityPlaceholder: "Choisir la priorité",
-    low: "Basse",
-    normal: "Normale",
-    high: "Haute",
     cancel: "Annuler",
     queueTask: "Mettre en file",
   },
@@ -113,11 +99,6 @@ const messages = {
   settings: {
     title: "Réglages",
     description: "Préférences aria2 et interface principales",
-    theme: "Thème",
-    themePlaceholder: "Choisir un thème",
-    dark: "Sombre",
-    light: "Clair",
-    system: "Système",
     defaultFolder: "Dossier par défaut",
     rpcSecret: "Secret RPC",
     language: "Langue",
@@ -131,12 +112,6 @@ const messages = {
       disk: "disque",
       net: "réseau",
     },
-    messages: {
-      rpcReady: "RPC prêt sur 127.0.0.1",
-      tasksWaiting: "2 tâches en attente de créneaux",
-      sessionSaved: "session enregistrée avec succès",
-      peerCount: "le nombre de pairs reste à 304",
-    },
   },
   queueSummary: {
     title: "Résumé de la file",
@@ -148,7 +123,6 @@ const messages = {
   },
   footer: {
     serviceStatus: "aria2c en cours · session enregistrée il y a 8 s",
-    traffic: "Descente 51 MB/s · Montée 8.2 MB/s · 304 pairs · 5 actives",
   },
   languageOptions: {
     en: "English",

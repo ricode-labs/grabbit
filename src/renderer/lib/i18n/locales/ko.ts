@@ -12,8 +12,6 @@ const messages = {
     searchAria: "다운로드 검색",
     searchPlaceholder: "URL, magnet, 파일 이름, 작업 ID 검색...",
     newTask: "새 작업",
-    filters: "필터",
-    notifications: "알림",
   },
   tabs: {
     overview: "개요",
@@ -41,19 +39,14 @@ const messages = {
   },
   stats: {
     download: "다운로드",
-    downloadDetail: "평균 대비 12% 높음",
     upload: "업로드",
-    uploadDetail: "304 피어",
     disk: "디스크",
-    diskDetail: "캐시 활성",
     rpc: "RPC",
-    rpcDetail: "127.0.0.1",
   },
   taskPanel: {
     title: "활성 다운로드",
     description: "HTTP, magnet, 미러 소스의 4개 작업",
     pauseAll: "모두 일시 중지",
-    retryFailed: "실패 항목 재시도",
     columns: {
       name: "이름",
       status: "상태",
@@ -71,14 +64,7 @@ const messages = {
     source: "출처",
     sourcePlaceholder: "https://... 또는 magnet:?xt=...",
     saveTo: "저장 위치",
-    comment: "메모",
-    commentPlaceholder: "이 작업에 대한 선택 메모",
     connections: "연결 수",
-    priority: "우선순위",
-    priorityPlaceholder: "우선순위 선택",
-    low: "낮음",
-    normal: "보통",
-    high: "높음",
     cancel: "취소",
     queueTask: "대기열에 추가",
   },
@@ -112,11 +98,6 @@ const messages = {
   settings: {
     title: "설정",
     description: "aria2 핵심 및 UI 환경 설정",
-    theme: "테마",
-    themePlaceholder: "테마 선택",
-    dark: "어두움",
-    light: "밝음",
-    system: "시스템",
     defaultFolder: "기본 폴더",
     rpcSecret: "RPC 비밀키",
     language: "언어",
@@ -130,12 +111,6 @@ const messages = {
       disk: "디스크",
       net: "네트워크",
     },
-    messages: {
-      rpcReady: "RPC가 127.0.0.1에서 준비됨",
-      tasksWaiting: "2개의 작업이 슬롯을 기다리는 중",
-      sessionSaved: "세션이 성공적으로 저장됨",
-      peerCount: "피어 수가 304로 안정적",
-    },
   },
   queueSummary: {
     title: "대기열 요약",
@@ -147,7 +122,6 @@ const messages = {
   },
   footer: {
     serviceStatus: "aria2c 실행 중 · 8초 전에 세션 저장",
-    traffic: "다운 51 MB/s · 업 8.2 MB/s · 304 피어 · 5개 활성",
   },
   languageOptions: {
     en: "English",

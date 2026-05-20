@@ -12,8 +12,6 @@ const messages = {
     searchAria: "ダウンロードを検索",
     searchPlaceholder: "URL、magnet、ファイル名、タスク ID を検索...",
     newTask: "新しいタスク",
-    filters: "フィルター",
-    notifications: "通知",
   },
   tabs: {
     overview: "概要",
@@ -41,19 +39,14 @@ const messages = {
   },
   stats: {
     download: "ダウンロード",
-    downloadDetail: "平均より 12% 高い",
     upload: "アップロード",
-    uploadDetail: "304 ピア",
     disk: "ディスク",
-    diskDetail: "キャッシュ有効",
     rpc: "RPC",
-    rpcDetail: "127.0.0.1",
   },
   taskPanel: {
     title: "稼働中のダウンロード",
     description: "HTTP、magnet、ミラーソースの 4 タスク",
     pauseAll: "すべて一時停止",
-    retryFailed: "失敗分を再試行",
     columns: {
       name: "名前",
       status: "状態",
@@ -72,14 +65,7 @@ const messages = {
     source: "ソース",
     sourcePlaceholder: "https://... または magnet:?xt=...",
     saveTo: "保存先",
-    comment: "コメント",
-    commentPlaceholder: "このタスクの任意メモ",
     connections: "接続数",
-    priority: "優先度",
-    priorityPlaceholder: "優先度を選択",
-    low: "低",
-    normal: "通常",
-    high: "高",
     cancel: "キャンセル",
     queueTask: "キューに追加",
   },
@@ -113,11 +99,6 @@ const messages = {
   settings: {
     title: "設定",
     description: "aria2 と UI の基本設定",
-    theme: "テーマ",
-    themePlaceholder: "テーマを選択",
-    dark: "ダーク",
-    light: "ライト",
-    system: "システム",
     defaultFolder: "既定フォルダー",
     rpcSecret: "RPC シークレット",
     language: "言語",
@@ -131,12 +112,6 @@ const messages = {
       disk: "ディスク",
       net: "ネット",
     },
-    messages: {
-      rpcReady: "RPC が 127.0.0.1 で準備完了",
-      tasksWaiting: "2 件のタスクがスロット待ち",
-      sessionSaved: "セッションを正常に保存しました",
-      peerCount: "ピア数は 304 で安定",
-    },
   },
   queueSummary: {
     title: "キューの概要",
@@ -148,7 +123,6 @@ const messages = {
   },
   footer: {
     serviceStatus: "aria2c 実行中 · 8 秒前にセッション保存",
-    traffic: "下り 51 MB/s · 上り 8.2 MB/s · 304 ピア · 5 件稼働",
   },
   languageOptions: {
     en: "English",

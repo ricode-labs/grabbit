@@ -13,8 +13,6 @@ const messages = {
     searchPlaceholder:
       "Pesquisar URL, magnet, nome de arquivo, ID da tarefa...",
     newTask: "Nova tarefa",
-    filters: "Filtros",
-    notifications: "Notificações",
   },
   tabs: {
     overview: "Visão geral",
@@ -42,19 +40,14 @@ const messages = {
   },
   stats: {
     download: "Download",
-    downloadDetail: "+12% acima da média",
     upload: "Upload",
-    uploadDetail: "304 pares",
     disk: "Disco",
-    diskDetail: "cache ativo",
     rpc: "RPC",
-    rpcDetail: "127.0.0.1",
   },
   taskPanel: {
     title: "Downloads ativos",
     description: "4 tarefas em HTTP, magnet e espelhos",
     pauseAll: "Pausar tudo",
-    retryFailed: "Tentar novamente as falhas",
     columns: {
       name: "Nome",
       status: "Status",
@@ -72,14 +65,7 @@ const messages = {
     source: "Origem",
     sourcePlaceholder: "https://... ou magnet:?xt=...",
     saveTo: "Salvar em",
-    comment: "Comentário",
-    commentPlaceholder: "Nota opcional para esta tarefa",
     connections: "Conexões",
-    priority: "Prioridade",
-    priorityPlaceholder: "Escolher prioridade",
-    low: "Baixa",
-    normal: "Normal",
-    high: "Alta",
     cancel: "Cancelar",
     queueTask: "Colocar na fila",
   },
@@ -113,11 +99,6 @@ const messages = {
   settings: {
     title: "Configurações",
     description: "Preferências centrais do aria2 e da interface",
-    theme: "Tema",
-    themePlaceholder: "Escolher tema",
-    dark: "Escuro",
-    light: "Claro",
-    system: "Sistema",
     defaultFolder: "Pasta padrão",
     rpcSecret: "Segredo RPC",
     language: "Idioma",
@@ -131,12 +112,6 @@ const messages = {
       disk: "disco",
       net: "rede",
     },
-    messages: {
-      rpcReady: "RPC pronto em 127.0.0.1",
-      tasksWaiting: "2 tarefas aguardando vagas",
-      sessionSaved: "sessão salva com sucesso",
-      peerCount: "a contagem de pares estável em 304",
-    },
   },
   queueSummary: {
     title: "Resumo da fila",
@@ -148,7 +123,6 @@ const messages = {
   },
   footer: {
     serviceStatus: "aria2c em execução · sessão salva há 8 s",
-    traffic: "Download 51 MB/s · Upload 8.2 MB/s · 304 pares · 5 ativas",
   },
   languageOptions: {
     en: "English",
