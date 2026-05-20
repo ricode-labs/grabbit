@@ -450,6 +450,7 @@ class DownloadService {
     await mkdir(sessionDir, { recursive: true })
 
     this.process = spawn(getAria2Path(), [
+      `--conf-path=${getAria2ConfigPath()}`,
       "--enable-rpc=true",
       `--rpc-listen-port=${RPC_PORT}`,
       `--rpc-secret=${this.secret}`,
@@ -482,6 +483,14 @@ function getAria2Path() {
   }
 
   return path.join(process.cwd(), "resources", "aria2", "linux-x64", "aria2c")
+}
+
+function getAria2ConfigPath() {
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, "aria2", "aria2.conf")
+  }
+
+  return path.join(process.cwd(), "resources", "aria2", "aria2.conf")
 }
 
 async function waitForRpcReady(check: () => Promise<void>) {
