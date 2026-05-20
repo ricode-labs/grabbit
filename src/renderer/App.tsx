@@ -80,17 +80,23 @@ import { useI18n } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
 type TaskStatus = "downloading" | "queued" | "paused" | "seeding" | "completed"
+type TaskProtocol = "http" | "ftp" | "bt" | "magnet" | "metalink"
 
 type DownloadTask = {
   id: string
   name: string
   source: string
+  protocol: TaskProtocol
   status: TaskStatus
   progress: number
   size: string
   speed: string
   eta: string
   peers: string
+  connections: number
+  downloaded: string
+  uploaded: string
+  ratio: string
   savePath: string
   accent: string
 }
@@ -107,12 +113,17 @@ const tasks: DownloadTask[] = [
     id: "8f2c4a91",
     name: "ubuntu-26.04-desktop-amd64.iso",
     source: "https://releases.ubuntu.com/26.04/ubuntu.iso",
+    protocol: "http",
     status: "downloading",
     progress: 76,
     size: "4.1 / 5.4 GB",
     speed: "42.8 MB/s",
     eta: "02:18",
     peers: "18 conns",
+    connections: 18,
+    downloaded: "4.1 GB",
+    uploaded: "0 MB",
+    ratio: "0.00",
     savePath: "~/Downloads/grabbit/linux",
     accent: "from-cyan-300 to-blue-500",
   },
@@ -120,12 +131,17 @@ const tasks: DownloadTask[] = [
     id: "90ad112e",
     name: "foundation-s01-archive.mkv",
     source: "magnet:?xt=urn:btih:foundation-archive",
+    protocol: "magnet",
     status: "seeding",
     progress: 100,
     size: "11.7 GB",
     speed: "8.2 MB/s up",
     eta: "ratio 2.1",
     peers: "84 peers",
+    connections: 84,
+    downloaded: "11.7 GB",
+    uploaded: "24.6 GB",
+    ratio: "2.10",
     savePath: "~/Media/Series/Foundation",
     accent: "from-violet-300 to-fuchsia-500",
   },
@@ -133,12 +149,17 @@ const tasks: DownloadTask[] = [
     id: "e4b70d30",
     name: "stable-diffusion-model.safetensors",
     source: "https://models.example.com/sd-model.safetensors",
+    protocol: "http",
     status: "paused",
     progress: 39,
     size: "2.5 / 6.6 GB",
     speed: "0 KB/s",
     eta: "paused",
     peers: "12 conns",
+    connections: 12,
+    downloaded: "2.5 GB",
+    uploaded: "0 MB",
+    ratio: "0.00",
     savePath: "~/AI/models",
     accent: "from-amber-300 to-orange-500",
   },
@@ -146,15 +167,68 @@ const tasks: DownloadTask[] = [
     id: "72ab0081",
     name: "archlinux-bootstrap-2026.05.tar.zst",
     source: "https://mirrors.edge.kernel.org/archlinux/iso/latest/",
+    protocol: "ftp",
     status: "queued",
     progress: 0,
     size: "958 MB",
     speed: "waiting",
     eta: "queue #2",
     peers: "mirror set",
+    connections: 0,
+    downloaded: "0 MB",
+    uploaded: "0 MB",
+    ratio: "0.00",
     savePath: "~/Downloads/grabbit/linux",
     accent: "from-sky-300 to-indigo-500",
   },
+]
+
+const featureGroups = [
+  {
+    title: "Download protocols",
+    description: "HTTP, FTP, BitTorrent, magnet links, and metalink sources.",
+    icon: Globe2,
+    items: ["HTTP/HTTPS", "FTP/SFTP", "BitTorrent", "Magnet URI", "Metalink"],
+  },
+  {
+    title: "Task management",
+    description: "Start, pause, resume, retry, remove, filter, and inspect tasks.",
+    icon: Download,
+    items: ["Active queue", "Completed history", "Per-task detail", "Batch actions"],
+  },
+  {
+    title: "BT engine",
+    description: "Tracker lists, DHT, PEX, local peer discovery, and seeding ratio.",
+    icon: Magnet,
+    items: ["Tracker sync", "DHT", "PEX", "LPD", "Seed ratio"],
+  },
+  {
+    title: "System integration",
+    description: "Browser capture, notifications, tray behavior, and RPC health.",
+    icon: RadioTower,
+    items: ["Browser extension", "System tray", "Notifications", "RPC secret"],
+  },
+]
+
+const engineProfiles = [
+  ["Concurrent tasks", "5 active", "Motrix-style global queue cap"],
+  ["Connections per task", "16 / 64", "Split downloads across mirrors"],
+  ["Download limit", "100 MB/s", "Global cap, adjustable per session"],
+  ["Upload limit", "12 MB/s", "BT seeding and sharing cap"],
+]
+
+const btOptions = [
+  ["DHT network", "On", "Discover peers without trackers"],
+  ["Peer exchange", "On", "Share known peers across the swarm"],
+  ["Local peer discovery", "On", "Find peers on the local network"],
+  ["Auto update trackers", "Daily", "Keep public tracker lists fresh"],
+]
+
+const integrationOptions = [
+  ["Browser capture", "Enabled", "Catch downloads from Chrome, Edge, Firefox"],
+  ["User agent", "Motrix compatible", "Improve compatibility with protected hosts"],
+  ["System tray", "Minimize to tray", "Keep downloads running in background"],
+  ["Notifications", "Completed + failed", "Desktop alerts for task events"],
 ]
 
 const history = [
@@ -204,6 +278,7 @@ function App() {
                       className="mt-0 grid gap-4 outline-none"
                     >
                       <Hero />
+                      <FeatureMatrix />
                       <StatsGrid />
                       <TaskPanel />
                     </TabsContent>
@@ -443,6 +518,35 @@ function StatsGrid() {
   )
 }
 
+function FeatureMatrix() {
+  return (
+    <section className="grid gap-3 xl:grid-cols-2">
+      {featureGroups.map((group) => (
+        <Card key={group.title} className="border-white/10 bg-white/[0.045] text-slate-50 shadow-lg shadow-black/15">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="grid size-10 place-items-center rounded-2xl bg-white/[0.06] text-cyan-200">
+                <group.icon className="size-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold text-white">{group.title}</div>
+                <div className="mt-1 text-sm text-slate-500">{group.description}</div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {group.items.map((item) => (
+                    <Badge key={item} variant="outline" className="border-white/10 bg-white/[0.03] text-slate-300">
+                      {item}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </section>
+  )
+}
+
 function TaskPanel() {
   const { t } = useI18n()
   const statusLabels: Record<TaskStatus, string> = {
@@ -476,7 +580,7 @@ function TaskPanel() {
 
       <Table>
         <TableHeader className="hidden lg:table-header-group">
-            <TableRow className="border-white/10 hover:bg-transparent">
+          <TableRow className="border-white/10 hover:bg-transparent">
                 <TableHead className="px-4 text-xs font-semibold tracking-wide text-slate-500 uppercase">
                   {t("taskPanel.columns.name")}
                 </TableHead>
@@ -492,7 +596,7 @@ function TaskPanel() {
                 <TableHead className="w-24 text-xs font-semibold tracking-wide text-slate-500 uppercase">
                   {t("taskPanel.columns.action")}
                 </TableHead>
-            </TableRow>
+          </TableRow>
         </TableHeader>
         <TableBody>
           {tasks.map((task) => (
@@ -521,6 +625,13 @@ function TaskPanel() {
                     <p className="truncate text-xs text-slate-500">
                       {task.source}
                     </p>
+                    <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-slate-400">
+                      <span>{task.protocol.toUpperCase()}</span>
+                      <span>•</span>
+                      <span>{task.connections} peers</span>
+                      <span>•</span>
+                      <span>ratio {task.ratio}</span>
+                    </div>
                   </div>
                 </div>
                 <div className="mt-3 flex items-center gap-3">
@@ -705,6 +816,12 @@ function TaskDetails({ task }: { task: DownloadTask }) {
                 </ProgressTrack>
               </Progress>
             </div>
+            <div className="mt-4 grid grid-cols-2 gap-2 text-xs text-slate-400">
+              <DetailStat label="Downloaded" value={task.downloaded} />
+              <DetailStat label="Uploaded" value={task.uploaded} />
+              <DetailStat label="Protocol" value={task.protocol.toUpperCase()} />
+              <DetailStat label="Ratio" value={task.ratio} />
+            </div>
           </CardContent>
         </Card>
         <div className="grid grid-cols-3 gap-2">
@@ -868,8 +985,68 @@ function SettingsPanel() {
             defaultValue="Generated on launch"
           />
         </div>
+        <section className="grid gap-3 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+          <div>
+            <div className="text-sm font-semibold text-white">Engine</div>
+            <div className="text-xs text-slate-500">Queue, speed, and concurrency controls</div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {engineProfiles.map(([label, value, detail]) => (
+              <Card key={label} className="border-white/10 bg-white/[0.03] shadow-none">
+                <CardContent className="p-3">
+                  <div className="text-xs text-slate-500">{label}</div>
+                  <div className="text-base font-semibold text-white">{value}</div>
+                  <div className="text-xs text-slate-500">{detail}</div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+        <section className="grid gap-3 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+          <div>
+            <div className="text-sm font-semibold text-white">BitTorrent</div>
+            <div className="text-xs text-slate-500">Tracker, DHT, and swarm discovery</div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {btOptions.map(([label, value, detail]) => (
+              <Card key={label} className="border-white/10 bg-white/[0.03] shadow-none">
+                <CardContent className="p-3">
+                  <div className="text-xs text-slate-500">{label}</div>
+                  <div className="text-base font-semibold text-white">{value}</div>
+                  <div className="text-xs text-slate-500">{detail}</div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+        <section className="grid gap-3 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+          <div>
+            <div className="text-sm font-semibold text-white">Integration</div>
+            <div className="text-xs text-slate-500">Browser, tray, and notifications</div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {integrationOptions.map(([label, value, detail]) => (
+              <Card key={label} className="border-white/10 bg-white/[0.03] shadow-none">
+                <CardContent className="p-3">
+                  <div className="text-xs text-slate-500">{label}</div>
+                  <div className="text-base font-semibold text-white">{value}</div>
+                  <div className="text-xs text-slate-500">{detail}</div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
       </CardContent>
     </Card>
+  )
+}
+
+function DetailStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-2">
+      <div className="text-[11px] uppercase tracking-wide text-slate-500">{label}</div>
+      <div className="mt-1 text-sm font-semibold text-white">{value}</div>
+    </div>
   )
 }
 

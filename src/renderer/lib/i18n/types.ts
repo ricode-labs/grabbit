@@ -162,17 +162,3 @@ export type Messages = {
   }
   languageOptions: Record<Locale, string>
 }
-
-type Primitive = string | number | boolean | null | undefined
-
-type Paths<T> = {
-  [K in keyof T & string]: T[K] extends Primitive
-    ? K
-    : T[K] extends Record<string, unknown>
-      ? K | `${K}.${Paths<T[K]>}`
-      : K
-}[keyof T & string]
-
-type TranslationKey = Paths<Messages>
-
-type Translator = (key: TranslationKey) => string
