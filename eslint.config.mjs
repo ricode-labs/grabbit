@@ -23,4 +23,10 @@ export default defineConfig([
       },
     },
   },
+  {
+    files: ['src/renderer/components/ui/**/*.{ts,tsx}', 'src/renderer/hooks/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])
