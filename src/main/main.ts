@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from "electron"
+import { app, BrowserWindow } from "electron"
 import path from "node:path"
 import started from "electron-squirrel-startup"
 
@@ -11,40 +11,11 @@ if (started) {
 
 registerDownloadApi()
 
-ipcMain.handle("window:minimize", (event) => {
-  BrowserWindow.fromWebContents(event.sender)?.minimize()
-})
-
-ipcMain.handle("window:toggle-maximize", (event) => {
-  const window = BrowserWindow.fromWebContents(event.sender)
-  if (!window) {
-    return false
-  }
-
-  if (window.isMaximized()) {
-    window.unmaximize()
-    return false
-  }
-
-  window.maximize()
-  return true
-})
-
-ipcMain.handle("window:close", (event) => {
-  BrowserWindow.fromWebContents(event.sender)?.close()
-})
-
 const createWindow = () => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 840,
-    minWidth: 1120,
-    minHeight: 720,
-    title: "Grabbit",
-    autoHideMenuBar: true,
-    backgroundColor: "#0f172a",
-    frame: false,
+    width: 800,
+    height: 600,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },
@@ -58,6 +29,9 @@ const createWindow = () => {
       path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
     )
   }
+
+  // Open the DevTools.
+  mainWindow.webContents.openDevTools()
 }
 
 // This method will be called when Electron has finished

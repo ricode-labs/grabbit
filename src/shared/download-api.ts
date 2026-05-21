@@ -198,16 +198,8 @@ export type DownloadApi = {
   resumeAll: () => Promise<"OK">
   getStatus: (gid: string, keys?: string[]) => Promise<DownloadTask>
   tellActive: (keys?: string[]) => Promise<DownloadTask[]>
-  tellWaiting: (
-    offset?: number,
-    count?: number,
-    keys?: string[]
-  ) => Promise<DownloadTask[]>
-  tellStopped: (
-    offset?: number,
-    count?: number,
-    keys?: string[]
-  ) => Promise<DownloadTask[]>
+  tellWaiting: (offset?: number, count?: number, keys?: string[]) => Promise<DownloadTask[]>
+  tellStopped: (offset?: number, count?: number, keys?: string[]) => Promise<DownloadTask[]>
   list: () => Promise<DownloadTask[]>
   getUris: (gid: string) => Promise<DownloadUri[]>
   getFiles: (gid: string) => Promise<DownloadFile[]>

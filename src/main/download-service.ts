@@ -5,13 +5,6 @@ import { mkdir } from "node:fs/promises"
 import path from "node:path"
 
 import {
-  loadUserAria2Options,
-  mergeAria2Options,
-  saveUserAria2Options,
-  toAria2Args,
-} from "./aria2-config"
-import { sanitizeTaskOptions } from "./sanitize"
-import {
   DOWNLOAD_API_CHANNELS,
   type AddMetalinkInput,
   type AddTorrentInput,
@@ -31,7 +24,6 @@ import {
   type DownloadVersion,
   type RawRpcInput,
 } from "../shared/download-api"
-import { ARIA2_ERROR_CODES } from "../shared/aria2-error-codes"
 
 type Aria2Uri = {
   uri?: string
@@ -164,7 +156,6 @@ class DownloadService {
   private process: ChildProcessWithoutNullStreams | null = null
   private secret = randomBytes(24).toString("hex")
   private startPromise: Promise<void> | null = null
-  private userOptions: Aria2Options = {}
 
   async startService() {
     await this.ensureStarted()
@@ -194,42 +185,27 @@ class DownloadService {
       throw new Error("At least one URI is required")
     }
 
-    const options = sanitizeTaskOptions(input.options)
-
     return this.call<string>(
       "aria2.addUri",
-      withOptionalPosition(
-        [input.uris, normalizeOptions(options)],
-        input.position
-      )
+      withOptionalPosition([input.uris, normalizeOptions(input.options)], input.position)
     )
   }
 
   async addTorrent(input: AddTorrentInput) {
-    const options = sanitizeTaskOptions({
-      "force-save": true,
-      ...input.options,
-    })
-
     return this.call<string>(
       "aria2.addTorrent",
       withOptionalPosition(
-        [input.torrentBase64, input.uris ?? [], normalizeOptions(options)],
+        [input.torrentBase64, input.uris ?? [], normalizeOptions(input.options)],
         input.position
       )
     )
   }
 
   async addMetalink(input: AddMetalinkInput) {
-    const options = sanitizeTaskOptions({
-      "force-save": true,
-      ...input.options,
-    })
-
     return this.call<string[]>(
       "aria2.addMetalink",
       withOptionalPosition(
-        [input.metalinkBase64, normalizeOptions(options)],
+        [input.metalinkBase64, normalizeOptions(input.options)],
         input.position
       )
     )
@@ -338,13 +314,7 @@ class DownloadService {
       "aria2.changeUri",
       input.position === undefined
         ? [input.gid, input.fileIndex, input.delUris, input.addUris]
-        : [
-            input.gid,
-            input.fileIndex,
-            input.delUris,
-            input.addUris,
-            input.position,
-          ]
+        : [input.gid, input.fileIndex, input.delUris, input.addUris, input.position]
     )
   }
 
@@ -353,10 +323,7 @@ class DownloadService {
   }
 
   async changeOption(gid: string, options: Aria2Options) {
-    return this.call<"OK">("aria2.changeOption", [
-      gid,
-      normalizeOptions(options),
-    ])
+    return this.call<"OK">("aria2.changeOption", [gid, normalizeOptions(options)])
   }
 
   async getGlobalOption() {
@@ -364,17 +331,7 @@ class DownloadService {
   }
 
   async changeGlobalOption(options: Aria2Options) {
-    const result = await this.call<"OK">("aria2.changeGlobalOption", [
-      normalizeOptions(options),
-    ])
-
-    this.userOptions = {
-      ...this.userOptions,
-      ...options,
-    }
-    await saveUserAria2Options(app.getPath("userData"), this.userOptions)
-
-    return result
+    return this.call<"OK">("aria2.changeGlobalOption", [normalizeOptions(options)])
   }
 
   async getGlobalStat() {
@@ -473,17 +430,17 @@ class DownloadService {
     const sessionDir = path.join(app.getPath("userData"), "aria2")
     const sessionFile = path.join(sessionDir, "session.txt")
     await mkdir(sessionDir, { recursive: true })
-    this.userOptions = await loadUserAria2Options(app.getPath("userData"))
-    const mergedOptions = mergeAria2Options(this.userOptions)
 
     this.process = spawn(getAria2Path(), [
-      ...toAria2Args(mergedOptions),
-      `--input-file=${sessionFile}`,
-      `--save-session=${sessionFile}`,
       "--enable-rpc=true",
-      "--rpc-listen-all=false",
       `--rpc-listen-port=${RPC_PORT}`,
       `--rpc-secret=${this.secret}`,
+      "--rpc-listen-all=false",
+      "--disable-ipv6=true",
+      "--continue=true",
+      `--input-file=${sessionFile}`,
+      `--save-session=${sessionFile}`,
+      "--save-session-interval=30",
     ])
 
     this.process.once("exit", () => {
@@ -523,9 +480,7 @@ async function waitForRpcReady(check: () => Promise<void>) {
     }
   }
 
-  throw lastError instanceof Error
-    ? lastError
-    : new Error("aria2 RPC did not start")
+  throw lastError instanceof Error ? lastError : new Error("aria2 RPC did not start")
 }
 
 function withOptionalPosition(params: unknown[], position: number | undefined) {
@@ -569,7 +524,7 @@ function normalizeTask(task: Aria2Task): DownloadTask {
     numPieces: toNumber(task.numPieces),
     connections: toNumber(task.connections),
     errorCode: task.errorCode,
-    errorMessage: getAria2ErrorMessage(task.errorCode, task.errorMessage),
+    errorMessage: task.errorMessage,
     followedBy: task.followedBy ?? [],
     following: task.following ?? null,
     belongsTo: task.belongsTo ?? null,
@@ -668,28 +623,10 @@ function toBoolean(value: string | undefined) {
   return value === "true"
 }
 
-function getAria2ErrorMessage(
-  errorCode: string | undefined,
-  errorMessage: string | undefined
-) {
-  if (!errorCode) {
-    return errorMessage
-  }
-
-  const mappedMessage = ARIA2_ERROR_CODES[errorCode]
-  if (!mappedMessage) {
-    return errorMessage
-  }
-
-  return errorMessage ? `${mappedMessage}: ${errorMessage}` : mappedMessage
-}
-
 export function registerDownloadApi() {
   const service = new DownloadService()
 
-  ipcMain.handle(DOWNLOAD_API_CHANNELS.startService, () =>
-    service.startService()
-  )
+  ipcMain.handle(DOWNLOAD_API_CHANNELS.startService, () => service.startService())
   ipcMain.handle(DOWNLOAD_API_CHANNELS.stopService, () => service.stopService())
   ipcMain.handle(DOWNLOAD_API_CHANNELS.restartService, () =>
     service.restartService()
