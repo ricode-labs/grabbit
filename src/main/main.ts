@@ -299,21 +299,6 @@ const isPathInside = (candidatePath: string, parentPath: string) => {
   return relativePath === "" || (!relativePath.startsWith("..") && !path.isAbsolute(relativePath))
 }
 
-const getTaskFilePaths = (task: Aria2Task) => {
-  const taskDir = path.resolve(task.dir || getFallbackDownloadDir())
-  const files = task.files ?? []
-
-  return Array.from(
-    new Set(
-      files
-        .map((file) => file.path.trim())
-        .filter(Boolean)
-        .map((filePath) => path.resolve(filePath))
-        .filter((filePath) => isPathInside(filePath, taskDir))
-    )
-  )
-}
-
 const deleteTaskFiles = async (task: Aria2Task): Promise<DeleteTaskFilesResult> => {
   const result: DeleteTaskFilesResult = {
     deleted: [],

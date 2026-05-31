@@ -149,6 +149,15 @@ function formatBytes(bytes: string | number | undefined) {
   return `${(value / 1024 ** index).toFixed(index === 0 ? 0 : 1)} ${units[index]}`
 }
 
+function getProgress(task: Aria2Task) {
+  const total = toNumber(task.totalLength)
+  if (total <= 0) {
+    return 0
+  }
+
+  return Math.min(100, Math.round((toNumber(task.completedLength) / total) * 100))
+}
+
 function describeDeleteFilesResult(result: DeleteTaskFilesResult | null) {
   if (!result) {
     return ""
@@ -166,6 +175,25 @@ function describeDeleteFilesResult(result: DeleteTaskFilesResult | null) {
   }
 
   return parts.length > 0 ? `，${parts.join("，")}` : "，没有可删除的本地文件"
+}
+
+function mergeDeleteResults(results: Array<DeleteTaskFilesResult | null>) {
+  const merged: DeleteTaskFilesResult = {
+    deleted: [],
+    skipped: [],
+    failed: [],
+  }
+
+  for (const result of results) {
+    if (!result) {
+      continue
+    }
+    merged.deleted.push(...result.deleted)
+    merged.skipped.push(...result.skipped)
+    merged.failed.push(...result.failed)
+  }
+
+  return merged.deleted.length > 0 || merged.skipped.length > 0 || merged.failed.length > 0 ? merged : null
 }
 
 export function App() {
@@ -299,10 +327,9 @@ export function App() {
       } else if (action === "restart") {
         await window.grabbit.restartTask(task, { dir: task.dir })
         setNotice({ tone: "success", message: "已重新添加任务" })
-      } else if (task.status === "complete" || task.status === "error" || task.status === "removed") {
-        await window.grabbit.removeTaskResult(task.gid)
       } else {
-        await window.grabbit.removeTask(task.gid)
+        await confirmRemoveTasks([task])
+        return
       }
 
       await loadTasks()
@@ -314,8 +341,41 @@ export function App() {
     }
   }
 
+  const confirmRemoveTasks = async (targets: Aria2Task[]) => {
+    try {
+      const results = []
+      for (const task of targets) {
+        const result = task.status === "complete" || task.status === "error" || task.status === "removed"
+          ? await window.grabbit.removeTaskResult(task, deleteFiles)
+          : await window.grabbit.removeTask(task, deleteFiles)
+        results.push(result)
+      }
+
+      setNotice({
+        tone: "success",
+        message: `已移除 ${targets.length} 个任务${describeDeleteFilesResult(mergeDeleteResults(results))}`,
+      })
+      setDeleteTarget(null)
+      setDeleteBatchTargets([])
+      setDeleteFiles(false)
+      setSelected(new Set())
+      await loadTasks()
+    } catch (error) {
+      setNotice({
+        tone: "error",
+        message: error instanceof Error ? error.message : "移除任务失败",
+      })
+    }
+  }
+
   const runBatchAction = async (action: "pause" | "resume" | "remove") => {
     const selectedTasks = tasks.filter((task) => selected.has(task.gid))
+    if (action === "remove") {
+      setDeleteBatchTargets(selectedTasks)
+      setDeleteFiles(false)
+      return
+    }
+
     for (const task of selectedTasks) {
       await runTaskAction(task, action)
     }
@@ -676,9 +736,10 @@ export function App() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={deleteTarget !== null} onOpenChange={(open) => {
+      <Dialog open={deleteTarget !== null || deleteBatchTargets.length > 0} onOpenChange={(open) => {
         if (!open) {
           setDeleteTarget(null)
+          setDeleteBatchTargets([])
           setDeleteFiles(false)
         }
       }}>
@@ -686,18 +747,30 @@ export function App() {
           <DialogHeader>
             <DialogTitle>确认移除任务？</DialogTitle>
             <DialogDescription>
-              {deleteTarget ? `将从列表中移除“${getTaskName(deleteTarget)}”。` : "将从列表中移除该任务。"}
+              {deleteBatchTargets.length > 0
+                ? `将从列表中移除选中的 ${deleteBatchTargets.length} 个任务。`
+                : deleteTarget
+                  ? `将从列表中移除“${getTaskName(deleteTarget)}”。`
+                  : "将从列表中移除该任务。"}
             </DialogDescription>
           </DialogHeader>
-          <div className="flex items-center space-x-2 rounded-lg border p-3">
-            <Checkbox id="delete-files" checked={deleteFiles} onCheckedChange={(checked) => setDeleteFiles(checked === true)} disabled />
-            <Label htmlFor="delete-files" className="text-sm text-muted-foreground">同时删除本地文件（aria2 RPC 不支持安全删除文件，暂不可用）</Label>
+          <div className="flex items-start space-x-2 rounded-lg border p-3">
+            <Checkbox id="delete-files" checked={deleteFiles} onCheckedChange={(checked) => setDeleteFiles(checked === true)} />
+            <div className="space-y-1">
+              <Label htmlFor="delete-files" className="text-sm">同时删除本地文件</Label>
+              <p className="text-xs text-muted-foreground">文件会被移动到系统回收站。为避免误删，仅处理 aria2 返回且位于任务保存目录内的文件，目录会跳过。</p>
+            </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>取消</Button>
+            <Button variant="outline" onClick={() => {
+              setDeleteTarget(null)
+              setDeleteBatchTargets([])
+              setDeleteFiles(false)
+            }}>取消</Button>
             <Button variant="destructive" onClick={() => {
-              if (deleteTarget) {
-                void runTaskAction(deleteTarget, "remove").then(() => setDeleteTarget(null))
+              const targets = deleteBatchTargets.length > 0 ? deleteBatchTargets : deleteTarget ? [deleteTarget] : []
+              if (targets.length > 0) {
+                void confirmRemoveTasks(targets)
               }
             }}>移除</Button>
           </DialogFooter>
