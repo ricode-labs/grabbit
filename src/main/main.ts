@@ -1,7 +1,9 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process"
 import { app, BrowserWindow, dialog, ipcMain, shell } from "electron"
+import fs from "node:fs/promises"
 import path from "node:path"
 import started from "electron-squirrel-startup"
+import { normalizeAria2Options, type GrabbitPreferences } from "../shared/grabbit"
 
 if (started) {
   app.quit()
@@ -60,15 +62,39 @@ const getAria2Executable = () => {
 }
 
 const getSessionPath = () => path.join(app.getPath("userData"), "aria2.session")
-const getDefaultDownloadDir = () => path.join(app.getPath("downloads"), "Grabbit")
+const getPreferencesPath = () => path.join(app.getPath("userData"), "preferences.json")
+const getFallbackDownloadDir = () => path.join(app.getPath("downloads"), "Grabbit")
 
-const startAria2 = () => {
+const readPreferences = async (): Promise<GrabbitPreferences> => {
+  try {
+    const raw = await fs.readFile(getPreferencesPath(), "utf8")
+    const preferences = JSON.parse(raw) as Partial<GrabbitPreferences>
+    return {
+      downloadDir: preferences.downloadDir || getFallbackDownloadDir(),
+    }
+  } catch {
+    return {
+      downloadDir: getFallbackDownloadDir(),
+    }
+  }
+}
+
+const writePreferences = async (preferences: GrabbitPreferences) => {
+  await fs.mkdir(app.getPath("userData"), { recursive: true })
+  await fs.writeFile(getPreferencesPath(), JSON.stringify(preferences, null, 2), "utf8")
+  return preferences
+}
+
+const getDefaultDownloadDir = async () => (await readPreferences()).downloadDir
+
+const startAria2 = async () => {
   if (aria2Process) {
     return
   }
 
   const aria2Path = getAria2Executable()
-  const downloadDir = getDefaultDownloadDir()
+  const downloadDir = await getDefaultDownloadDir()
+  await fs.mkdir(downloadDir, { recursive: true })
   const sessionPath = getSessionPath()
 
   aria2Process = spawn(
@@ -146,22 +172,7 @@ const callAria2 = async <T = unknown>(
   return data.result
 }
 
-const normalizeOptions = (
-  options: AddTaskPayload["options"] = {}
-): Record<string, string> => {
-  const result: Record<string, string> = {}
-
-  for (const [key, value] of Object.entries(options)) {
-    if (value === undefined || value === "") {
-      continue
-    }
-
-    const kebabKey = key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)
-    result[kebabKey] = String(value)
-  }
-
-  return result
-}
+const normalizeOptions = normalizeAria2Options
 
 const fetchTasks = async (status: "active" | "waiting" | "stopped") => {
   const keys = [
@@ -214,7 +225,7 @@ const createWindow = () => {
 }
 
 app.on("ready", () => {
-  startAria2()
+  void startAria2()
   createWindow()
 })
 
@@ -258,11 +269,15 @@ ipcMain.handle("tasks:resume-all", () => callAria2("aria2.unpauseAll"))
 ipcMain.handle("app:select-directory", async () => {
   const window = BrowserWindow.getFocusedWindow() ?? mainWindow
   const result = await dialog.showOpenDialog(window!, {
-    defaultPath: getDefaultDownloadDir(),
+    defaultPath: await getDefaultDownloadDir(),
     properties: ["openDirectory", "createDirectory"],
   })
 
   return result.canceled ? null : result.filePaths[0]
 })
 ipcMain.handle("app:open-path", (_event, targetPath: string) => shell.openPath(targetPath))
+ipcMain.handle("app:get-preferences", () => readPreferences())
+ipcMain.handle("app:set-preferences", (_event, preferences: GrabbitPreferences) =>
+  writePreferences(preferences)
+)
 ipcMain.handle("app:get-default-dir", () => getDefaultDownloadDir())

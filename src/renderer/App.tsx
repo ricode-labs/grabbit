@@ -45,6 +45,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
+import { buildAddTaskOptions, type AddTaskForm, type GrabbitPreferences } from "../shared/grabbit"
 import type { Aria2Task, TaskListStatus, TaskStatus } from "../preload/preload"
 
 type Page = "tasks" | "preferences" | "about"
@@ -52,19 +53,6 @@ type Page = "tasks" | "preferences" | "about"
 type Notice = {
   tone: "success" | "error" | "info"
   message: string
-}
-
-type AddTaskForm = {
-  uris: string
-  out: string
-  split: number
-  dir: string
-  userAgent: string
-  authorization: string
-  referer: string
-  cookie: string
-  allProxy: string
-  showDownloading: boolean
 }
 
 const initialForm: AddTaskForm = {
@@ -138,23 +126,6 @@ function getProgress(task: Aria2Task) {
   return Math.min(100, Math.round((toNumber(task.completedLength) / total) * 100))
 }
 
-function buildOptions(form: AddTaskForm) {
-  return {
-    out: form.out,
-    split: form.split,
-    dir: form.dir,
-    userAgent: form.userAgent,
-    header: [
-      form.authorization ? `Authorization: ${form.authorization}` : "",
-      form.referer ? `Referer: ${form.referer}` : "",
-      form.cookie ? `Cookie: ${form.cookie}` : "",
-    ]
-      .filter(Boolean)
-      .join("\n"),
-    allProxy: form.allProxy,
-  }
-}
-
 export function App() {
   const [page, setPage] = useState<Page>("tasks")
   const [status, setStatus] = useState<TaskListStatus>("active")
@@ -163,6 +134,7 @@ export function App() {
   const [addOpen, setAddOpen] = useState(false)
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [form, setForm] = useState<AddTaskForm>(initialForm)
+  const [preferences, setPreferences] = useState<GrabbitPreferences | null>(null)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [notice, setNotice] = useState<Notice | null>(null)
   const [addTaskError, setAddTaskError] = useState<string | null>(null)
@@ -183,8 +155,9 @@ export function App() {
   }, [status])
 
   useEffect(() => {
-    void window.grabbit.getDefaultDir().then((dir) => {
-      setForm((current) => ({ ...current, dir }))
+    void window.grabbit.getPreferences().then((nextPreferences) => {
+      setPreferences(nextPreferences)
+      setForm((current) => ({ ...current, dir: nextPreferences.downloadDir }))
     })
   }, [])
 
@@ -214,7 +187,7 @@ export function App() {
     }
 
     try {
-      await window.grabbit.addUri({ uris, options: buildOptions(form) })
+      await window.grabbit.addUri({ uris, options: buildAddTaskOptions(form) })
       setAddTaskError(null)
       setNotice({ tone: "success", message: "任务已添加" })
       setAddOpen(false)
@@ -261,6 +234,27 @@ export function App() {
     const directory = await window.grabbit.selectDirectory()
     if (directory) {
       setForm((current) => ({ ...current, dir: directory }))
+    }
+  }
+
+  const savePreferences = async (nextPreferences: GrabbitPreferences) => {
+    try {
+      const savedPreferences = await window.grabbit.setPreferences(nextPreferences)
+      setPreferences(savedPreferences)
+      setForm((current) => ({ ...current, dir: savedPreferences.downloadDir }))
+      setNotice({ tone: "success", message: "偏好设置已保存，新任务会使用新的默认目录" })
+    } catch (error) {
+      setNotice({
+        tone: "error",
+        message: error instanceof Error ? error.message : "保存偏好设置失败",
+      })
+    }
+  }
+
+  const chooseDefaultDirectory = async () => {
+    const directory = await window.grabbit.selectDirectory()
+    if (directory) {
+      await savePreferences({ downloadDir: directory })
     }
   }
 
@@ -352,7 +346,14 @@ export function App() {
         </main>
       ) : null}
 
-      {page === "preferences" ? <PreferencesPage /> : null}
+      {page === "preferences" ? (
+        <PreferencesPage
+          preferences={preferences}
+          onChange={setPreferences}
+          onSave={savePreferences}
+          onChooseDirectory={chooseDefaultDirectory}
+        />
+      ) : null}
       {page === "about" ? <AboutPage /> : null}
 
       <Speedometer speed={totalSpeed} activeCount={tasks.filter((task) => task.status === "active").length} />
@@ -653,7 +654,19 @@ function LabeledTextarea({ id, label, value, onChange }: { id: string; label: st
   )
 }
 
-function PreferencesPage() {
+function PreferencesPage({
+  preferences,
+  onChange,
+  onSave,
+  onChooseDirectory,
+}: {
+  preferences: GrabbitPreferences | null
+  onChange: (preferences: GrabbitPreferences) => void
+  onSave: (preferences: GrabbitPreferences) => Promise<void>
+  onChooseDirectory: () => Promise<void>
+}) {
+  const currentPreferences = preferences ?? { downloadDir: "" }
+
   return (
     <main className="flex flex-1 flex-col bg-muted/30">
       <header className="flex h-[84px] items-center border-b bg-background px-6">
@@ -665,6 +678,28 @@ function PreferencesPage() {
             <div>
               <h2 className="font-medium">下载引擎</h2>
               <p className="text-sm text-muted-foreground">Grabbit 启动内置 aria2c，并通过 JSON-RPC 管理下载任务。</p>
+            </div>
+            <Separator />
+            <div className="space-y-2">
+              <Label htmlFor="default-download-dir">默认保存目录</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="default-download-dir"
+                  placeholder="默认下载目录"
+                  value={currentPreferences.downloadDir}
+                  onChange={(event) => onChange({ downloadDir: event.target.value })}
+                />
+                <Button variant="outline" onClick={() => void onChooseDirectory()}>
+                  <Folder />
+                  选择
+                </Button>
+                <Button onClick={() => void onSave(currentPreferences)} disabled={!currentPreferences.downloadDir.trim()}>
+                  保存
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                新建任务会默认使用这个目录。直接编辑路径后点击保存即可持久化。
+              </p>
             </div>
             <Separator />
             <div className="grid gap-3 text-sm md:grid-cols-2">

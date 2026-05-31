@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron"
+import type { GrabbitPreferences } from "../shared/grabbit"
 
 export type TaskStatus = "active" | "waiting" | "paused" | "complete" | "error" | "removed"
 
@@ -43,6 +44,10 @@ export const grabbitApi = {
   selectDirectory: () => ipcRenderer.invoke("app:select-directory") as Promise<string | null>,
   openPath: (targetPath: string) =>
     ipcRenderer.invoke("app:open-path", targetPath) as Promise<string>,
+  getPreferences: () =>
+    ipcRenderer.invoke("app:get-preferences") as Promise<GrabbitPreferences>,
+  setPreferences: (preferences: GrabbitPreferences) =>
+    ipcRenderer.invoke("app:set-preferences", preferences) as Promise<GrabbitPreferences>,
   getDefaultDir: () => ipcRenderer.invoke("app:get-default-dir") as Promise<string>,
 }
 
