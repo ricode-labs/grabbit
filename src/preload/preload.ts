@@ -1,2 +1,49 @@
-// See the Electron documentation for details on how to use preload scripts:
-// https://www.electronjs.org/docs/latest/tutorial/process-model#preload-scripts
+import { contextBridge, ipcRenderer } from "electron"
+
+export type TaskStatus = "active" | "waiting" | "paused" | "complete" | "error" | "removed"
+
+export type Aria2File = {
+  path: string
+  length: string
+  completedLength: string
+  selected: string
+}
+
+export type Aria2Task = {
+  gid: string
+  status: TaskStatus
+  totalLength: string
+  completedLength: string
+  downloadSpeed: string
+  uploadSpeed: string
+  connections: string
+  dir: string
+  files?: Aria2File[]
+}
+
+export type TaskListStatus = "active" | "waiting" | "stopped"
+
+export type AddTaskPayload = {
+  uris: string[]
+  options?: Record<string, string | number | boolean | undefined>
+}
+
+export const grabbitApi = {
+  listTasks: (status: TaskListStatus) =>
+    ipcRenderer.invoke("tasks:list", status) as Promise<Aria2Task[]>,
+  addUri: (payload: AddTaskPayload) =>
+    ipcRenderer.invoke("tasks:add-uri", payload) as Promise<string[]>,
+  pauseTask: (gid: string) => ipcRenderer.invoke("tasks:pause", gid) as Promise<unknown>,
+  resumeTask: (gid: string) => ipcRenderer.invoke("tasks:resume", gid) as Promise<unknown>,
+  removeTask: (gid: string) => ipcRenderer.invoke("tasks:remove", gid) as Promise<unknown>,
+  removeTaskResult: (gid: string) =>
+    ipcRenderer.invoke("tasks:remove-result", gid) as Promise<unknown>,
+  pauseAll: () => ipcRenderer.invoke("tasks:pause-all") as Promise<unknown>,
+  resumeAll: () => ipcRenderer.invoke("tasks:resume-all") as Promise<unknown>,
+  selectDirectory: () => ipcRenderer.invoke("app:select-directory") as Promise<string | null>,
+  openPath: (targetPath: string) =>
+    ipcRenderer.invoke("app:open-path", targetPath) as Promise<string>,
+  getDefaultDir: () => ipcRenderer.invoke("app:get-default-dir") as Promise<string>,
+}
+
+contextBridge.exposeInMainWorld("grabbit", grabbitApi)
