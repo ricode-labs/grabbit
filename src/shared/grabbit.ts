@@ -249,11 +249,38 @@ export function buildGlobalAria2Options(preferences: GrabbitPreferences) {
   })
 }
 
+export function thunderLinkToUri(link: string): string | null {
+  const payload = link.replace(/^thunder:\/\//i, "").trim()
+
+  if (!payload) {
+    return null
+  }
+
+  try {
+    const decoded = Buffer.from(payload, "base64").toString("utf8")
+    const match = decoded.match(/^AA([\s\S]+)ZZ$/)
+    const uri = (match?.[1] ?? decoded).trim()
+    return /^(https?|ftp):\/\//i.test(uri) || /^magnet:\?/i.test(uri) ? uri : null
+  } catch {
+    return null
+  }
+}
+
+export function normalizeTaskLink(value: string): string | null {
+  const link = value.trim()
+
+  if (/^thunder:\/\//i.test(link)) {
+    return thunderLinkToUri(link)
+  }
+
+  return /^(https?|ftp):\/\//i.test(link) || /^magnet:\?/i.test(link) ? link : null
+}
+
 export function splitTaskLinks(input: string) {
   return input
     .split(/[\s\n]+/)
-    .map((value) => value.trim())
-    .filter((value) => /^(https?|ftp):\/\//i.test(value) || /^magnet:\?/i.test(value))
+    .map(normalizeTaskLink)
+    .filter((value): value is string => Boolean(value))
 }
 
 function tokenizeCommand(command: string) {

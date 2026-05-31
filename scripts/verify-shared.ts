@@ -11,6 +11,7 @@ import {
   normalizeTaskSchedulerRule,
   parseCurlCommand,
   splitTaskLinks,
+  thunderLinkToUri,
   type AddTaskForm,
 } from "../src/shared/grabbit"
 
@@ -62,9 +63,21 @@ assert.deepEqual(
   }
 )
 
+const thunderHttp = "thunder://QUFodHRwczovL2V4YW1wbGUuY29tL3RodW5kZXIuemlwWlo="
+const thunderFtp = "thunder://QUFmdHA6Ly9leGFtcGxlLmNvbS9iLmlzb1pa"
+
+assert.equal(thunderLinkToUri(thunderHttp), "https://example.com/thunder.zip")
+assert.equal(thunderLinkToUri("thunder://not-base64"), null)
+
 assert.deepEqual(
-  splitTaskLinks("https://example.com/a.zip\n magnet:?xt=urn:btih:abc ftp://example.com/b.iso"),
-  ["https://example.com/a.zip", "magnet:?xt=urn:btih:abc", "ftp://example.com/b.iso"]
+  splitTaskLinks(`https://example.com/a.zip\n ${thunderHttp} ${thunderFtp} magnet:?xt=urn:btih:abc ftp://example.com/b.iso`),
+  [
+    "https://example.com/a.zip",
+    "https://example.com/thunder.zip",
+    "ftp://example.com/b.iso",
+    "magnet:?xt=urn:btih:abc",
+    "ftp://example.com/b.iso",
+  ]
 )
 
 assert.deepEqual(parseCurlCommand("curl 'https://example.com/file.zip' -H 'Referer: https://example.com' -H 'Cookie: a=b' -A 'Agent/1.0' -o out.zip"), {
