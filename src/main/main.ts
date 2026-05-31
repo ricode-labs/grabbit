@@ -3,7 +3,16 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from "electron"
 import fs from "node:fs/promises"
 import path from "node:path"
 import started from "electron-squirrel-startup"
-import { normalizeAria2Options, buildGlobalAria2Options, defaultGrabbitPreferences, type GrabbitPreferences } from "../shared/grabbit"
+import {
+  buildGlobalAria2Options,
+  buildSchedulerGlobalOptions,
+  defaultGrabbitPreferences,
+  defaultTaskSchedulerRule,
+  normalizeAria2Options,
+  normalizeTaskSchedulerRule,
+  type GrabbitPreferences,
+  type TaskSchedulerRule,
+} from "../shared/grabbit"
 
 if (started) {
   app.quit()
@@ -60,12 +69,19 @@ type RestartTaskPayload = {
   options?: Record<string, string | number | boolean | undefined>
 }
 
+type DeleteTaskFilesResult = {
+  deleted: string[]
+  skipped: Array<{ path: string; reason: string }>
+  failed: Array<{ path: string; error: string }>
+}
+
 const RPC_PORT = 16800
 const RPC_SECRET = "grabbit"
 const RPC_URL = `http://127.0.0.1:${RPC_PORT}/jsonrpc`
 
 let mainWindow: BrowserWindow | null = null
 let aria2Process: ChildProcessWithoutNullStreams | null = null
+let schedulerTimer: NodeJS.Timeout | null = null
 
 const getAria2Executable = () => {
   if (app.isPackaged) {
@@ -77,6 +93,7 @@ const getAria2Executable = () => {
 
 const getSessionPath = () => path.join(app.getPath("userData"), "aria2.session")
 const getPreferencesPath = () => path.join(app.getPath("userData"), "preferences.json")
+const getSchedulerPath = () => path.join(app.getPath("userData"), "scheduler.json")
 const getFallbackDownloadDir = () => path.join(app.getPath("downloads"), "Grabbit")
 
 const readPreferences = async (): Promise<GrabbitPreferences> => {
@@ -124,6 +141,53 @@ const writePreferences = async (preferences: GrabbitPreferences) => {
   return nextPreferences
 }
 
+const readSchedulerRule = async (): Promise<TaskSchedulerRule> => {
+  try {
+    const raw = await fs.readFile(getSchedulerPath(), "utf8")
+    return normalizeTaskSchedulerRule(JSON.parse(raw) as Partial<TaskSchedulerRule>)
+  } catch {
+    return defaultTaskSchedulerRule()
+  }
+}
+
+const writeSchedulerRule = async (rule: TaskSchedulerRule) => {
+  const nextRule = normalizeTaskSchedulerRule(rule)
+  await fs.mkdir(app.getPath("userData"), { recursive: true })
+  await fs.writeFile(getSchedulerPath(), JSON.stringify(nextRule, null, 2), "utf8")
+  await applySchedulerRule()
+  return nextRule
+}
+
+const applySchedulerRule = async () => {
+  if (!aria2Process) {
+    return
+  }
+
+  const [preferences, schedulerRule] = await Promise.all([readPreferences(), readSchedulerRule()])
+  const nextOptions = buildSchedulerGlobalOptions(schedulerRule, preferences)
+
+  await callAria2("aria2.changeGlobalOption", [nextOptions])
+}
+
+const ensureSchedulerTimer = () => {
+  if (schedulerTimer) {
+    return
+  }
+
+  schedulerTimer = setInterval(() => {
+    void applySchedulerRule().catch((error) => {
+      console.error("Failed to apply scheduler rule", error)
+    })
+  }, 60_000)
+}
+
+const clearSchedulerTimer = () => {
+  if (schedulerTimer) {
+    clearInterval(schedulerTimer)
+    schedulerTimer = null
+  }
+}
+
 const getDefaultDownloadDir = async () => (await readPreferences()).downloadDir
 
 const startAria2 = async () => {
@@ -133,11 +197,15 @@ const startAria2 = async () => {
 
   const aria2Path = getAria2Executable()
   const preferences = await readPreferences()
+  const schedulerRule = await readSchedulerRule()
   const downloadDir = preferences.downloadDir
   await fs.mkdir(downloadDir, { recursive: true })
   await fs.mkdir(app.getPath("userData"), { recursive: true })
   const sessionPath = getSessionPath()
-  const globalOptions = buildGlobalAria2Options(preferences)
+  const globalOptions = {
+    ...buildGlobalAria2Options(preferences),
+    ...buildSchedulerGlobalOptions(schedulerRule, preferences),
+  }
 
   aria2Process = spawn(
     aria2Path,
@@ -172,6 +240,8 @@ const startAria2 = async () => {
   aria2Process.stderr.on("data", (chunk) => {
     console.error(`[aria2] ${chunk}`)
   })
+
+  ensureSchedulerTimer()
 }
 
 const stopAria2 = async () => {
@@ -187,6 +257,7 @@ const stopAria2 = async () => {
 
   aria2Process.kill()
   aria2Process = null
+  clearSchedulerTimer()
 }
 
 const callAria2 = async <T = unknown>(
@@ -220,6 +291,87 @@ const callAria2 = async <T = unknown>(
 
 const normalizeOptions = normalizeAria2Options
 
+const isStoppedTask = (task: Pick<Aria2Task, "status">) =>
+  task.status === "complete" || task.status === "error" || task.status === "removed"
+
+const isPathInside = (candidatePath: string, parentPath: string) => {
+  const relativePath = path.relative(parentPath, candidatePath)
+  return relativePath === "" || (!relativePath.startsWith("..") && !path.isAbsolute(relativePath))
+}
+
+const getTaskFilePaths = (task: Aria2Task) => {
+  const taskDir = path.resolve(task.dir || getFallbackDownloadDir())
+  const files = task.files ?? []
+
+  return Array.from(
+    new Set(
+      files
+        .map((file) => file.path.trim())
+        .filter(Boolean)
+        .map((filePath) => path.resolve(filePath))
+        .filter((filePath) => isPathInside(filePath, taskDir))
+    )
+  )
+}
+
+const deleteTaskFiles = async (task: Aria2Task): Promise<DeleteTaskFilesResult> => {
+  const result: DeleteTaskFilesResult = {
+    deleted: [],
+    skipped: [],
+    failed: [],
+  }
+  const taskDir = path.resolve(task.dir || getFallbackDownloadDir())
+  const rawPaths = Array.from(new Set(task.files?.map((file) => file.path.trim()).filter(Boolean) ?? []))
+
+  if (rawPaths.length === 0) {
+    result.skipped.push({ path: taskDir, reason: "这个任务没有可删除的本地文件路径" })
+    return result
+  }
+
+  for (const rawPath of rawPaths) {
+    const filePath = path.resolve(rawPath)
+
+    if (!isPathInside(filePath, taskDir)) {
+      result.skipped.push({ path: rawPath, reason: "文件路径不在任务保存目录内，已跳过" })
+      continue
+    }
+
+    try {
+      const stats = await fs.stat(filePath)
+      if (stats.isDirectory()) {
+        result.skipped.push({ path: filePath, reason: "为避免误删目录，仅移入任务文件" })
+        continue
+      }
+
+      await shell.trashItem(filePath)
+      result.deleted.push(filePath)
+    } catch (error) {
+      const nodeError = error as NodeJS.ErrnoException
+      if (nodeError.code === "ENOENT") {
+        result.skipped.push({ path: filePath, reason: "文件不存在" })
+      } else {
+        result.failed.push({ path: filePath, error: error instanceof Error ? error.message : "删除失败" })
+      }
+    }
+  }
+
+  return result
+}
+
+const removeTask = async (task: Aria2Task, deleteFiles = false) => {
+  if (isStoppedTask(task)) {
+    await callAria2("aria2.removeDownloadResult", [task.gid])
+  } else {
+    await callAria2("aria2.remove", [task.gid])
+  }
+
+  if (!deleteFiles) {
+    return null
+  }
+
+  return deleteTaskFiles(task)
+}
+
 const fetchTasks = async (status: "active" | "waiting" | "stopped") => {
   const keys = [
     "gid",
@@ -235,12 +387,7 @@ const fetchTasks = async (status: "active" | "waiting" | "stopped") => {
   ]
 
   if (status === "active") {
-    const [active, waiting] = await Promise.all([
-      callAria2<Aria2Task[]>("aria2.tellActive", [keys]),
-      callAria2<Aria2Task[]>("aria2.tellWaiting", [0, 100, keys]),
-    ])
-
-    return [...active, ...waiting]
+    return callAria2<Aria2Task[]>("aria2.tellActive", [keys])
   }
 
   if (status === "waiting") {
@@ -340,10 +487,21 @@ ipcMain.handle("app:select-torrent", async () => {
 
 ipcMain.handle("tasks:pause", (_event, gid: string) => callAria2("aria2.pause", [gid]))
 ipcMain.handle("tasks:resume", (_event, gid: string) => callAria2("aria2.unpause", [gid]))
-ipcMain.handle("tasks:remove", (_event, gid: string) => callAria2("aria2.remove", [gid]))
-ipcMain.handle("tasks:remove-result", (_event, gid: string) =>
-  callAria2("aria2.removeDownloadResult", [gid])
-)
+ipcMain.handle("tasks:remove", (_event, taskOrGid: Aria2Task | string, deleteFiles = false) => {
+  if (typeof taskOrGid === "string") {
+    return callAria2("aria2.remove", [taskOrGid])
+  }
+
+  return removeTask(taskOrGid, deleteFiles)
+})
+ipcMain.handle("tasks:remove-result", (_event, taskOrGid: Aria2Task | string, deleteFiles = false) => {
+  if (typeof taskOrGid === "string") {
+    return callAria2("aria2.removeDownloadResult", [taskOrGid])
+  }
+
+  return removeTask(taskOrGid, deleteFiles)
+})
+ipcMain.handle("tasks:delete-files", (_event, task: Aria2Task) => deleteTaskFiles(task))
 ipcMain.handle("tasks:pause-all", () => callAria2("aria2.pauseAll"))
 ipcMain.handle("tasks:resume-all", () => callAria2("aria2.unpauseAll"))
 ipcMain.handle("app:select-directory", async () => {
@@ -355,9 +513,23 @@ ipcMain.handle("app:select-directory", async () => {
 
   return result.canceled ? null : result.filePaths[0]
 })
-ipcMain.handle("app:open-path", (_event, targetPath: string) => shell.openPath(targetPath))
+ipcMain.handle("app:open-path", async (_event, targetPath: string) => {
+  if (!targetPath) {
+    return ""
+  }
+
+  const stats = await fs.stat(targetPath).catch(() => null)
+  if (stats?.isFile()) {
+    shell.showItemInFolder(targetPath)
+    return ""
+  }
+
+  return shell.openPath(targetPath)
+})
 ipcMain.handle("app:get-preferences", () => readPreferences())
 ipcMain.handle("app:set-preferences", (_event, preferences: GrabbitPreferences) =>
   writePreferences(preferences)
 )
+ipcMain.handle("app:get-scheduler", () => readSchedulerRule())
+ipcMain.handle("app:set-scheduler", (_event, rule: TaskSchedulerRule) => writeSchedulerRule(rule))
 ipcMain.handle("app:get-default-dir", () => getDefaultDownloadDir())

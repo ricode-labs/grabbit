@@ -9,6 +9,18 @@ export type GrabbitPreferences = {
   allProxy: string
 }
 
+export type SchedulerSpeedMode = "manual" | "unlimited"
+
+export type TaskSchedulerRule = {
+  enabled: boolean
+  speedMode: SchedulerSpeedMode
+  downloadLimit: string
+  uploadLimit: string
+  startTime: string
+  endTime: string
+  repeatDays: number[]
+}
+
 export type AddTaskForm = {
   uris: string
   torrentPath: string
@@ -43,6 +55,92 @@ export function defaultGrabbitPreferences(downloadDir: string): GrabbitPreferenc
     continueDownloads: true,
     allProxy: "",
   }
+}
+
+const fullWeekDays = [1, 2, 3, 4, 5, 6, 0]
+
+export function defaultTaskSchedulerRule(): TaskSchedulerRule {
+  return {
+    enabled: false,
+    speedMode: "manual",
+    downloadLimit: "0",
+    uploadLimit: "0",
+    startTime: "00:00",
+    endTime: "23:59",
+    repeatDays: fullWeekDays,
+  }
+}
+
+const timePattern = /^([01]\d|2[0-3]):([0-5]\d)$/
+
+export function normalizeTaskSchedulerRule(
+  rule: Partial<TaskSchedulerRule> | null | undefined
+): TaskSchedulerRule {
+  const defaults = defaultTaskSchedulerRule()
+  const repeatDays = Array.from(
+    new Set(
+      (rule?.repeatDays ?? defaults.repeatDays)
+        .map((day) => Number(day))
+        .filter((day) => Number.isInteger(day) && day >= 0 && day <= 6)
+    )
+  )
+
+  return {
+    enabled: rule?.enabled ?? defaults.enabled,
+    speedMode: rule?.speedMode === "unlimited" ? "unlimited" : "manual",
+    downloadLimit: rule?.downloadLimit ?? defaults.downloadLimit,
+    uploadLimit: rule?.uploadLimit ?? defaults.uploadLimit,
+    startTime: rule?.startTime && timePattern.test(rule.startTime) ? rule.startTime : defaults.startTime,
+    endTime: rule?.endTime && timePattern.test(rule.endTime) ? rule.endTime : defaults.endTime,
+    repeatDays: repeatDays.length > 0 ? repeatDays : defaults.repeatDays,
+  }
+}
+
+const minutesOfDay = (time: string) => {
+  const [hours, minutes] = time.split(":").map(Number)
+  return hours * 60 + minutes
+}
+
+export function isSchedulerRuleActive(rule: TaskSchedulerRule, now = new Date()) {
+  if (!rule.enabled || !rule.repeatDays.includes(now.getDay())) {
+    return false
+  }
+
+  const start = minutesOfDay(rule.startTime)
+  const end = minutesOfDay(rule.endTime)
+  const current = now.getHours() * 60 + now.getMinutes()
+
+  if (start === end) {
+    return true
+  }
+
+  if (start < end) {
+    return current >= start && current <= end
+  }
+
+  return current >= start || current <= end
+}
+
+export function buildSchedulerGlobalOptions(
+  rule: TaskSchedulerRule,
+  preferences: GrabbitPreferences,
+  now = new Date()
+) {
+  if (!isSchedulerRuleActive(rule, now)) {
+    return buildGlobalAria2Options(preferences)
+  }
+
+  if (rule.speedMode === "unlimited") {
+    return normalizeAria2Options({
+      maxOverallDownloadLimit: "0",
+      maxOverallUploadLimit: "0",
+    })
+  }
+
+  return normalizeAria2Options({
+    maxOverallDownloadLimit: rule.downloadLimit,
+    maxOverallUploadLimit: rule.uploadLimit,
+  })
 }
 
 export function normalizeAria2Options(

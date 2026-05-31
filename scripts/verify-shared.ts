@@ -2,8 +2,12 @@ import assert from "node:assert/strict"
 import {
   buildAddTaskOptions,
   buildGlobalAria2Options,
+  buildSchedulerGlobalOptions,
   defaultGrabbitPreferences,
+  defaultTaskSchedulerRule,
+  isSchedulerRuleActive,
   normalizeAria2Options,
+  normalizeTaskSchedulerRule,
   parseCurlCommand,
   splitTaskLinks,
   type AddTaskForm,
@@ -91,6 +95,82 @@ assert.deepEqual(
     "max-overall-upload-limit": "512K",
     continue: "false",
     "all-proxy": "http://proxy.local:8080",
+  }
+)
+
+const invalidScheduler = normalizeTaskSchedulerRule({
+  enabled: true,
+  speedMode: "manual",
+  downloadLimit: "256K",
+  uploadLimit: "128K",
+  startTime: "99:00",
+  endTime: "18:00",
+  repeatDays: [-1, 1, 1, 8, 5],
+})
+
+assert.deepEqual(invalidScheduler, {
+  ...defaultTaskSchedulerRule(),
+  enabled: true,
+  downloadLimit: "256K",
+  uploadLimit: "128K",
+  endTime: "18:00",
+  repeatDays: [1, 5],
+})
+
+const weekdayRule = normalizeTaskSchedulerRule({
+  enabled: true,
+  startTime: "09:00",
+  endTime: "18:00",
+  repeatDays: [1, 2, 3, 4, 5],
+})
+
+assert.equal(isSchedulerRuleActive(weekdayRule, new Date("2026-06-01T10:00:00")), true)
+assert.equal(isSchedulerRuleActive(weekdayRule, new Date("2026-06-01T19:00:00")), false)
+assert.equal(isSchedulerRuleActive(weekdayRule, new Date("2026-06-07T10:00:00")), false)
+
+const nightRule = normalizeTaskSchedulerRule({
+  enabled: true,
+  startTime: "22:00",
+  endTime: "06:00",
+  repeatDays: [1],
+})
+assert.equal(isSchedulerRuleActive(nightRule, new Date("2026-06-01T23:00:00")), true)
+assert.equal(isSchedulerRuleActive(nightRule, new Date("2026-06-01T12:00:00")), false)
+
+assert.deepEqual(
+  buildSchedulerGlobalOptions(
+    normalizeTaskSchedulerRule({
+      enabled: true,
+      downloadLimit: "300K",
+      uploadLimit: "100K",
+      startTime: "09:00",
+      endTime: "18:00",
+      repeatDays: [1],
+    }),
+    defaultGrabbitPreferences("/downloads"),
+    new Date("2026-06-01T12:00:00")
+  ),
+  {
+    "max-overall-download-limit": "300K",
+    "max-overall-upload-limit": "100K",
+  }
+)
+
+assert.deepEqual(
+  buildSchedulerGlobalOptions(
+    normalizeTaskSchedulerRule({
+      enabled: true,
+      speedMode: "unlimited",
+      startTime: "09:00",
+      endTime: "18:00",
+      repeatDays: [1],
+    }),
+    defaultGrabbitPreferences("/downloads"),
+    new Date("2026-06-01T12:00:00")
+  ),
+  {
+    "max-overall-download-limit": "0",
+    "max-overall-upload-limit": "0",
   }
 )
 

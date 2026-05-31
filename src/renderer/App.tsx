@@ -19,6 +19,7 @@ import {
   Play,
   Plus,
   RotateCw,
+  Search,
   Settings,
   Trash2,
   X,
@@ -53,12 +54,15 @@ import { Textarea } from "@/components/ui/textarea"
 import {
   buildAddTaskOptions,
   defaultGrabbitPreferences,
+  defaultTaskSchedulerRule,
   parseCurlCommand,
   splitTaskLinks,
   type AddTaskForm,
   type GrabbitPreferences,
+  type SchedulerSpeedMode,
+  type TaskSchedulerRule,
 } from "../shared/grabbit"
-import type { Aria2Task, TaskListStatus, TaskStatus } from "../preload/preload"
+import type { Aria2Task, DeleteTaskFilesResult, TaskListStatus, TaskStatus } from "../preload/preload"
 
 type Page = "tasks" | "preferences" | "about"
 
@@ -145,13 +149,23 @@ function formatBytes(bytes: string | number | undefined) {
   return `${(value / 1024 ** index).toFixed(index === 0 ? 0 : 1)} ${units[index]}`
 }
 
-function getProgress(task: Aria2Task) {
-  const total = toNumber(task.totalLength)
-  if (total <= 0) {
-    return 0
+function describeDeleteFilesResult(result: DeleteTaskFilesResult | null) {
+  if (!result) {
+    return ""
   }
 
-  return Math.min(100, Math.round((toNumber(task.completedLength) / total) * 100))
+  const parts = []
+  if (result.deleted.length > 0) {
+    parts.push(`已移入回收站 ${result.deleted.length} 个文件`)
+  }
+  if (result.skipped.length > 0) {
+    parts.push(`跳过 ${result.skipped.length} 项`)
+  }
+  if (result.failed.length > 0) {
+    parts.push(`失败 ${result.failed.length} 项`)
+  }
+
+  return parts.length > 0 ? `，${parts.join("，")}` : "，没有可删除的本地文件"
 }
 
 export function App() {
@@ -163,10 +177,13 @@ export function App() {
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const [form, setForm] = useState<AddTaskForm>(initialForm)
   const [preferences, setPreferences] = useState<GrabbitPreferences | null>(null)
+  const [schedulerRule, setSchedulerRule] = useState<TaskSchedulerRule | null>(null)
   const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [searchQuery, setSearchQuery] = useState("")
   const [notice, setNotice] = useState<Notice | null>(null)
   const [addTaskError, setAddTaskError] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Aria2Task | null>(null)
+  const [deleteBatchTargets, setDeleteBatchTargets] = useState<Aria2Task[]>([])
   const [deleteFiles, setDeleteFiles] = useState(false)
   const [detailTask, setDetailTask] = useState<Aria2Task | null>(null)
 
@@ -190,6 +207,7 @@ export function App() {
       setPreferences(nextPreferences)
       setForm((current) => ({ ...current, dir: nextPreferences.downloadDir }))
     })
+    void window.grabbit.getScheduler().then(setSchedulerRule)
   }, [])
 
   useEffect(() => {
@@ -205,6 +223,25 @@ export function App() {
     () => tasks.reduce((sum, task) => sum + toNumber(task.downloadSpeed), 0),
     [tasks]
   )
+
+  const visibleTasks = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase()
+    if (!query) {
+      return tasks
+    }
+
+    return tasks.filter((task) => {
+      const haystack = [
+        task.gid,
+        getTaskName(task),
+        task.dir,
+        ...(task.files?.flatMap((file) => [file.path, ...(file.uris?.map((uri) => uri.uri) ?? [])]) ?? []),
+      ]
+        .join("\n")
+        .toLowerCase()
+      return haystack.includes(query)
+    })
+  }, [searchQuery, tasks])
 
   const submitTask = async () => {
     const uris = splitTaskLinks(form.uris)
@@ -313,6 +350,19 @@ export function App() {
     }
   }
 
+  const saveScheduler = async (rule: TaskSchedulerRule) => {
+    try {
+      const savedRule = await window.grabbit.setScheduler(rule)
+      setSchedulerRule(savedRule)
+      setNotice({ tone: "success", message: "速度计划已保存，并已应用到 aria2 引擎" })
+    } catch (error) {
+      setNotice({
+        tone: "error",
+        message: error instanceof Error ? error.message : "保存速度计划失败",
+      })
+    }
+  }
+
   const chooseDefaultDirectory = async () => {
     const directory = await window.grabbit.selectDirectory()
     if (directory) {
@@ -366,7 +416,7 @@ export function App() {
               <div>
                 <h1 className="text-xl font-semibold tracking-tight">{statusLabels[status]}</h1>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {tasks.length} 个任务 · 当前速度 {formatBytes(totalSpeed)}/s
+                  {visibleTasks.length} / {tasks.length} 个任务 · 当前速度 {formatBytes(totalSpeed)}/s
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -406,6 +456,19 @@ export function App() {
               </div>
             ) : null}
 
+            <div className="flex items-center gap-2 border-b px-6 py-3">
+              <Search className="size-4 text-muted-foreground" />
+              <Input
+                aria-label="搜索任务"
+                placeholder="搜索任务名、GID、保存目录或原始链接"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+              />
+              {searchQuery ? (
+                <Button variant="ghost" size="sm" onClick={() => setSearchQuery("")}>清除</Button>
+              ) : null}
+            </div>
+
             <ScrollArea className="min-h-0 flex-1">
               <div className="space-y-4 p-4 pb-24">
                 {notice ? <NoticeBanner notice={notice} onClose={() => setNotice(null)} /> : null}
@@ -413,8 +476,8 @@ export function App() {
                   <div className="flex h-72 items-center justify-center text-muted-foreground">
                     <Loader2 className="mr-2 animate-spin" /> 正在读取 aria2 任务...
                   </div>
-                ) : tasks.length > 0 ? (
-                  tasks.map((task) => (
+                ) : visibleTasks.length > 0 ? (
+                  visibleTasks.map((task) => (
                     <TaskCard
                       key={task.gid}
                       task={task}
@@ -454,8 +517,11 @@ export function App() {
       {page === "preferences" ? (
         <PreferencesPage
           preferences={preferences}
+          schedulerRule={schedulerRule}
           onChange={setPreferences}
+          onSchedulerChange={setSchedulerRule}
           onSave={savePreferences}
+          onSaveScheduler={saveScheduler}
           onChooseDirectory={chooseDefaultDirectory}
         />
       ) : null}
@@ -954,23 +1020,30 @@ function LabeledTextarea({ id, label, value, onChange }: { id: string; label: st
 
 function PreferencesPage({
   preferences,
+  schedulerRule,
   onChange,
+  onSchedulerChange,
   onSave,
+  onSaveScheduler,
   onChooseDirectory,
 }: {
   preferences: GrabbitPreferences | null
+  schedulerRule: TaskSchedulerRule | null
   onChange: (preferences: GrabbitPreferences) => void
+  onSchedulerChange: (rule: TaskSchedulerRule) => void
   onSave: (preferences: GrabbitPreferences) => Promise<void>
+  onSaveScheduler: (rule: TaskSchedulerRule) => Promise<void>
   onChooseDirectory: () => Promise<void>
 }) {
   const currentPreferences = preferences ?? defaultGrabbitPreferences("")
+  const currentSchedulerRule = schedulerRule ?? defaultTaskSchedulerRule()
 
   return (
     <main className="flex flex-1 flex-col bg-muted/30">
       <header className="flex h-[84px] items-center border-b bg-background px-6">
         <h1 className="text-xl font-semibold">偏好设置</h1>
       </header>
-      <div className="max-w-3xl space-y-4 p-6">
+      <div className="max-w-3xl space-y-4 overflow-auto p-6">
         <Card>
           <CardContent className="space-y-4 p-6">
             <div>
@@ -1070,9 +1143,128 @@ function PreferencesPage({
             </div>
           </CardContent>
         </Card>
+        <Card>
+          <CardContent className="space-y-4 p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="font-medium">速度计划</h2>
+                <p className="text-sm text-muted-foreground">按星期和时间段自动切换全局下载/上传限速，类似 Motrix 的任务计划。</p>
+              </div>
+              <Switch
+                id="scheduler-enabled"
+                checked={currentSchedulerRule.enabled}
+                onCheckedChange={(checked) => onSchedulerChange({ ...currentSchedulerRule, enabled: checked })}
+              />
+            </div>
+            <Separator />
+            <div className="grid gap-4 md:grid-cols-2">
+              <TextPreference
+                id="scheduler-start"
+                label="开始时间"
+                placeholder="HH:mm"
+                value={currentSchedulerRule.startTime}
+                onChange={(value) => onSchedulerChange({ ...currentSchedulerRule, startTime: value })}
+              />
+              <TextPreference
+                id="scheduler-end"
+                label="结束时间"
+                placeholder="HH:mm"
+                value={currentSchedulerRule.endTime}
+                onChange={(value) => onSchedulerChange({ ...currentSchedulerRule, endTime: value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>重复</Label>
+              <div className="flex flex-wrap gap-2">
+                {weekDays.map((day) => (
+                  <Button
+                    key={day.value}
+                    type="button"
+                    variant={currentSchedulerRule.repeatDays.includes(day.value) ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => onSchedulerChange(toggleSchedulerDay(currentSchedulerRule, day.value))}
+                  >
+                    {day.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>计划期间速度</Label>
+              <div className="flex flex-wrap gap-2">
+                {speedModes.map((mode) => (
+                  <Button
+                    key={mode.value}
+                    type="button"
+                    variant={currentSchedulerRule.speedMode === mode.value ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => onSchedulerChange({ ...currentSchedulerRule, speedMode: mode.value })}
+                  >
+                    {mode.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            {currentSchedulerRule.speedMode === "manual" ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <TextPreference
+                  id="scheduler-download-limit"
+                  label="计划下载限速"
+                  placeholder="如 300K / 2M / 0"
+                  value={currentSchedulerRule.downloadLimit}
+                  onChange={(value) => onSchedulerChange({ ...currentSchedulerRule, downloadLimit: value })}
+                />
+                <TextPreference
+                  id="scheduler-upload-limit"
+                  label="计划上传限速"
+                  placeholder="如 100K / 1M / 0"
+                  value={currentSchedulerRule.uploadLimit}
+                  onChange={(value) => onSchedulerChange({ ...currentSchedulerRule, uploadLimit: value })}
+                />
+              </div>
+            ) : (
+              <p className="rounded-lg border bg-muted/30 p-3 text-sm text-muted-foreground">
+                计划生效时会把全局上传/下载限速切换为 0（不限速）；计划外恢复偏好设置里的全局限速。
+              </p>
+            )}
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">
+                Grabbit 每分钟检查一次计划；保存后会立即根据当前时间应用。
+              </p>
+              <Button onClick={() => void onSaveScheduler(currentSchedulerRule)}>
+                保存速度计划
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </main>
   )
+}
+
+const weekDays = [
+  { value: 1, label: "周一" },
+  { value: 2, label: "周二" },
+  { value: 3, label: "周三" },
+  { value: 4, label: "周四" },
+  { value: 5, label: "周五" },
+  { value: 6, label: "周六" },
+  { value: 0, label: "周日" },
+]
+
+const speedModes: Array<{ value: SchedulerSpeedMode; label: string }> = [
+  { value: "manual", label: "使用指定限速" },
+  { value: "unlimited", label: "不限速" },
+]
+
+function toggleSchedulerDay(rule: TaskSchedulerRule, day: number) {
+  const nextDays = rule.repeatDays.includes(day)
+    ? rule.repeatDays.filter((item) => item !== day)
+    : [...rule.repeatDays, day]
+  return {
+    ...rule,
+    repeatDays: nextDays.length > 0 ? nextDays : rule.repeatDays,
+  }
 }
 
 function NumberPreference({

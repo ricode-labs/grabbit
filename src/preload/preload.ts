@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron"
-import type { GrabbitPreferences } from "../shared/grabbit"
+import type { GrabbitPreferences, TaskSchedulerRule } from "../shared/grabbit"
 
 export type TaskStatus = "active" | "waiting" | "paused" | "complete" | "error" | "removed"
 
@@ -38,6 +38,12 @@ export type AddTorrentPayload = {
   options?: Record<string, string | number | boolean | undefined>
 }
 
+export type DeleteTaskFilesResult = {
+  deleted: string[]
+  skipped: Array<{ path: string; reason: string }>
+  failed: Array<{ path: string; error: string }>
+}
+
 export const grabbitApi = {
   listTasks: (status: TaskListStatus) =>
     ipcRenderer.invoke("tasks:list", status) as Promise<Aria2Task[]>,
@@ -49,9 +55,12 @@ export const grabbitApi = {
     ipcRenderer.invoke("tasks:restart", { task, options }) as Promise<string[]>,
   pauseTask: (gid: string) => ipcRenderer.invoke("tasks:pause", gid) as Promise<unknown>,
   resumeTask: (gid: string) => ipcRenderer.invoke("tasks:resume", gid) as Promise<unknown>,
-  removeTask: (gid: string) => ipcRenderer.invoke("tasks:remove", gid) as Promise<unknown>,
-  removeTaskResult: (gid: string) =>
-    ipcRenderer.invoke("tasks:remove-result", gid) as Promise<unknown>,
+  removeTask: (task: Aria2Task, deleteFiles = false) =>
+    ipcRenderer.invoke("tasks:remove", task, deleteFiles) as Promise<DeleteTaskFilesResult | null>,
+  removeTaskResult: (task: Aria2Task, deleteFiles = false) =>
+    ipcRenderer.invoke("tasks:remove-result", task, deleteFiles) as Promise<DeleteTaskFilesResult | null>,
+  deleteTaskFiles: (task: Aria2Task) =>
+    ipcRenderer.invoke("tasks:delete-files", task) as Promise<DeleteTaskFilesResult>,
   pauseAll: () => ipcRenderer.invoke("tasks:pause-all") as Promise<unknown>,
   resumeAll: () => ipcRenderer.invoke("tasks:resume-all") as Promise<unknown>,
   purgeResults: () => ipcRenderer.invoke("tasks:purge-results") as Promise<unknown>,
@@ -63,6 +72,9 @@ export const grabbitApi = {
     ipcRenderer.invoke("app:get-preferences") as Promise<GrabbitPreferences>,
   setPreferences: (preferences: GrabbitPreferences) =>
     ipcRenderer.invoke("app:set-preferences", preferences) as Promise<GrabbitPreferences>,
+  getScheduler: () => ipcRenderer.invoke("app:get-scheduler") as Promise<TaskSchedulerRule>,
+  setScheduler: (rule: TaskSchedulerRule) =>
+    ipcRenderer.invoke("app:set-scheduler", rule) as Promise<TaskSchedulerRule>,
   getDefaultDir: () => ipcRenderer.invoke("app:get-default-dir") as Promise<string>,
 }
 
