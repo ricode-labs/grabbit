@@ -3,7 +3,7 @@ import { app, BrowserWindow, dialog, ipcMain, shell } from "electron"
 import fs from "node:fs/promises"
 import path from "node:path"
 import started from "electron-squirrel-startup"
-import { normalizeAria2Options, type GrabbitPreferences } from "../shared/grabbit"
+import { normalizeAria2Options, buildGlobalAria2Options, defaultGrabbitPreferences, type GrabbitPreferences } from "../shared/grabbit"
 
 if (started) {
   app.quit()
@@ -66,23 +66,48 @@ const getPreferencesPath = () => path.join(app.getPath("userData"), "preferences
 const getFallbackDownloadDir = () => path.join(app.getPath("downloads"), "Grabbit")
 
 const readPreferences = async (): Promise<GrabbitPreferences> => {
+  const defaults = defaultGrabbitPreferences(getFallbackDownloadDir())
+
   try {
     const raw = await fs.readFile(getPreferencesPath(), "utf8")
     const preferences = JSON.parse(raw) as Partial<GrabbitPreferences>
     return {
-      downloadDir: preferences.downloadDir || getFallbackDownloadDir(),
+      ...defaults,
+      ...preferences,
+      downloadDir: preferences.downloadDir || defaults.downloadDir,
+      maxConcurrentDownloads:
+        preferences.maxConcurrentDownloads ?? defaults.maxConcurrentDownloads,
+      maxConnectionPerServer:
+        preferences.maxConnectionPerServer ?? defaults.maxConnectionPerServer,
+      split: preferences.split ?? defaults.split,
+      maxOverallDownloadLimit:
+        preferences.maxOverallDownloadLimit ?? defaults.maxOverallDownloadLimit,
+      maxOverallUploadLimit:
+        preferences.maxOverallUploadLimit ?? defaults.maxOverallUploadLimit,
+      continueDownloads: preferences.continueDownloads ?? defaults.continueDownloads,
+      allProxy: preferences.allProxy ?? defaults.allProxy,
     }
   } catch {
-    return {
-      downloadDir: getFallbackDownloadDir(),
-    }
+    return defaults
   }
 }
 
 const writePreferences = async (preferences: GrabbitPreferences) => {
+  const defaults = defaultGrabbitPreferences(getFallbackDownloadDir())
+  const nextPreferences = {
+    ...defaults,
+    ...preferences,
+    downloadDir: preferences.downloadDir || defaults.downloadDir,
+  }
   await fs.mkdir(app.getPath("userData"), { recursive: true })
-  await fs.writeFile(getPreferencesPath(), JSON.stringify(preferences, null, 2), "utf8")
-  return preferences
+  await fs.writeFile(getPreferencesPath(), JSON.stringify(nextPreferences, null, 2), "utf8")
+
+  if (aria2Process) {
+    await fs.mkdir(nextPreferences.downloadDir, { recursive: true })
+    await callAria2("aria2.changeGlobalOption", [buildGlobalAria2Options(nextPreferences)])
+  }
+
+  return nextPreferences
 }
 
 const getDefaultDownloadDir = async () => (await readPreferences()).downloadDir
@@ -93,9 +118,12 @@ const startAria2 = async () => {
   }
 
   const aria2Path = getAria2Executable()
-  const downloadDir = await getDefaultDownloadDir()
+  const preferences = await readPreferences()
+  const downloadDir = preferences.downloadDir
   await fs.mkdir(downloadDir, { recursive: true })
+  await fs.mkdir(app.getPath("userData"), { recursive: true })
   const sessionPath = getSessionPath()
+  const globalOptions = buildGlobalAria2Options(preferences)
 
   aria2Process = spawn(
     aria2Path,
@@ -104,13 +132,17 @@ const startAria2 = async () => {
       "--rpc-listen-all=false",
       `--rpc-listen-port=${RPC_PORT}`,
       `--rpc-secret=${RPC_SECRET}`,
-      `--dir=${downloadDir}`,
+      `--dir=${globalOptions.dir}`,
       `--input-file=${sessionPath}`,
       `--save-session=${sessionPath}`,
       "--save-session-interval=15",
-      "--continue=true",
-      "--max-connection-per-server=16",
-      "--split=16",
+      `--continue=${globalOptions.continue}`,
+      `--max-concurrent-downloads=${globalOptions["max-concurrent-downloads"]}`,
+      `--max-connection-per-server=${globalOptions["max-connection-per-server"]}`,
+      `--split=${globalOptions.split}`,
+      `--max-overall-download-limit=${globalOptions["max-overall-download-limit"]}`,
+      `--max-overall-upload-limit=${globalOptions["max-overall-upload-limit"]}`,
+      ...(globalOptions["all-proxy"] ? [`--all-proxy=${globalOptions["all-proxy"]}`] : []),
       "--min-split-size=1M",
       "--summary-interval=0",
     ],

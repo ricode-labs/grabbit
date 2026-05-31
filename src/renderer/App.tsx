@@ -43,9 +43,17 @@ import { Label } from "@/components/ui/label"
 import { Progress } from "@/components/ui/progress"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
+import { Switch } from "@/components/ui/switch"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { buildAddTaskOptions, type AddTaskForm, type GrabbitPreferences } from "../shared/grabbit"
+import {
+  buildAddTaskOptions,
+  defaultGrabbitPreferences,
+  parseCurlCommand,
+  splitTaskLinks,
+  type AddTaskForm,
+  type GrabbitPreferences,
+} from "../shared/grabbit"
 import type { Aria2Task, TaskListStatus, TaskStatus } from "../preload/preload"
 
 type Page = "tasks" | "preferences" | "about"
@@ -176,10 +184,7 @@ export function App() {
   )
 
   const submitTask = async () => {
-    const uris = form.uris
-      .split(/\n+/)
-      .map((uri) => uri.trim())
-      .filter(Boolean)
+    const uris = splitTaskLinks(form.uris)
 
     if (uris.length === 0) {
       setAddTaskError("请输入至少一个下载链接")
@@ -254,13 +259,41 @@ export function App() {
   const chooseDefaultDirectory = async () => {
     const directory = await window.grabbit.selectDirectory()
     if (directory) {
-      await savePreferences({ downloadDir: directory })
+      const nextPreferences = preferences ?? defaultGrabbitPreferences(directory)
+      await savePreferences({ ...nextPreferences, downloadDir: directory })
+    }
+  }
+
+  const openAddTaskDialog = async () => {
+    setAddOpen(true)
+    const clipboardText = await navigator.clipboard.readText().catch(() => "")
+    const parsedCurl = parseCurlCommand(clipboardText)
+    const detectedUris = parsedCurl?.uris ?? splitTaskLinks(clipboardText)
+
+    if (parsedCurl) {
+      setForm((current) => ({
+        ...current,
+        uris: parsedCurl.uris.join("\n"),
+        out: parsedCurl.out || current.out,
+        userAgent: parsedCurl.userAgent || current.userAgent,
+        authorization: parsedCurl.authorization || current.authorization,
+        referer: parsedCurl.referer || current.referer,
+        cookie: parsedCurl.cookie || current.cookie,
+      }))
+      return
+    }
+
+    if (detectedUris.length > 0) {
+      setForm((current) => ({
+        ...current,
+        uris: current.uris || detectedUris.join("\n"),
+      }))
     }
   }
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
-      <PrimaryAside page={page} onNavigate={setPage} onAddTask={() => setAddOpen(true)} />
+      <PrimaryAside page={page} onNavigate={setPage} onAddTask={() => void openAddTaskDialog()} />
 
       {page === "tasks" ? (
         <main className="flex min-w-0 flex-1 bg-muted/30">
@@ -292,7 +325,7 @@ export function App() {
                   <Play />
                   全部开始
                 </Button>
-                <Button size="sm" onClick={() => setAddOpen(true)}>
+                <Button size="sm" onClick={() => void openAddTaskDialog()}>
                   <Plus />
                   新建任务
                 </Button>
@@ -338,7 +371,7 @@ export function App() {
                     />
                   ))
                 ) : (
-                  <EmptyTasks onAddTask={() => setAddOpen(true)} />
+                  <EmptyTasks onAddTask={() => void openAddTaskDialog()} />
                 )}
               </div>
             </ScrollArea>
@@ -381,7 +414,7 @@ export function App() {
                 <Textarea
                   id="uris"
                   className="min-h-28"
-                  placeholder="https://example.com/file.zip"
+                  placeholder="https://example.com/file.zip\nmagnet:?xt=urn:btih:...\n或粘贴 curl 命令自动解析"
                   value={form.uris}
                   onChange={(event) => setForm({ ...form, uris: event.target.value })}
                 />
@@ -665,7 +698,7 @@ function PreferencesPage({
   onSave: (preferences: GrabbitPreferences) => Promise<void>
   onChooseDirectory: () => Promise<void>
 }) {
-  const currentPreferences = preferences ?? { downloadDir: "" }
+  const currentPreferences = preferences ?? defaultGrabbitPreferences("")
 
   return (
     <main className="flex flex-1 flex-col bg-muted/30">
@@ -687,31 +720,149 @@ function PreferencesPage({
                   id="default-download-dir"
                   placeholder="默认下载目录"
                   value={currentPreferences.downloadDir}
-                  onChange={(event) => onChange({ downloadDir: event.target.value })}
+                  onChange={(event) => onChange({ ...currentPreferences, downloadDir: event.target.value })}
                 />
                 <Button variant="outline" onClick={() => void onChooseDirectory()}>
                   <Folder />
                   选择
                 </Button>
-                <Button onClick={() => void onSave(currentPreferences)} disabled={!currentPreferences.downloadDir.trim()}>
-                  保存
-                </Button>
               </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              <NumberPreference
+                id="max-concurrent-downloads"
+                label="同时下载任务数"
+                min={1}
+                max={64}
+                value={currentPreferences.maxConcurrentDownloads}
+                onChange={(value) => onChange({ ...currentPreferences, maxConcurrentDownloads: value })}
+              />
+              <NumberPreference
+                id="max-connection-per-server"
+                label="单服务器连接数"
+                min={1}
+                max={64}
+                value={currentPreferences.maxConnectionPerServer}
+                onChange={(value) => onChange({ ...currentPreferences, maxConnectionPerServer: value })}
+              />
+              <NumberPreference
+                id="default-split"
+                label="默认分片数"
+                min={1}
+                max={64}
+                value={currentPreferences.split}
+                onChange={(value) => onChange({ ...currentPreferences, split: value })}
+              />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <TextPreference
+                id="download-limit"
+                label="全局下载限速"
+                placeholder="0 表示不限速，如 2M / 512K"
+                value={currentPreferences.maxOverallDownloadLimit}
+                onChange={(value) => onChange({ ...currentPreferences, maxOverallDownloadLimit: value })}
+              />
+              <TextPreference
+                id="upload-limit"
+                label="全局上传限速"
+                placeholder="0 表示不限速，如 1M / 256K"
+                value={currentPreferences.maxOverallUploadLimit}
+                onChange={(value) => onChange({ ...currentPreferences, maxOverallUploadLimit: value })}
+              />
+            </div>
+            <TextPreference
+              id="global-proxy"
+              label="全局代理"
+              placeholder="[http://][USER:PASSWORD@]HOST[:PORT]"
+              value={currentPreferences.allProxy}
+              onChange={(value) => onChange({ ...currentPreferences, allProxy: value })}
+            />
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div>
+                <Label htmlFor="continue-downloads">断点续传</Label>
+                <p className="text-xs text-muted-foreground">对应 aria2 continue 选项，关闭后新任务不会自动续传。</p>
+              </div>
+              <Switch
+                id="continue-downloads"
+                checked={currentPreferences.continueDownloads}
+                onCheckedChange={(checked) => onChange({ ...currentPreferences, continueDownloads: checked })}
+              />
+            </div>
+            <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground">
-                新建任务会默认使用这个目录。直接编辑路径后点击保存即可持久化。
+                保存后会持久化设置，并对正在运行的 aria2 引擎应用全局选项。
               </p>
+              <Button onClick={() => void onSave(currentPreferences)} disabled={!currentPreferences.downloadDir.trim()}>
+                保存
+              </Button>
             </div>
             <Separator />
             <div className="grid gap-3 text-sm md:grid-cols-2">
-              <div>默认 RPC 端口：16800</div>
-              <div>默认连接数：16</div>
-              <div>会话保存：自动</div>
-              <div>断点续传：启用</div>
+              <div>RPC 端口：16800</div>
+              <div>同时任务：{currentPreferences.maxConcurrentDownloads}</div>
+              <div>单服务器连接：{currentPreferences.maxConnectionPerServer}</div>
+              <div>断点续传：{currentPreferences.continueDownloads ? "启用" : "关闭"}</div>
             </div>
           </CardContent>
         </Card>
       </div>
     </main>
+  )
+}
+
+function NumberPreference({
+  id,
+  label,
+  min,
+  max,
+  value,
+  onChange,
+}: {
+  id: string
+  label: string
+  min: number
+  max: number
+  value: number
+  onChange: (value: number) => void
+}) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        id={id}
+        type="number"
+        min={min}
+        max={max}
+        value={value}
+        onChange={(event) => onChange(Math.min(max, Math.max(min, Number(event.target.value) || min)))}
+      />
+    </div>
+  )
+}
+
+function TextPreference({
+  id,
+  label,
+  placeholder,
+  value,
+  onChange,
+}: {
+  id: string
+  label: string
+  placeholder: string
+  value: string
+  onChange: (value: string) => void
+}) {
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        id={id}
+        placeholder={placeholder}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+    </div>
   )
 }
 
