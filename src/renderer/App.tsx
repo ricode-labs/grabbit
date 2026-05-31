@@ -4,8 +4,11 @@ import {
   Activity,
   AlertCircle,
   CheckCircle2,
+  Clipboard,
   Download,
+  ExternalLink,
   FileDown,
+  FileText,
   FileUp,
   Folder,
   Gauge,
@@ -102,6 +105,16 @@ const statusText: Record<TaskStatus, string> = {
   removed: "已移除",
 }
 
+function getTaskUris(task: Aria2Task) {
+  return Array.from(
+    new Set(
+      task.files
+        ?.flatMap((file) => file.uris?.map((uri) => uri.uri) ?? [])
+        .filter(Boolean) ?? []
+    )
+  )
+}
+
 function getTaskName(task: Aria2Task) {
   const torrentName = task.bittorrent?.info?.name
   if (torrentName) {
@@ -155,6 +168,7 @@ export function App() {
   const [addTaskError, setAddTaskError] = useState<string | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<Aria2Task | null>(null)
   const [deleteFiles, setDeleteFiles] = useState(false)
+  const [detailTask, setDetailTask] = useState<Aria2Task | null>(null)
 
   const loadTasks = useCallback(async () => {
     setLoading(true)
@@ -218,6 +232,25 @@ export function App() {
     } catch (error) {
       setAddTaskError(error instanceof Error ? error.message : "添加任务失败")
     }
+  }
+
+  const copyText = async (text: string, successMessage: string) => {
+    if (!text) {
+      setNotice({ tone: "error", message: "没有可复制的内容" })
+      return
+    }
+
+    try {
+      await navigator.clipboard.writeText(text)
+      setNotice({ tone: "success", message: successMessage })
+    } catch {
+      setNotice({ tone: "error", message: "复制失败，请检查剪贴板权限" })
+    }
+  }
+
+  const copyTaskLinks = async (task: Aria2Task) => {
+    const links = getTaskUris(task)
+    await copyText(links.join("\n"), "任务链接已复制")
   }
 
   const runTaskAction = async (task: Aria2Task, action: "pause" | "resume" | "remove" | "restart") => {
@@ -397,6 +430,8 @@ export function App() {
                           return next
                         })
                       }}
+                      onShowDetails={setDetailTask}
+                      onCopyLinks={copyTaskLinks}
                       onAction={(task, action) => {
                         if (action === "remove") {
                           setDeleteTarget(task)
@@ -550,6 +585,31 @@ export function App() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={detailTask !== null} onOpenChange={(open) => {
+        if (!open) {
+          setDetailTask(null)
+        }
+      }}>
+        <DialogContent className="flex h-[86vh] w-[min(760px,calc(100vw-2rem))] max-w-none grid-rows-none flex-col overflow-hidden p-0">
+          <DialogHeader className="shrink-0 p-4 pb-0">
+            <DialogTitle>任务详情</DialogTitle>
+            <DialogDescription>
+              {detailTask ? getTaskName(detailTask) : "查看任务的下载信息、原始链接和文件列表。"}
+            </DialogDescription>
+          </DialogHeader>
+          {detailTask ? (
+            <TaskDetails
+              task={detailTask}
+              onCopy={(text, message) => void copyText(text, message)}
+              onOpenPath={(targetPath) => void window.grabbit.openPath(targetPath)}
+            />
+          ) : null}
+          <DialogFooter className="mx-0 mb-0 shrink-0 border-t bg-background p-4">
+            <Button variant="outline" onClick={() => setDetailTask(null)}>关闭</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={deleteTarget !== null} onOpenChange={(open) => {
         if (!open) {
           setDeleteTarget(null)
@@ -646,11 +706,15 @@ function TaskCard({
   task,
   selected,
   onSelectedChange,
+  onShowDetails,
+  onCopyLinks,
   onAction,
 }: {
   task: Aria2Task
   selected: boolean
   onSelectedChange: (checked: boolean) => void
+  onShowDetails: (task: Aria2Task) => void
+  onCopyLinks: (task: Aria2Task) => Promise<void>
   onAction: (task: Aria2Task, action: "pause" | "resume" | "remove" | "restart") => Promise<void>
 }) {
   const progress = getProgress(task)
@@ -687,6 +751,12 @@ function TaskCard({
                     <MoreHorizontal />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => onShowDetails(task)}>
+                      <FileText /> 查看详情
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => void onCopyLinks(task)}>
+                      <Clipboard /> 复制链接
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => void window.grabbit.openPath(taskPath)}>
                       <Folder /> 打开位置
                     </DropdownMenuItem>
@@ -713,6 +783,116 @@ function TaskCard({
         </div>
       </CardContent>
     </Card>
+  )
+}
+
+function TaskDetails({
+  task,
+  onCopy,
+  onOpenPath,
+}: {
+  task: Aria2Task
+  onCopy: (text: string, message: string) => void
+  onOpenPath: (targetPath: string) => void
+}) {
+  const taskUris = getTaskUris(task)
+  const progress = getProgress(task)
+  const taskPath = task.files?.[0]?.path || task.dir
+
+  return (
+    <ScrollArea className="min-h-0 flex-1 px-4 py-4">
+      <div className="space-y-4 pb-2">
+        <div className="grid gap-3 text-sm md:grid-cols-2">
+          <DetailItem label="GID" value={task.gid} />
+          <DetailItem label="状态" value={statusText[task.status] ?? task.status} />
+          <DetailItem label="保存目录" value={task.dir || "-"} />
+          <DetailItem label="连接数" value={task.connections || "0"} />
+          <DetailItem label="已完成" value={formatBytes(task.completedLength)} />
+          <DetailItem label="总大小" value={formatBytes(task.totalLength)} />
+          <DetailItem label="下载速度" value={`${formatBytes(task.downloadSpeed)}/s`} />
+          <DetailItem label="上传速度" value={`${formatBytes(task.uploadSpeed)}/s`} />
+        </div>
+
+        <div className="space-y-2 rounded-lg border p-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-sm font-medium">进度</h3>
+              <p className="text-xs text-muted-foreground">{formatBytes(task.completedLength)} / {formatBytes(task.totalLength)}</p>
+            </div>
+            <span className="text-sm font-medium">{progress}%</span>
+          </div>
+          <Progress value={progress} />
+        </div>
+
+        <div className="space-y-2 rounded-lg border p-3">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-sm font-medium">原始链接</h3>
+            <Button variant="outline" size="sm" onClick={() => onCopy(taskUris.join("\n"), "任务链接已复制")} disabled={taskUris.length === 0}>
+              <Clipboard /> 复制全部
+            </Button>
+          </div>
+          {taskUris.length > 0 ? (
+            <div className="space-y-2">
+              {taskUris.map((uri) => (
+                <div key={uri} className="flex items-start justify-between gap-2 rounded-md bg-muted/40 p-2 text-xs">
+                  <code className="min-w-0 break-all">{uri}</code>
+                  <Button variant="ghost" size="icon" className="size-7 shrink-0" onClick={() => onCopy(uri, "链接已复制")}>
+                    <Clipboard />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">aria2 没有返回原始链接；种子任务或部分历史记录可能只包含文件信息。</p>
+          )}
+        </div>
+
+        <div className="space-y-2 rounded-lg border p-3">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-sm font-medium">文件列表</h3>
+            <Button variant="outline" size="sm" onClick={() => onOpenPath(taskPath)} disabled={!taskPath}>
+              <ExternalLink /> 打开位置
+            </Button>
+          </div>
+          {task.files?.length ? (
+            <div className="divide-y rounded-md border">
+              {task.files.map((file, index) => {
+                const fileProgress = toNumber(file.length) > 0
+                  ? Math.min(100, Math.round((toNumber(file.completedLength) / toNumber(file.length)) * 100))
+                  : 0
+                return (
+                  <div key={`${file.path}-${index}`} className="space-y-2 p-3 text-sm">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="break-all font-medium">{file.path || `文件 ${index + 1}`}</div>
+                        <div className="mt-1 text-xs text-muted-foreground">
+                          {formatBytes(file.completedLength)} / {formatBytes(file.length)} · {file.selected === "true" ? "已选择" : "未选择"}
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="icon" className="size-7 shrink-0" onClick={() => onCopy(file.path, "文件路径已复制")}>
+                        <Clipboard />
+                      </Button>
+                    </div>
+                    <Progress value={fileProgress} />
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">暂无文件信息。</p>
+          )}
+        </div>
+      </div>
+    </ScrollArea>
+  )
+}
+
+function DetailItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border bg-muted/20 p-3">
+      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="mt-1 break-all text-sm font-medium">{value || "-"}</div>
+    </div>
   )
 }
 
