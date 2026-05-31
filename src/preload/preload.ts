@@ -8,6 +8,7 @@ export type Aria2File = {
   length: string
   completedLength: string
   selected: string
+  uris?: Array<{ uri: string; status: string }>
 }
 
 export type Aria2Task = {
@@ -20,6 +21,9 @@ export type Aria2Task = {
   connections: string
   dir: string
   files?: Aria2File[]
+  bittorrent?: {
+    info?: { name?: string }
+  }
 }
 
 export type TaskListStatus = "active" | "waiting" | "stopped"
@@ -29,11 +33,20 @@ export type AddTaskPayload = {
   options?: Record<string, string | number | boolean | undefined>
 }
 
+export type AddTorrentPayload = {
+  torrentPath: string
+  options?: Record<string, string | number | boolean | undefined>
+}
+
 export const grabbitApi = {
   listTasks: (status: TaskListStatus) =>
     ipcRenderer.invoke("tasks:list", status) as Promise<Aria2Task[]>,
   addUri: (payload: AddTaskPayload) =>
     ipcRenderer.invoke("tasks:add-uri", payload) as Promise<string[]>,
+  addTorrent: (payload: AddTorrentPayload) =>
+    ipcRenderer.invoke("tasks:add-torrent", payload) as Promise<string>,
+  restartTask: (task: Aria2Task, options?: Record<string, string | number | boolean | undefined>) =>
+    ipcRenderer.invoke("tasks:restart", { task, options }) as Promise<string[]>,
   pauseTask: (gid: string) => ipcRenderer.invoke("tasks:pause", gid) as Promise<unknown>,
   resumeTask: (gid: string) => ipcRenderer.invoke("tasks:resume", gid) as Promise<unknown>,
   removeTask: (gid: string) => ipcRenderer.invoke("tasks:remove", gid) as Promise<unknown>,
@@ -41,7 +54,9 @@ export const grabbitApi = {
     ipcRenderer.invoke("tasks:remove-result", gid) as Promise<unknown>,
   pauseAll: () => ipcRenderer.invoke("tasks:pause-all") as Promise<unknown>,
   resumeAll: () => ipcRenderer.invoke("tasks:resume-all") as Promise<unknown>,
+  purgeResults: () => ipcRenderer.invoke("tasks:purge-results") as Promise<unknown>,
   selectDirectory: () => ipcRenderer.invoke("app:select-directory") as Promise<string | null>,
+  selectTorrent: () => ipcRenderer.invoke("app:select-torrent") as Promise<string | null>,
   openPath: (targetPath: string) =>
     ipcRenderer.invoke("app:open-path", targetPath) as Promise<string>,
   getPreferences: () =>

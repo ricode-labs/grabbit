@@ -11,6 +11,7 @@ import {
 
 const form: AddTaskForm = {
   uris: "https://example.com/file.zip",
+  torrentPath: "",
   out: "file.zip",
   split: 8,
   dir: "/tmp/grabbit-downloads",

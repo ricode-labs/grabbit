@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Download,
   FileDown,
+  FileUp,
   Folder,
   Gauge,
   Info,
@@ -65,6 +66,7 @@ type Notice = {
 
 const initialForm: AddTaskForm = {
   uris: "",
+  torrentPath: "",
   out: "",
   split: 16,
   dir: "",
@@ -101,6 +103,11 @@ const statusText: Record<TaskStatus, string> = {
 }
 
 function getTaskName(task: Aria2Task) {
+  const torrentName = task.bittorrent?.info?.name
+  if (torrentName) {
+    return torrentName
+  }
+
   const firstPath = task.files?.[0]?.path
   if (!firstPath) {
     return task.gid
@@ -146,6 +153,8 @@ export function App() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [notice, setNotice] = useState<Notice | null>(null)
   const [addTaskError, setAddTaskError] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Aria2Task | null>(null)
+  const [deleteFiles, setDeleteFiles] = useState(false)
 
   const loadTasks = useCallback(async () => {
     setLoading(true)
@@ -186,13 +195,18 @@ export function App() {
   const submitTask = async () => {
     const uris = splitTaskLinks(form.uris)
 
-    if (uris.length === 0) {
-      setAddTaskError("请输入至少一个下载链接")
+    if (uris.length === 0 && !form.torrentPath) {
+      setAddTaskError("请输入至少一个下载链接，或选择一个 .torrent 文件")
       return
     }
 
     try {
-      await window.grabbit.addUri({ uris, options: buildAddTaskOptions(form) })
+      if (form.torrentPath) {
+        await window.grabbit.addTorrent({ torrentPath: form.torrentPath, options: buildAddTaskOptions(form) })
+      }
+      if (uris.length > 0) {
+        await window.grabbit.addUri({ uris, options: buildAddTaskOptions(form) })
+      }
       setAddTaskError(null)
       setNotice({ tone: "success", message: "任务已添加" })
       setAddOpen(false)
@@ -206,12 +220,15 @@ export function App() {
     }
   }
 
-  const runTaskAction = async (task: Aria2Task, action: "pause" | "resume" | "remove") => {
+  const runTaskAction = async (task: Aria2Task, action: "pause" | "resume" | "remove" | "restart") => {
     try {
       if (action === "pause") {
         await window.grabbit.pauseTask(task.gid)
       } else if (action === "resume") {
         await window.grabbit.resumeTask(task.gid)
+      } else if (action === "restart") {
+        await window.grabbit.restartTask(task, { dir: task.dir })
+        setNotice({ tone: "success", message: "已重新添加任务" })
       } else if (task.status === "complete" || task.status === "error" || task.status === "removed") {
         await window.grabbit.removeTaskResult(task.gid)
       } else {
@@ -233,6 +250,13 @@ export function App() {
       await runTaskAction(task, action)
     }
     setSelected(new Set())
+  }
+
+  const chooseTorrent = async () => {
+    const torrentPath = await window.grabbit.selectTorrent()
+    if (torrentPath) {
+      setForm((current) => ({ ...current, torrentPath }))
+    }
   }
 
   const chooseDirectory = async () => {
@@ -325,6 +349,12 @@ export function App() {
                   <Play />
                   全部开始
                 </Button>
+                {status === "stopped" ? (
+                  <Button variant="outline" size="sm" onClick={() => void window.grabbit.purgeResults().then(loadTasks)}>
+                    <Trash2 />
+                    清空记录
+                  </Button>
+                ) : null}
                 <Button size="sm" onClick={() => void openAddTaskDialog()}>
                   <Plus />
                   新建任务
@@ -367,7 +397,14 @@ export function App() {
                           return next
                         })
                       }}
-                      onAction={runTaskAction}
+                      onAction={(task, action) => {
+                        if (action === "remove") {
+                          setDeleteTarget(task)
+                          setDeleteFiles(false)
+                          return Promise.resolve()
+                        }
+                        return runTaskAction(task, action)
+                      }}
                     />
                   ))
                 ) : (
@@ -406,7 +443,7 @@ export function App() {
             <Tabs defaultValue="uri" className="min-h-0 pb-4">
             <TabsList>
               <TabsTrigger value="uri">链接任务</TabsTrigger>
-              <TabsTrigger value="torrent" disabled>种子任务</TabsTrigger>
+              <TabsTrigger value="torrent">种子任务</TabsTrigger>
             </TabsList>
             <TabsContent value="uri" className="space-y-4 pt-4">
               <div className="space-y-2">
@@ -484,6 +521,21 @@ export function App() {
                 </div>
               ) : null}
             </TabsContent>
+            <TabsContent value="torrent" className="space-y-4 pt-4">
+              <div className="rounded-lg border border-dashed p-4">
+                <div className="flex items-start gap-3">
+                  <FileUp className="mt-1 text-muted-foreground" />
+                  <div className="min-w-0 flex-1">
+                    <Label>种子文件</Label>
+                    <p className="mt-1 text-sm text-muted-foreground">选择本地 .torrent 文件后，Grabbit 会通过 aria2.addTorrent 添加任务。</p>
+                    <div className="mt-3 flex gap-2">
+                      <Input value={form.torrentPath} placeholder="尚未选择 .torrent 文件" readOnly />
+                      <Button variant="outline" onClick={() => void chooseTorrent()}>选择文件</Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
             </Tabs>
           </ScrollArea>
           {addTaskError ? (
@@ -494,6 +546,34 @@ export function App() {
           <DialogFooter className="mx-0 mb-0 shrink-0 border-t bg-background p-4">
             <Button variant="outline" onClick={() => setAddOpen(false)}>取消</Button>
             <Button onClick={() => void submitTask()}>提交</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={deleteTarget !== null} onOpenChange={(open) => {
+        if (!open) {
+          setDeleteTarget(null)
+          setDeleteFiles(false)
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>确认移除任务？</DialogTitle>
+            <DialogDescription>
+              {deleteTarget ? `将从列表中移除“${getTaskName(deleteTarget)}”。` : "将从列表中移除该任务。"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center space-x-2 rounded-lg border p-3">
+            <Checkbox id="delete-files" checked={deleteFiles} onCheckedChange={(checked) => setDeleteFiles(checked === true)} disabled />
+            <Label htmlFor="delete-files" className="text-sm text-muted-foreground">同时删除本地文件（aria2 RPC 不支持安全删除文件，暂不可用）</Label>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>取消</Button>
+            <Button variant="destructive" onClick={() => {
+              if (deleteTarget) {
+                void runTaskAction(deleteTarget, "remove").then(() => setDeleteTarget(null))
+              }
+            }}>移除</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -571,7 +651,7 @@ function TaskCard({
   task: Aria2Task
   selected: boolean
   onSelectedChange: (checked: boolean) => void
-  onAction: (task: Aria2Task, action: "pause" | "resume" | "remove") => Promise<void>
+  onAction: (task: Aria2Task, action: "pause" | "resume" | "remove" | "restart") => Promise<void>
 }) {
   const progress = getProgress(task)
   const taskPath = task.files?.[0]?.path || task.dir
@@ -610,6 +690,11 @@ function TaskCard({
                     <DropdownMenuItem onClick={() => void window.grabbit.openPath(taskPath)}>
                       <Folder /> 打开位置
                     </DropdownMenuItem>
+                    {(task.status === "complete" || task.status === "error" || task.status === "removed") ? (
+                      <DropdownMenuItem onClick={() => void onAction(task, "restart")}>
+                        <RotateCw /> 重新下载
+                      </DropdownMenuItem>
+                    ) : null}
                     <DropdownMenuItem className="text-destructive" onClick={() => void onAction(task, "remove")}>
                       <Trash2 /> 移除任务
                     </DropdownMenuItem>

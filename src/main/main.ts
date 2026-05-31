@@ -38,11 +38,25 @@ type Aria2Task = {
     length: string
     completedLength: string
     selected: string
+    uris?: Array<{ uri: string; status: string }>
   }>
+  bittorrent?: {
+    info?: { name?: string }
+  }
 }
 
 type AddTaskPayload = {
   uris: string[]
+  options?: Record<string, string | number | boolean | undefined>
+}
+
+type AddTorrentPayload = {
+  torrentPath: string
+  options?: Record<string, string | number | boolean | undefined>
+}
+
+type RestartTaskPayload = {
+  task: Aria2Task
   options?: Record<string, string | number | boolean | undefined>
 }
 
@@ -217,6 +231,7 @@ const fetchTasks = async (status: "active" | "waiting" | "stopped") => {
     "connections",
     "dir",
     "files",
+    "bittorrent",
   ]
 
   if (status === "active") {
@@ -288,6 +303,39 @@ ipcMain.handle("tasks:add-uri", async (_event, payload: AddTaskPayload) => {
   )
 
   return gids
+})
+
+ipcMain.handle("tasks:add-torrent", async (_event, payload: AddTorrentPayload) => {
+  const options = normalizeOptions(payload.options)
+  const torrent = await fs.readFile(payload.torrentPath)
+  return callAria2<string>("aria2.addTorrent", [torrent.toString("base64"), [], options])
+})
+
+ipcMain.handle("tasks:restart", async (_event, payload: RestartTaskPayload) => {
+  const options = normalizeOptions({
+    dir: payload.task.dir,
+    ...payload.options,
+  })
+  const uris = payload.task.files
+    ?.flatMap((file) => file.uris?.map((uri) => uri.uri) ?? [])
+    .filter((uri) => /^(https?|ftp):\/\//i.test(uri) || /^magnet:\?/i.test(uri))
+
+  if (uris?.length) {
+    return Promise.all(uris.map((uri) => callAria2<string>("aria2.addUri", [[uri], options])))
+  }
+
+  throw new Error("这个任务没有可用于重新下载的原始链接")
+})
+
+ipcMain.handle("tasks:purge-results", () => callAria2("aria2.purgeDownloadResult"))
+ipcMain.handle("app:select-torrent", async () => {
+  const window = BrowserWindow.getFocusedWindow() ?? mainWindow
+  const result = await dialog.showOpenDialog(window!, {
+    properties: ["openFile"],
+    filters: [{ name: "Torrent", extensions: ["torrent"] }],
+  })
+
+  return result.canceled ? null : result.filePaths[0]
 })
 
 ipcMain.handle("tasks:pause", (_event, gid: string) => callAria2("aria2.pause", [gid]))

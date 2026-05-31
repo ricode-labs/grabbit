@@ -11,6 +11,7 @@ export type GrabbitPreferences = {
 
 export type AddTaskForm = {
   uris: string
+  torrentPath: string
   out: string
   split: number
   dir: string
