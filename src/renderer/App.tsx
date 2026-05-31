@@ -1218,6 +1218,104 @@ function PreferencesPage({
         </Card>
         <Card>
           <CardContent className="space-y-4 p-6">
+            <div>
+              <h2 className="font-medium">BT 与高级引擎</h2>
+              <p className="text-sm text-muted-foreground">补齐 Motrix 常用的 BT、端口、Tracker 和 User-Agent 全局选项。</p>
+            </div>
+            <Separator />
+            <TextPreference
+              id="global-user-agent"
+              label="全局 User-Agent"
+              placeholder="留空使用 aria2 默认值"
+              value={currentPreferences.userAgent}
+              onChange={(value) => onChange({ ...currentPreferences, userAgent: value })}
+            />
+            <div className="grid gap-4 md:grid-cols-2">
+              <NumberPreference
+                id="seed-ratio"
+                label="分享率 Seed Ratio"
+                min={0}
+                max={100}
+                value={currentPreferences.seedRatio}
+                onChange={(value) => onChange({ ...currentPreferences, seedRatio: value })}
+              />
+              <NumberPreference
+                id="seed-time"
+                label="做种时间 Seed Time（分钟）"
+                min={0}
+                max={525600}
+                value={currentPreferences.seedTime}
+                onChange={(value) => onChange({ ...currentPreferences, seedTime: value })}
+              />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <TextPreference
+                id="listen-port"
+                label="BT 监听端口"
+                placeholder="如 6881"
+                value={currentPreferences.listenPort}
+                onChange={(value) => onChange({ ...currentPreferences, listenPort: value })}
+              />
+              <TextPreference
+                id="dht-listen-port"
+                label="DHT 监听端口"
+                placeholder="如 6881"
+                value={currentPreferences.dhtListenPort}
+                onChange={(value) => onChange({ ...currentPreferences, dhtListenPort: value })}
+              />
+            </div>
+            <LabeledTextarea
+              id="bt-tracker"
+              label="BT Tracker（每行一个）"
+              value={currentPreferences.btTracker}
+              onChange={(value) => onChange({ ...currentPreferences, btTracker: value })}
+            />
+            <div className="grid gap-3 md:grid-cols-2">
+              <SwitchPreference
+                id="bt-save-metadata"
+                label="保存磁力链接元数据"
+                description="对应 aria2 bt-save-metadata。"
+                checked={currentPreferences.btSaveMetadata}
+                onCheckedChange={(checked) => onChange({ ...currentPreferences, btSaveMetadata: checked })}
+              />
+              <SwitchPreference
+                id="bt-force-encryption"
+                label="强制 BT 加密"
+                description="对应 aria2 bt-force-encryption。"
+                checked={currentPreferences.btForceEncryption}
+                onCheckedChange={(checked) => onChange({ ...currentPreferences, btForceEncryption: checked })}
+              />
+              <SwitchPreference
+                id="follow-torrent"
+                label="自动跟随 Torrent"
+                description="下载到 torrent 文件后自动添加内容任务。"
+                checked={currentPreferences.followTorrent}
+                onCheckedChange={(checked) => onChange({ ...currentPreferences, followTorrent: checked })}
+              />
+              <SwitchPreference
+                id="follow-metalink"
+                label="自动跟随 Metalink"
+                description="下载到 metalink 后自动添加内容任务。"
+                checked={currentPreferences.followMetalink}
+                onCheckedChange={(checked) => onChange({ ...currentPreferences, followMetalink: checked })}
+              />
+              <SwitchPreference
+                id="enable-upnp"
+                label="UPnP / NAT-PMP"
+                description="自动映射 BT 端口。"
+                checked={currentPreferences.enableUpnp}
+                onCheckedChange={(checked) => onChange({ ...currentPreferences, enableUpnp: checked })}
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={() => void onSave(currentPreferences)} disabled={!currentPreferences.downloadDir.trim()}>
+                保存 BT 与高级引擎设置
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="space-y-4 p-6">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="font-medium">速度计划</h2>
@@ -1366,6 +1464,30 @@ function NumberPreference({
         value={value}
         onChange={(event) => onChange(Math.min(max, Math.max(min, Number(event.target.value) || min)))}
       />
+    </div>
+  )
+}
+
+function SwitchPreference({
+  id,
+  label,
+  description,
+  checked,
+  onCheckedChange,
+}: {
+  id: string
+  label: string
+  description: string
+  checked: boolean
+  onCheckedChange: (checked: boolean) => void
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
+      <div>
+        <Label htmlFor={id}>{label}</Label>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </div>
+      <Switch id={id} checked={checked} onCheckedChange={onCheckedChange} />
     </div>
   )
 }

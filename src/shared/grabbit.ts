@@ -7,6 +7,17 @@ export type GrabbitPreferences = {
   maxOverallUploadLimit: string
   continueDownloads: boolean
   allProxy: string
+  userAgent: string
+  btSaveMetadata: boolean
+  btForceEncryption: boolean
+  followTorrent: boolean
+  followMetalink: boolean
+  seedRatio: number
+  seedTime: number
+  btTracker: string
+  enableUpnp: boolean
+  listenPort: string
+  dhtListenPort: string
 }
 
 export type SchedulerSpeedMode = "manual" | "unlimited"
@@ -54,6 +65,17 @@ export function defaultGrabbitPreferences(downloadDir: string): GrabbitPreferenc
     maxOverallUploadLimit: "0",
     continueDownloads: true,
     allProxy: "",
+    userAgent: "",
+    btSaveMetadata: true,
+    btForceEncryption: false,
+    followTorrent: true,
+    followMetalink: true,
+    seedRatio: 1,
+    seedTime: 0,
+    btTracker: "",
+    enableUpnp: true,
+    listenPort: "6881",
+    dhtListenPort: "6881",
   }
 }
 
@@ -178,6 +200,12 @@ export function buildAddTaskOptions(form: AddTaskForm) {
 }
 
 export function buildGlobalAria2Options(preferences: GrabbitPreferences) {
+  const trackerList = preferences.btTracker
+    .split(/[\n,]+/)
+    .map((tracker) => tracker.trim())
+    .filter(Boolean)
+    .join(",")
+
   return normalizeAria2Options({
     dir: preferences.downloadDir,
     maxConcurrentDownloads: preferences.maxConcurrentDownloads,
@@ -187,6 +215,17 @@ export function buildGlobalAria2Options(preferences: GrabbitPreferences) {
     maxOverallUploadLimit: preferences.maxOverallUploadLimit,
     continue: preferences.continueDownloads,
     allProxy: preferences.allProxy,
+    userAgent: preferences.userAgent,
+    btSaveMetadata: preferences.btSaveMetadata,
+    btForceEncryption: preferences.btForceEncryption,
+    followTorrent: preferences.followTorrent,
+    followMetalink: preferences.followMetalink,
+    seedRatio: preferences.seedRatio,
+    seedTime: preferences.seedTime,
+    btTracker: trackerList,
+    enableUpnp: preferences.enableUpnp,
+    listenPort: preferences.listenPort,
+    dhtListenPort: preferences.dhtListenPort,
   })
 }
 
