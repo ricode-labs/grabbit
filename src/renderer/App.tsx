@@ -53,6 +53,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import {
   buildAddTaskOptions,
+  buildInitialAddTaskForm,
   defaultGrabbitPreferences,
   defaultTaskSchedulerRule,
   parseCurlCommand,
@@ -71,19 +72,7 @@ type Notice = {
   message: string
 }
 
-const initialForm: AddTaskForm = {
-  uris: "",
-  torrentPath: "",
-  out: "",
-  split: 16,
-  dir: "",
-  userAgent: "",
-  authorization: "",
-  referer: "",
-  cookie: "",
-  allProxy: "",
-  showDownloading: true,
-}
+const fallbackInitialForm = buildInitialAddTaskForm(defaultGrabbitPreferences(""))
 
 const statusLabels: Record<TaskListStatus, string> = {
   active: "正在下载",
@@ -203,7 +192,7 @@ export function App() {
   const [loading, setLoading] = useState(true)
   const [addOpen, setAddOpen] = useState(false)
   const [advancedOpen, setAdvancedOpen] = useState(false)
-  const [form, setForm] = useState<AddTaskForm>(initialForm)
+  const [form, setForm] = useState<AddTaskForm>(fallbackInitialForm)
   const [preferences, setPreferences] = useState<GrabbitPreferences | null>(null)
   const [schedulerRule, setSchedulerRule] = useState<TaskSchedulerRule | null>(null)
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -233,7 +222,7 @@ export function App() {
   useEffect(() => {
     void window.grabbit.getPreferences().then((nextPreferences) => {
       setPreferences(nextPreferences)
-      setForm((current) => ({ ...current, dir: nextPreferences.downloadDir }))
+      setForm(buildInitialAddTaskForm(nextPreferences))
     })
     void window.grabbit.getScheduler().then(setSchedulerRule)
   }, [])
@@ -289,7 +278,8 @@ export function App() {
       setAddTaskError(null)
       setNotice({ tone: "success", message: "任务已添加" })
       setAddOpen(false)
-      setForm((current) => ({ ...initialForm, dir: current.dir }))
+      const nextForm = buildInitialAddTaskForm(preferences ?? defaultGrabbitPreferences(form.dir))
+      setForm({ ...nextForm, dir: form.dir })
       if (form.showDownloading) {
         setStatus("active")
       }
@@ -371,8 +361,12 @@ export function App() {
   const runBatchAction = async (action: "pause" | "resume" | "remove") => {
     const selectedTasks = tasks.filter((task) => selected.has(task.gid))
     if (action === "remove") {
-      setDeleteBatchTargets(selectedTasks)
-      setDeleteFiles(false)
+      if (preferences?.noConfirmBeforeDeleteTask) {
+        await confirmRemoveTasks(selectedTasks)
+      } else {
+        setDeleteBatchTargets(selectedTasks)
+        setDeleteFiles(false)
+      }
       return
     }
 
@@ -400,7 +394,7 @@ export function App() {
     try {
       const savedPreferences = await window.grabbit.setPreferences(nextPreferences)
       setPreferences(savedPreferences)
-      setForm((current) => ({ ...current, dir: savedPreferences.downloadDir }))
+      setForm(buildInitialAddTaskForm(savedPreferences))
       setNotice({ tone: "success", message: "偏好设置已保存，新任务会使用新的默认目录" })
     } catch (error) {
       setNotice({
@@ -557,6 +551,9 @@ export function App() {
                       onCopyLinks={copyTaskLinks}
                       onAction={(task, action) => {
                         if (action === "remove") {
+                          if (preferences?.noConfirmBeforeDeleteTask) {
+                            return runTaskAction(task, action)
+                          }
                           setDeleteTarget(task)
                           setDeleteFiles(false)
                           return Promise.resolve()
@@ -1188,15 +1185,27 @@ function PreferencesPage({
               value={currentPreferences.allProxy}
               onChange={(value) => onChange({ ...currentPreferences, allProxy: value })}
             />
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div>
-                <Label htmlFor="continue-downloads">断点续传</Label>
-                <p className="text-xs text-muted-foreground">对应 aria2 continue 选项，关闭后新任务不会自动续传。</p>
-              </div>
-              <Switch
+            <div className="grid gap-3 md:grid-cols-2">
+              <SwitchPreference
                 id="continue-downloads"
+                label="断点续传"
+                description="对应 aria2 continue 选项，关闭后新任务不会自动续传。"
                 checked={currentPreferences.continueDownloads}
                 onCheckedChange={(checked) => onChange({ ...currentPreferences, continueDownloads: checked })}
+              />
+              <SwitchPreference
+                id="new-task-show-downloading"
+                label="添加后跳转到正在下载"
+                description="作为新建任务弹窗的默认行为，和 Motrix 的 new-task-show-downloading 对齐。"
+                checked={currentPreferences.newTaskShowDownloading}
+                onCheckedChange={(checked) => onChange({ ...currentPreferences, newTaskShowDownloading: checked })}
+              />
+              <SwitchPreference
+                id="no-confirm-before-delete-task"
+                label="移除任务前不再确认"
+                description="启用后单个和批量移除会直接执行；删除本地文件仍只能在确认弹窗中手动勾选。"
+                checked={currentPreferences.noConfirmBeforeDeleteTask}
+                onCheckedChange={(checked) => onChange({ ...currentPreferences, noConfirmBeforeDeleteTask: checked })}
               />
             </div>
             <div className="flex items-center justify-between">

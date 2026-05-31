@@ -2,6 +2,7 @@ import assert from "node:assert/strict"
 import {
   buildAddTaskOptions,
   buildGlobalAria2Options,
+  buildInitialAddTaskForm,
   buildSchedulerGlobalOptions,
   defaultGrabbitPreferences,
   defaultTaskSchedulerRule,
@@ -76,6 +77,29 @@ assert.deepEqual(parseCurlCommand("curl 'https://example.com/file.zip' -H 'Refer
 })
 
 assert.deepEqual(
+  buildInitialAddTaskForm({
+    ...defaultGrabbitPreferences("/downloads"),
+    split: 24,
+    userAgent: "Mozilla/5.0 Grabbit",
+    allProxy: "http://proxy.local:8080",
+    newTaskShowDownloading: false,
+  }),
+  {
+    uris: "",
+    torrentPath: "",
+    out: "",
+    split: 24,
+    dir: "/downloads",
+    userAgent: "Mozilla/5.0 Grabbit",
+    authorization: "",
+    referer: "",
+    cookie: "",
+    allProxy: "http://proxy.local:8080",
+    showDownloading: false,
+  }
+)
+
+assert.deepEqual(
   buildGlobalAria2Options({
     ...defaultGrabbitPreferences("/downloads"),
     maxConcurrentDownloads: 5,
@@ -96,6 +120,8 @@ assert.deepEqual(
     enableUpnp: false,
     listenPort: "51413",
     dhtListenPort: "6881",
+    newTaskShowDownloading: false,
+    noConfirmBeforeDeleteTask: true,
   }),
   {
     dir: "/downloads",

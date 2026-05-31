@@ -18,6 +18,8 @@ export type GrabbitPreferences = {
   enableUpnp: boolean
   listenPort: string
   dhtListenPort: string
+  newTaskShowDownloading: boolean
+  noConfirmBeforeDeleteTask: boolean
 }
 
 export type SchedulerSpeedMode = "manual" | "unlimited"
@@ -76,6 +78,8 @@ export function defaultGrabbitPreferences(downloadDir: string): GrabbitPreferenc
     enableUpnp: true,
     listenPort: "6881",
     dhtListenPort: "6881",
+    newTaskShowDownloading: true,
+    noConfirmBeforeDeleteTask: false,
   }
 }
 
@@ -180,6 +184,22 @@ export function normalizeAria2Options(
   }
 
   return result
+}
+
+export function buildInitialAddTaskForm(preferences: GrabbitPreferences): AddTaskForm {
+  return {
+    uris: "",
+    torrentPath: "",
+    out: "",
+    split: preferences.split,
+    dir: preferences.downloadDir,
+    userAgent: preferences.userAgent,
+    authorization: "",
+    referer: "",
+    cookie: "",
+    allProxy: preferences.allProxy,
+    showDownloading: preferences.newTaskShowDownloading,
+  }
 }
 
 export function buildAddTaskOptions(form: AddTaskForm) {
