@@ -1,5 +1,15 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process"
-import { app, BrowserWindow, dialog, ipcMain, shell } from "electron"
+import {
+  app,
+  BrowserWindow,
+  Menu,
+  Tray,
+  dialog,
+  ipcMain,
+  nativeImage,
+  shell,
+  type MenuItemConstructorOptions,
+} from "electron"
 import fs from "node:fs/promises"
 import path from "node:path"
 import parseTorrent from "parse-torrent"
@@ -12,6 +22,9 @@ import {
   normalizeAria2Options,
   normalizeDownloadDirectoryHistory,
   normalizeTaskSchedulerRule,
+  parseExternalTaskIntents,
+  supportedExternalProtocols,
+  type ExternalTaskIntent,
   type GrabbitPreferences,
   type ParsedTorrentInfo,
   type TaskSchedulerRule,
@@ -107,8 +120,189 @@ const RPC_SECRET = "grabbit"
 const RPC_URL = `http://127.0.0.1:${RPC_PORT}/jsonrpc`
 
 let mainWindow: BrowserWindow | null = null
+let tray: Tray | null = null
+let pendingExternalIntents: ExternalTaskIntent[] = []
 let aria2Process: ChildProcessWithoutNullStreams | null = null
 let schedulerTimer: NodeJS.Timeout | null = null
+
+const isSupportedExternalValue = (value: string) =>
+  /^(https?|ftp|magnet|thunder|mo|motrix):/i.test(value) ||
+  /\.torrent(?:$|[?#])/i.test(value)
+
+const collectExternalIntents = (values: string[]) =>
+  parseExternalTaskIntents(values.filter(isSupportedExternalValue))
+
+const registerProtocolClients = () => {
+  for (const protocol of supportedExternalProtocols) {
+    if (process.defaultApp && process.argv.length >= 2) {
+      app.setAsDefaultProtocolClient(protocol, process.execPath, [
+        path.resolve(process.argv[1]),
+      ])
+    } else {
+      app.setAsDefaultProtocolClient(protocol)
+    }
+  }
+}
+
+const sendExternalIntents = (intents: ExternalTaskIntent[]) => {
+  if (intents.length === 0) {
+    return
+  }
+
+  if (!mainWindow || mainWindow.webContents.isLoading()) {
+    pendingExternalIntents.push(...intents)
+    return
+  }
+
+  mainWindow.show()
+  mainWindow.focus()
+  mainWindow.webContents.send("external:task-intents", intents)
+}
+
+const flushExternalIntents = () => {
+  if (pendingExternalIntents.length === 0) {
+    return
+  }
+
+  const nextIntents = pendingExternalIntents
+  pendingExternalIntents = []
+  sendExternalIntents(nextIntents)
+}
+
+const showMainWindow = () => {
+  if (!mainWindow) {
+    createWindow()
+    return
+  }
+  mainWindow.show()
+  mainWindow.focus()
+}
+
+const createNativeMenu = () => {
+  const template: MenuItemConstructorOptions[] = [
+    ...(process.platform === "darwin"
+      ? [
+          {
+            label: app.name,
+            submenu: [
+              { role: "about" },
+              { type: "separator" },
+              { role: "services" },
+              { type: "separator" },
+              { role: "hide" },
+              { role: "hideOthers" },
+              { role: "unhide" },
+              { type: "separator" },
+              { role: "quit" },
+            ],
+          } satisfies MenuItemConstructorOptions,
+        ]
+      : []),
+    {
+      label: "任务",
+      submenu: [
+        {
+          label: "新建下载任务",
+          accelerator: "CmdOrCtrl+N",
+          click: () =>
+            sendExternalIntents([
+              { kind: "command", value: "menu:new-task", command: "new-task" },
+            ]),
+        },
+        {
+          label: "打开 Torrent 文件…",
+          accelerator: "CmdOrCtrl+O",
+          click: async () => {
+            const { canceled, filePaths } = await dialog.showOpenDialog({
+              properties: ["openFile"],
+              filters: [{ name: "Torrent", extensions: ["torrent"] }],
+            })
+            if (!canceled) {
+              sendExternalIntents(
+                filePaths.map((filePath) => ({
+                  kind: "torrent",
+                  value: filePath,
+                }))
+              )
+            }
+          },
+        },
+        { type: "separator" },
+        { label: "暂停全部", click: () => void callAria2("aria2.pauseAll") },
+        { label: "开始全部", click: () => void callAria2("aria2.unpauseAll") },
+      ],
+    },
+    {
+      label: "视图",
+      submenu: [
+        { role: "reload" },
+        { role: "forceReload" },
+        { role: "toggleDevTools" },
+        { type: "separator" },
+        { role: "resetZoom" },
+        { role: "zoomIn" },
+        { role: "zoomOut" },
+        { type: "separator" },
+        { role: "togglefullscreen" },
+      ],
+    },
+    {
+      label: "窗口",
+      submenu: [{ role: "minimize" }, { role: "close" }],
+    },
+  ]
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+}
+
+const createTray = () => {
+  if (tray) {
+    return
+  }
+
+  const image = nativeImage.createFromDataURL(
+    "data:image/svg+xml;utf8," +
+      encodeURIComponent(
+        '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#18181b"/><path d="M16 6v14m0 0 6-6m-6 6-6-6M9 25h14" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      )
+  )
+  image.setTemplateImage(process.platform === "darwin")
+
+  tray = new Tray(image)
+  tray.setToolTip("Grabbit")
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      { label: "显示 Grabbit", click: showMainWindow },
+      {
+        label: "新建下载任务",
+        click: () =>
+          sendExternalIntents([
+            { kind: "command", value: "tray:new-task", command: "new-task" },
+          ]),
+      },
+      {
+        label: "打开 Torrent 文件…",
+        click: async () => {
+          const { canceled, filePaths } = await dialog.showOpenDialog({
+            properties: ["openFile"],
+            filters: [{ name: "Torrent", extensions: ["torrent"] }],
+          })
+          if (!canceled) {
+            sendExternalIntents(
+              filePaths.map((filePath) => ({
+                kind: "torrent",
+                value: filePath,
+              }))
+            )
+          }
+        },
+      },
+      { type: "separator" },
+      { label: "退出", click: () => app.quit() },
+    ])
+  )
+  tray.on("click", showMainWindow)
+}
 
 const getAria2Executable = () => {
   if (app.isPackaged) {
@@ -542,9 +736,38 @@ const createWindow = () => {
       path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
     )
   }
+
+  mainWindow.webContents.once("did-finish-load", flushExternalIntents)
 }
 
+const gotSingleInstanceLock = app.requestSingleInstanceLock()
+
+if (!gotSingleInstanceLock) {
+  app.quit()
+} else {
+  app.on("second-instance", (_event, argv) => {
+    showMainWindow()
+    sendExternalIntents(collectExternalIntents(argv))
+  })
+}
+
+app.on("open-url", (event, url) => {
+  event.preventDefault()
+  sendExternalIntents(collectExternalIntents([url]))
+})
+
+app.on("open-file", (event, filePath) => {
+  if (/\.torrent$/i.test(filePath)) {
+    event.preventDefault()
+    sendExternalIntents([{ kind: "torrent", value: filePath }])
+  }
+})
+
 app.on("ready", () => {
+  registerProtocolClients()
+  createNativeMenu()
+  createTray()
+  pendingExternalIntents.push(...collectExternalIntents(process.argv))
   void startAria2()
   createWindow()
 })

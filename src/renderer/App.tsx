@@ -69,6 +69,7 @@ import {
   summarizePeers,
   toFiniteNumber,
   type AddTaskForm,
+  type ExternalTaskIntent,
   type GrabbitPreferences,
   type ParsedTorrentInfo,
   type SchedulerSpeedMode,
@@ -440,7 +441,7 @@ export function App() {
     setSelected(new Set())
   }
 
-  const loadTorrentInfo = async (torrentPath: string) => {
+  const loadTorrentInfo = useCallback(async (torrentPath: string) => {
     setTorrentLoading(true)
     try {
       const parsed = await window.grabbit.parseTorrent(torrentPath)
@@ -461,7 +462,7 @@ export function App() {
     } finally {
       setTorrentLoading(false)
     }
-  }
+  }, [])
 
   const chooseTorrent = async () => {
     const torrentPath = await window.grabbit.selectTorrent()
@@ -530,6 +531,31 @@ export function App() {
     }
   }
 
+  const openAddTaskDialogWithIntents = useCallback(
+    async (intents: ExternalTaskIntent[] = []) => {
+      setAddOpen(true)
+      setAddTaskError(null)
+      const torrentIntent = intents.find((intent) => intent.kind === "torrent")
+      const uriIntents = intents
+        .filter((intent) => intent.kind === "uri")
+        .map((intent) => intent.value)
+
+      if (torrentIntent) {
+        await loadTorrentInfo(torrentIntent.value)
+      }
+
+      if (uriIntents.length > 0) {
+        setForm((current) => ({
+          ...current,
+          uris: Array.from(
+            new Set([current.uris, ...uriIntents].filter(Boolean))
+          ).join("\n"),
+        }))
+      }
+    },
+    [loadTorrentInfo]
+  )
+
   const openAddTaskDialog = async () => {
     setAddOpen(true)
     const clipboardText = await navigator.clipboard.readText().catch(() => "")
@@ -556,6 +582,20 @@ export function App() {
       }))
     }
   }
+
+  useEffect(() => {
+    return window.grabbit.onExternalTaskIntents((intents) => {
+      const shouldOpen = intents.some(
+        (intent) =>
+          intent.kind === "uri" ||
+          intent.kind === "torrent" ||
+          intent.command === "new-task"
+      )
+      if (shouldOpen) {
+        void openAddTaskDialogWithIntents(intents)
+      }
+    })
+  }, [openAddTaskDialogWithIntents])
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">

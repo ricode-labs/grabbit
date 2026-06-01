@@ -11,6 +11,8 @@ import {
   normalizeDownloadDirectoryHistory,
   normalizeTaskSchedulerRule,
   parseCurlCommand,
+  parseExternalTaskIntent,
+  parseExternalTaskIntents,
   splitTaskLinks,
   thunderLinkToUri,
   buildTorrentSelectFileOption,
@@ -78,6 +80,41 @@ assert.equal(thunderLinkToUri(thunderHttp), "https://example.com/thunder.zip")
 assert.equal(thunderLinkToUri("thunder://not-base64"), null)
 assert.equal(buildTorrentSelectFileOption([2, 1, 2], 3), "1,2")
 assert.equal(buildTorrentSelectFileOption([1, 2, 3], 3), "")
+
+assert.deepEqual(parseExternalTaskIntent("magnet:?xt=urn:btih:abc"), {
+  kind: "uri",
+  value: "magnet:?xt=urn:btih:abc",
+})
+assert.deepEqual(parseExternalTaskIntent(thunderHttp), {
+  kind: "uri",
+  value: "https://example.com/thunder.zip",
+})
+assert.deepEqual(parseExternalTaskIntent("/tmp/example.torrent"), {
+  kind: "torrent",
+  value: "/tmp/example.torrent",
+})
+assert.deepEqual(
+  parseExternalTaskIntent(
+    "motrix://new-task?uri=https%3A%2F%2Fexample.com%2Fa.zip"
+  ),
+  {
+    kind: "uri",
+    value: "https://example.com/a.zip",
+    command: "new-task",
+    args: { uri: "https://example.com/a.zip" },
+  }
+)
+assert.deepEqual(
+  parseExternalTaskIntents([
+    "--flag",
+    "mo://new-task",
+    "https://example.com/file.zip",
+  ]),
+  [
+    { kind: "command", value: "mo://new-task", command: "new-task", args: {} },
+    { kind: "uri", value: "https://example.com/file.zip" },
+  ]
+)
 
 assert.deepEqual(
   splitTaskLinks(

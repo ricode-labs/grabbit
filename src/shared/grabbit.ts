@@ -462,6 +462,79 @@ export function isMediaTorrentFile(
   return groups[kind].includes(extension as never)
 }
 
+export type ExternalTaskIntent = {
+  kind: "uri" | "torrent" | "command"
+  value: string
+  command?: string
+  args?: Record<string, string>
+}
+
+export const supportedExternalProtocols = [
+  "magnet",
+  "thunder",
+  "mo",
+  "motrix",
+] as const
+
+export function isTorrentPath(value: string) {
+  return /\.torrent(?:$|[?#])/i.test(value.trim())
+}
+
+export function parseExternalTaskIntent(
+  value: string
+): ExternalTaskIntent | null {
+  const input = value.trim()
+  if (!input) {
+    return null
+  }
+
+  if (isTorrentPath(input) && !/^[a-z][a-z0-9+.-]*:/i.test(input)) {
+    return { kind: "torrent", value: input }
+  }
+
+  const normalizedUri = normalizeTaskLink(input)
+  if (normalizedUri) {
+    return { kind: "uri", value: normalizedUri }
+  }
+
+  if (/^(mo|motrix):/i.test(input)) {
+    try {
+      const parsed = new URL(input)
+      const args = Object.fromEntries(parsed.searchParams.entries())
+      const uri = args.uri || args.url || args.link || ""
+      const torrentPath = args.path || args.file || ""
+
+      if (uri) {
+        const normalized = normalizeTaskLink(uri)
+        return normalized
+          ? { kind: "uri", value: normalized, command: parsed.hostname, args }
+          : null
+      }
+
+      if (torrentPath && isTorrentPath(torrentPath)) {
+        return {
+          kind: "torrent",
+          value: torrentPath,
+          command: parsed.hostname,
+          args,
+        }
+      }
+
+      return { kind: "command", value: input, command: parsed.hostname, args }
+    } catch {
+      return null
+    }
+  }
+
+  return null
+}
+
+export function parseExternalTaskIntents(values: string[]) {
+  return values
+    .map(parseExternalTaskIntent)
+    .filter((intent): intent is ExternalTaskIntent => Boolean(intent))
+}
+
 export function thunderLinkToUri(link: string): string | null {
   const payload = link.replace(/^thunder:\/\//i, "").trim()
 

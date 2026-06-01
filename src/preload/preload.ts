@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from "electron"
 import type {
+  ExternalTaskIntent,
   GrabbitPreferences,
   ParsedTorrentInfo,
   TaskSchedulerRule,
@@ -83,6 +84,18 @@ export type DeleteTaskFilesResult = {
 }
 
 export const grabbitApi = {
+  onExternalTaskIntents: (
+    callback: (intents: ExternalTaskIntent[]) => void
+  ) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      intents: ExternalTaskIntent[]
+    ) => callback(intents)
+    ipcRenderer.on("external:task-intents", listener)
+    return () => {
+      ipcRenderer.removeListener("external:task-intents", listener)
+    }
+  },
   listTasks: (status: TaskListStatus) =>
     ipcRenderer.invoke("tasks:list", status) as Promise<Aria2Task[]>,
   getTaskPeers: (gid: string) =>
