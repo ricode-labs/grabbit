@@ -2,6 +2,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process"
 import { app, BrowserWindow, dialog, ipcMain, shell } from "electron"
 import fs from "node:fs/promises"
 import path from "node:path"
+import parseTorrent from "parse-torrent"
 import started from "electron-squirrel-startup"
 import {
   buildGlobalAria2Options,
@@ -12,7 +13,9 @@ import {
   normalizeDownloadDirectoryHistory,
   normalizeTaskSchedulerRule,
   type GrabbitPreferences,
+  type ParsedTorrentInfo,
   type TaskSchedulerRule,
+  type TorrentFileEntry,
 } from "../shared/grabbit"
 
 if (started) {
@@ -44,6 +47,7 @@ type Aria2Task = {
   connections: string
   dir: string
   files?: Array<{
+    index?: string
     path: string
     length: string
     completedLength: string
@@ -51,8 +55,18 @@ type Aria2Task = {
     uris?: Array<{ uri: string; status: string }>
   }>
   bittorrent?: {
+    announceList?: string[][]
+    comment?: string
+    creationDate?: string
+    mode?: string
     info?: { name?: string }
   }
+  verifiedLength?: string
+  verifyIntegrityPending?: string
+  numSeeders?: string
+  seeder?: string
+  errorCode?: string
+  errorMessage?: string
 }
 
 type AddTaskPayload = {
@@ -63,6 +77,18 @@ type AddTaskPayload = {
 type AddTorrentPayload = {
   torrentPath: string
   options?: Record<string, string | number | boolean | undefined>
+}
+
+type ParsedTorrentFile = {
+  path?: string
+  name?: string
+  length?: number
+}
+
+type ParsedTorrent = {
+  name?: string
+  files?: ParsedTorrentFile[]
+  length?: number
 }
 
 type RestartTaskPayload = {
@@ -89,13 +115,22 @@ const getAria2Executable = () => {
     return path.join(process.resourcesPath, "aria2", "linux-x64", "aria2c")
   }
 
-  return path.join(app.getAppPath(), "resources", "aria2", "linux-x64", "aria2c")
+  return path.join(
+    app.getAppPath(),
+    "resources",
+    "aria2",
+    "linux-x64",
+    "aria2c"
+  )
 }
 
 const getSessionPath = () => path.join(app.getPath("userData"), "aria2.session")
-const getPreferencesPath = () => path.join(app.getPath("userData"), "preferences.json")
-const getSchedulerPath = () => path.join(app.getPath("userData"), "scheduler.json")
-const getFallbackDownloadDir = () => path.join(app.getPath("downloads"), "Grabbit")
+const getPreferencesPath = () =>
+  path.join(app.getPath("userData"), "preferences.json")
+const getSchedulerPath = () =>
+  path.join(app.getPath("userData"), "scheduler.json")
+const getFallbackDownloadDir = () =>
+  path.join(app.getPath("downloads"), "Grabbit")
 
 const readPreferences = async (): Promise<GrabbitPreferences> => {
   const defaults = defaultGrabbitPreferences(getFallbackDownloadDir())
@@ -116,11 +151,13 @@ const readPreferences = async (): Promise<GrabbitPreferences> => {
         preferences.maxOverallDownloadLimit ?? defaults.maxOverallDownloadLimit,
       maxOverallUploadLimit:
         preferences.maxOverallUploadLimit ?? defaults.maxOverallUploadLimit,
-      continueDownloads: preferences.continueDownloads ?? defaults.continueDownloads,
+      continueDownloads:
+        preferences.continueDownloads ?? defaults.continueDownloads,
       allProxy: preferences.allProxy ?? defaults.allProxy,
       downloadDirectoryHistory: normalizeDownloadDirectoryHistory(
         preferences.downloadDir || defaults.downloadDir,
-        preferences.downloadDirectoryHistory ?? defaults.downloadDirectoryHistory
+        preferences.downloadDirectoryHistory ??
+          defaults.downloadDirectoryHistory
       ),
     }
   } catch {
@@ -140,11 +177,17 @@ const writePreferences = async (preferences: GrabbitPreferences) => {
     ),
   }
   await fs.mkdir(app.getPath("userData"), { recursive: true })
-  await fs.writeFile(getPreferencesPath(), JSON.stringify(nextPreferences, null, 2), "utf8")
+  await fs.writeFile(
+    getPreferencesPath(),
+    JSON.stringify(nextPreferences, null, 2),
+    "utf8"
+  )
 
   if (aria2Process) {
     await fs.mkdir(nextPreferences.downloadDir, { recursive: true })
-    await callAria2("aria2.changeGlobalOption", [buildGlobalAria2Options(nextPreferences)])
+    await callAria2("aria2.changeGlobalOption", [
+      buildGlobalAria2Options(nextPreferences),
+    ])
   }
 
   return nextPreferences
@@ -153,7 +196,9 @@ const writePreferences = async (preferences: GrabbitPreferences) => {
 const readSchedulerRule = async (): Promise<TaskSchedulerRule> => {
   try {
     const raw = await fs.readFile(getSchedulerPath(), "utf8")
-    return normalizeTaskSchedulerRule(JSON.parse(raw) as Partial<TaskSchedulerRule>)
+    return normalizeTaskSchedulerRule(
+      JSON.parse(raw) as Partial<TaskSchedulerRule>
+    )
   } catch {
     return defaultTaskSchedulerRule()
   }
@@ -162,7 +207,11 @@ const readSchedulerRule = async (): Promise<TaskSchedulerRule> => {
 const writeSchedulerRule = async (rule: TaskSchedulerRule) => {
   const nextRule = normalizeTaskSchedulerRule(rule)
   await fs.mkdir(app.getPath("userData"), { recursive: true })
-  await fs.writeFile(getSchedulerPath(), JSON.stringify(nextRule, null, 2), "utf8")
+  await fs.writeFile(
+    getSchedulerPath(),
+    JSON.stringify(nextRule, null, 2),
+    "utf8"
+  )
   await applySchedulerRule()
   return nextRule
 }
@@ -172,7 +221,10 @@ const applySchedulerRule = async () => {
     return
   }
 
-  const [preferences, schedulerRule] = await Promise.all([readPreferences(), readSchedulerRule()])
+  const [preferences, schedulerRule] = await Promise.all([
+    readPreferences(),
+    readSchedulerRule(),
+  ])
   const nextOptions = buildSchedulerGlobalOptions(schedulerRule, preferences)
 
   await callAria2("aria2.changeGlobalOption", [nextOptions])
@@ -233,15 +285,21 @@ const startAria2 = async () => {
       `--split=${globalOptions.split}`,
       `--max-overall-download-limit=${globalOptions["max-overall-download-limit"]}`,
       `--max-overall-upload-limit=${globalOptions["max-overall-upload-limit"]}`,
-      ...(globalOptions["all-proxy"] ? [`--all-proxy=${globalOptions["all-proxy"]}`] : []),
-      ...(globalOptions["user-agent"] ? [`--user-agent=${globalOptions["user-agent"]}`] : []),
+      ...(globalOptions["all-proxy"]
+        ? [`--all-proxy=${globalOptions["all-proxy"]}`]
+        : []),
+      ...(globalOptions["user-agent"]
+        ? [`--user-agent=${globalOptions["user-agent"]}`]
+        : []),
       `--bt-save-metadata=${globalOptions["bt-save-metadata"]}`,
       `--bt-force-encryption=${globalOptions["bt-force-encryption"]}`,
       `--follow-torrent=${globalOptions["follow-torrent"]}`,
       `--follow-metalink=${globalOptions["follow-metalink"]}`,
       `--seed-ratio=${globalOptions["seed-ratio"]}`,
       `--seed-time=${globalOptions["seed-time"]}`,
-      ...(globalOptions["bt-tracker"] ? [`--bt-tracker=${globalOptions["bt-tracker"]}`] : []),
+      ...(globalOptions["bt-tracker"]
+        ? [`--bt-tracker=${globalOptions["bt-tracker"]}`]
+        : []),
       `--enable-upnp=${globalOptions["enable-upnp"]}`,
       `--listen-port=${globalOptions["listen-port"]}`,
       `--dht-listen-port=${globalOptions["dht-listen-port"]}`,
@@ -298,7 +356,9 @@ const callAria2 = async <T = unknown>(
   })
 
   if (!response.ok) {
-    throw new Error(`aria2 RPC failed: ${response.status} ${response.statusText}`)
+    throw new Error(
+      `aria2 RPC failed: ${response.status} ${response.statusText}`
+    )
   }
 
   const data = (await response.json()) as JsonRpcSuccess<T> | JsonRpcFailure
@@ -311,25 +371,71 @@ const callAria2 = async <T = unknown>(
 
 const normalizeOptions = normalizeAria2Options
 
+const getFileExtension = (filePath: string) => {
+  const extension = path.extname(filePath)
+  return extension || ""
+}
+
+const parseTorrentFile = async (
+  torrentPath: string
+): Promise<ParsedTorrentInfo> => {
+  const torrent = await fs.readFile(torrentPath)
+  const parsed = parseTorrent(torrent) as ParsedTorrent
+  const filesSource = parsed.files?.length
+    ? parsed.files
+    : [{ path: parsed.name, name: parsed.name, length: parsed.length }]
+
+  const files: TorrentFileEntry[] = filesSource.map((file, index) => {
+    const filePath =
+      file.path || file.name || `${parsed.name || "torrent"}-${index + 1}`
+    const name = path.basename(filePath)
+    return {
+      index: index + 1,
+      path: filePath,
+      name,
+      extension: getFileExtension(name),
+      length: Number(file.length ?? 0),
+    }
+  })
+
+  return {
+    name: parsed.name || path.basename(torrentPath),
+    files,
+    totalLength: files.reduce((sum, file) => sum + file.length, 0),
+  }
+}
+
 const isStoppedTask = (task: Pick<Aria2Task, "status">) =>
-  task.status === "complete" || task.status === "error" || task.status === "removed"
+  task.status === "complete" ||
+  task.status === "error" ||
+  task.status === "removed"
 
 const isPathInside = (candidatePath: string, parentPath: string) => {
   const relativePath = path.relative(parentPath, candidatePath)
-  return relativePath === "" || (!relativePath.startsWith("..") && !path.isAbsolute(relativePath))
+  return (
+    relativePath === "" ||
+    (!relativePath.startsWith("..") && !path.isAbsolute(relativePath))
+  )
 }
 
-const deleteTaskFiles = async (task: Aria2Task): Promise<DeleteTaskFilesResult> => {
+const deleteTaskFiles = async (
+  task: Aria2Task
+): Promise<DeleteTaskFilesResult> => {
   const result: DeleteTaskFilesResult = {
     deleted: [],
     skipped: [],
     failed: [],
   }
   const taskDir = path.resolve(task.dir || getFallbackDownloadDir())
-  const rawPaths = Array.from(new Set(task.files?.map((file) => file.path.trim()).filter(Boolean) ?? []))
+  const rawPaths = Array.from(
+    new Set(task.files?.map((file) => file.path.trim()).filter(Boolean) ?? [])
+  )
 
   if (rawPaths.length === 0) {
-    result.skipped.push({ path: taskDir, reason: "这个任务没有可删除的本地文件路径" })
+    result.skipped.push({
+      path: taskDir,
+      reason: "这个任务没有可删除的本地文件路径",
+    })
     return result
   }
 
@@ -337,14 +443,20 @@ const deleteTaskFiles = async (task: Aria2Task): Promise<DeleteTaskFilesResult> 
     const filePath = path.resolve(rawPath)
 
     if (!isPathInside(filePath, taskDir)) {
-      result.skipped.push({ path: rawPath, reason: "文件路径不在任务保存目录内，已跳过" })
+      result.skipped.push({
+        path: rawPath,
+        reason: "文件路径不在任务保存目录内，已跳过",
+      })
       continue
     }
 
     try {
       const stats = await fs.stat(filePath)
       if (stats.isDirectory()) {
-        result.skipped.push({ path: filePath, reason: "为避免误删目录，仅移入任务文件" })
+        result.skipped.push({
+          path: filePath,
+          reason: "为避免误删目录，仅移入任务文件",
+        })
         continue
       }
 
@@ -355,7 +467,10 @@ const deleteTaskFiles = async (task: Aria2Task): Promise<DeleteTaskFilesResult> 
       if (nodeError.code === "ENOENT") {
         result.skipped.push({ path: filePath, reason: "文件不存在" })
       } else {
-        result.failed.push({ path: filePath, error: error instanceof Error ? error.message : "删除失败" })
+        result.failed.push({
+          path: filePath,
+          error: error instanceof Error ? error.message : "删除失败",
+        })
       }
     }
   }
@@ -389,6 +504,12 @@ const fetchTasks = async (status: "active" | "waiting" | "stopped") => {
     "dir",
     "files",
     "bittorrent",
+    "verifiedLength",
+    "verifyIntegrityPending",
+    "numSeeders",
+    "seeder",
+    "errorCode",
+    "errorMessage",
   ]
 
   if (status === "active") {
@@ -444,24 +565,46 @@ app.on("activate", () => {
   }
 })
 
-ipcMain.handle("tasks:list", (_event, status: "active" | "waiting" | "stopped") =>
-  fetchTasks(status)
+ipcMain.handle(
+  "tasks:list",
+  (_event, status: "active" | "waiting" | "stopped") => fetchTasks(status)
+)
+
+ipcMain.handle("tasks:get-peers", (_event, gid: string) =>
+  callAria2("aria2.getPeers", [gid])
+)
+
+ipcMain.handle("tasks:get-servers", (_event, gid: string) =>
+  callAria2("aria2.getServers", [gid])
 )
 
 ipcMain.handle("tasks:add-uri", async (_event, payload: AddTaskPayload) => {
   const options = normalizeOptions(payload.options)
   const gids = await Promise.all(
-    payload.uris.map((uri) => callAria2<string>("aria2.addUri", [[uri], options]))
+    payload.uris.map((uri) =>
+      callAria2<string>("aria2.addUri", [[uri], options])
+    )
   )
 
   return gids
 })
 
-ipcMain.handle("tasks:add-torrent", async (_event, payload: AddTorrentPayload) => {
-  const options = normalizeOptions(payload.options)
-  const torrent = await fs.readFile(payload.torrentPath)
-  return callAria2<string>("aria2.addTorrent", [torrent.toString("base64"), [], options])
-})
+ipcMain.handle(
+  "tasks:add-torrent",
+  async (_event, payload: AddTorrentPayload) => {
+    const options = normalizeOptions(payload.options)
+    const torrent = await fs.readFile(payload.torrentPath)
+    return callAria2<string>("aria2.addTorrent", [
+      torrent.toString("base64"),
+      [],
+      options,
+    ])
+  }
+)
+
+ipcMain.handle("torrent:parse", (_event, torrentPath: string) =>
+  parseTorrentFile(torrentPath)
+)
 
 ipcMain.handle("tasks:restart", async (_event, payload: RestartTaskPayload) => {
   const options = normalizeOptions({
@@ -473,13 +616,17 @@ ipcMain.handle("tasks:restart", async (_event, payload: RestartTaskPayload) => {
     .filter((uri) => /^(https?|ftp):\/\//i.test(uri) || /^magnet:\?/i.test(uri))
 
   if (uris?.length) {
-    return Promise.all(uris.map((uri) => callAria2<string>("aria2.addUri", [[uri], options])))
+    return Promise.all(
+      uris.map((uri) => callAria2<string>("aria2.addUri", [[uri], options]))
+    )
   }
 
   throw new Error("这个任务没有可用于重新下载的原始链接")
 })
 
-ipcMain.handle("tasks:purge-results", () => callAria2("aria2.purgeDownloadResult"))
+ipcMain.handle("tasks:purge-results", () =>
+  callAria2("aria2.purgeDownloadResult")
+)
 ipcMain.handle("app:select-torrent", async () => {
   const window = BrowserWindow.getFocusedWindow() ?? mainWindow
   const result = await dialog.showOpenDialog(window!, {
@@ -490,23 +637,35 @@ ipcMain.handle("app:select-torrent", async () => {
   return result.canceled ? null : result.filePaths[0]
 })
 
-ipcMain.handle("tasks:pause", (_event, gid: string) => callAria2("aria2.pause", [gid]))
-ipcMain.handle("tasks:resume", (_event, gid: string) => callAria2("aria2.unpause", [gid]))
-ipcMain.handle("tasks:remove", (_event, taskOrGid: Aria2Task | string, deleteFiles = false) => {
-  if (typeof taskOrGid === "string") {
-    return callAria2("aria2.remove", [taskOrGid])
-  }
+ipcMain.handle("tasks:pause", (_event, gid: string) =>
+  callAria2("aria2.pause", [gid])
+)
+ipcMain.handle("tasks:resume", (_event, gid: string) =>
+  callAria2("aria2.unpause", [gid])
+)
+ipcMain.handle(
+  "tasks:remove",
+  (_event, taskOrGid: Aria2Task | string, deleteFiles = false) => {
+    if (typeof taskOrGid === "string") {
+      return callAria2("aria2.remove", [taskOrGid])
+    }
 
-  return removeTask(taskOrGid, deleteFiles)
-})
-ipcMain.handle("tasks:remove-result", (_event, taskOrGid: Aria2Task | string, deleteFiles = false) => {
-  if (typeof taskOrGid === "string") {
-    return callAria2("aria2.removeDownloadResult", [taskOrGid])
+    return removeTask(taskOrGid, deleteFiles)
   }
+)
+ipcMain.handle(
+  "tasks:remove-result",
+  (_event, taskOrGid: Aria2Task | string, deleteFiles = false) => {
+    if (typeof taskOrGid === "string") {
+      return callAria2("aria2.removeDownloadResult", [taskOrGid])
+    }
 
-  return removeTask(taskOrGid, deleteFiles)
-})
-ipcMain.handle("tasks:delete-files", (_event, task: Aria2Task) => deleteTaskFiles(task))
+    return removeTask(taskOrGid, deleteFiles)
+  }
+)
+ipcMain.handle("tasks:delete-files", (_event, task: Aria2Task) =>
+  deleteTaskFiles(task)
+)
 ipcMain.handle("tasks:pause-all", () => callAria2("aria2.pauseAll"))
 ipcMain.handle("tasks:resume-all", () => callAria2("aria2.unpauseAll"))
 ipcMain.handle("app:select-directory", async () => {
@@ -532,9 +691,12 @@ ipcMain.handle("app:open-path", async (_event, targetPath: string) => {
   return shell.openPath(targetPath)
 })
 ipcMain.handle("app:get-preferences", () => readPreferences())
-ipcMain.handle("app:set-preferences", (_event, preferences: GrabbitPreferences) =>
-  writePreferences(preferences)
+ipcMain.handle(
+  "app:set-preferences",
+  (_event, preferences: GrabbitPreferences) => writePreferences(preferences)
 )
 ipcMain.handle("app:get-scheduler", () => readSchedulerRule())
-ipcMain.handle("app:set-scheduler", (_event, rule: TaskSchedulerRule) => writeSchedulerRule(rule))
+ipcMain.handle("app:set-scheduler", (_event, rule: TaskSchedulerRule) =>
+  writeSchedulerRule(rule)
+)
 ipcMain.handle("app:get-default-dir", () => getDefaultDownloadDir())

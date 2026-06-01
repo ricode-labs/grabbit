@@ -35,9 +35,117 @@ export type TaskSchedulerRule = {
   repeatDays: number[]
 }
 
+export type TorrentFileEntry = {
+  index: number
+  path: string
+  name: string
+  extension: string
+  length: number
+}
+
+export type ParsedTorrentInfo = {
+  name: string
+  files: TorrentFileEntry[]
+  totalLength: number
+}
+
+export type Aria2LikeFile = {
+  path?: string
+  length?: string | number
+  completedLength?: string | number
+  selected?: string
+}
+
+export type Aria2LikePeer = {
+  peerId?: string
+  ip?: string
+  port?: string
+  bitfield?: string
+  amChoking?: string
+  peerChoking?: string
+  downloadSpeed?: string
+  uploadSpeed?: string
+  seeder?: string
+}
+
+export type Aria2BittorrentLike = {
+  announceList?: string[][]
+  comment?: string
+  creationDate?: string | number
+  mode?: string
+  info?: { name?: string }
+}
+
+export function toFiniteNumber(value: string | number | undefined) {
+  const number = Number(value ?? 0)
+  return Number.isFinite(number) ? number : 0
+}
+
+export function calculateProgress(
+  completed: string | number | undefined,
+  total: string | number | undefined
+) {
+  const totalNumber = toFiniteNumber(total)
+  if (totalNumber <= 0) {
+    return 0
+  }
+
+  return Math.min(
+    100,
+    Math.round((toFiniteNumber(completed) / totalNumber) * 100)
+  )
+}
+
+export function summarizeFiles(files: Aria2LikeFile[] = []) {
+  const totalLength = files.reduce(
+    (sum, file) => sum + toFiniteNumber(file.length),
+    0
+  )
+  const completedLength = files.reduce(
+    (sum, file) => sum + toFiniteNumber(file.completedLength),
+    0
+  )
+  const selectedCount = files.filter((file) => file.selected === "true").length
+
+  return {
+    count: files.length,
+    selectedCount,
+    totalLength,
+    completedLength,
+    progress: calculateProgress(completedLength, totalLength),
+  }
+}
+
+export function flattenAnnounceList(announceList: string[][] | undefined) {
+  return Array.from(
+    new Set(
+      (announceList ?? [])
+        .flat()
+        .map((tracker) => tracker.trim())
+        .filter(Boolean)
+    )
+  )
+}
+
+export function summarizePeers(peers: Aria2LikePeer[] = []) {
+  return {
+    count: peers.length,
+    seeders: peers.filter((peer) => peer.seeder === "true").length,
+    downloadSpeed: peers.reduce(
+      (sum, peer) => sum + toFiniteNumber(peer.downloadSpeed),
+      0
+    ),
+    uploadSpeed: peers.reduce(
+      (sum, peer) => sum + toFiniteNumber(peer.uploadSpeed),
+      0
+    ),
+  }
+}
+
 export type AddTaskForm = {
   uris: string
   torrentPath: string
+  selectedTorrentFiles: string
   out: string
   split: number
   dir: string
@@ -58,7 +166,9 @@ export type ParsedCurlCommand = {
   cookie: string
 }
 
-export function defaultGrabbitPreferences(downloadDir: string): GrabbitPreferences {
+export function defaultGrabbitPreferences(
+  downloadDir: string
+): GrabbitPreferences {
   return {
     downloadDir,
     maxConcurrentDownloads: 5,
@@ -93,7 +203,10 @@ export function normalizeDownloadDirectoryHistory(
   return [nextDirectory, ...history]
     .map((directory) => directory?.trim() ?? "")
     .filter(Boolean)
-    .filter((directory, index, directories) => directories.indexOf(directory) === index)
+    .filter(
+      (directory, index, directories) =>
+        directories.indexOf(directory) === index
+    )
     .slice(0, limit)
 }
 
@@ -130,8 +243,14 @@ export function normalizeTaskSchedulerRule(
     speedMode: rule?.speedMode === "unlimited" ? "unlimited" : "manual",
     downloadLimit: rule?.downloadLimit ?? defaults.downloadLimit,
     uploadLimit: rule?.uploadLimit ?? defaults.uploadLimit,
-    startTime: rule?.startTime && timePattern.test(rule.startTime) ? rule.startTime : defaults.startTime,
-    endTime: rule?.endTime && timePattern.test(rule.endTime) ? rule.endTime : defaults.endTime,
+    startTime:
+      rule?.startTime && timePattern.test(rule.startTime)
+        ? rule.startTime
+        : defaults.startTime,
+    endTime:
+      rule?.endTime && timePattern.test(rule.endTime)
+        ? rule.endTime
+        : defaults.endTime,
     repeatDays: repeatDays.length > 0 ? repeatDays : defaults.repeatDays,
   }
 }
@@ -141,7 +260,10 @@ const minutesOfDay = (time: string) => {
   return hours * 60 + minutes
 }
 
-export function isSchedulerRuleActive(rule: TaskSchedulerRule, now = new Date()) {
+export function isSchedulerRuleActive(
+  rule: TaskSchedulerRule,
+  now = new Date()
+) {
   if (!rule.enabled || !rule.repeatDays.includes(now.getDay())) {
     return false
   }
@@ -193,17 +315,23 @@ export function normalizeAria2Options(
       continue
     }
 
-    const kebabKey = key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)
+    const kebabKey = key.replace(
+      /[A-Z]/g,
+      (letter) => `-${letter.toLowerCase()}`
+    )
     result[kebabKey] = String(value)
   }
 
   return result
 }
 
-export function buildInitialAddTaskForm(preferences: GrabbitPreferences): AddTaskForm {
+export function buildInitialAddTaskForm(
+  preferences: GrabbitPreferences
+): AddTaskForm {
   return {
     uris: "",
     torrentPath: "",
+    selectedTorrentFiles: "",
     out: "",
     split: preferences.split,
     dir: preferences.downloadDir,
@@ -221,6 +349,9 @@ export function buildAddTaskOptions(form: AddTaskForm) {
     out: form.out,
     split: form.split,
     dir: form.dir,
+    ...(form.selectedTorrentFiles
+      ? { selectFile: form.selectedTorrentFiles }
+      : {}),
     userAgent: form.userAgent,
     header: [
       form.authorization ? `Authorization: ${form.authorization}` : "",
@@ -263,6 +394,74 @@ export function buildGlobalAria2Options(preferences: GrabbitPreferences) {
   })
 }
 
+export function buildTorrentSelectFileOption(
+  selectedIndexes: number[],
+  totalFiles: number
+) {
+  if (totalFiles <= 0 || selectedIndexes.length === 0) {
+    return ""
+  }
+
+  const uniqueIndexes = Array.from(
+    new Set(
+      selectedIndexes
+        .map((index) => Number(index))
+        .filter(
+          (index) =>
+            Number.isInteger(index) && index >= 1 && index <= totalFiles
+        )
+    )
+  ).sort((left, right) => left - right)
+
+  if (uniqueIndexes.length === 0 || uniqueIndexes.length === totalFiles) {
+    return ""
+  }
+
+  return uniqueIndexes.join(",")
+}
+
+export function isMediaTorrentFile(
+  file: Pick<TorrentFileEntry, "extension">,
+  kind: "video" | "audio" | "image" | "document"
+) {
+  const extension = file.extension.toLowerCase().replace(/^\./, "")
+  const groups = {
+    video: [
+      "avi",
+      "flv",
+      "m2ts",
+      "m4v",
+      "mkv",
+      "mov",
+      "mp4",
+      "mpeg",
+      "mpg",
+      "rmvb",
+      "ts",
+      "webm",
+      "wmv",
+    ],
+    audio: ["aac", "ape", "flac", "m4a", "mp3", "ogg", "wav", "wma"],
+    image: ["bmp", "gif", "jpeg", "jpg", "png", "svg", "webp"],
+    document: [
+      "azw3",
+      "chm",
+      "doc",
+      "docx",
+      "epub",
+      "mobi",
+      "pdf",
+      "ppt",
+      "pptx",
+      "txt",
+      "xls",
+      "xlsx",
+    ],
+  } as const
+
+  return groups[kind].includes(extension as never)
+}
+
 export function thunderLinkToUri(link: string): string | null {
   const payload = link.replace(/^thunder:\/\//i, "").trim()
 
@@ -274,7 +473,9 @@ export function thunderLinkToUri(link: string): string | null {
     const decoded = Buffer.from(payload, "base64").toString("utf8")
     const match = decoded.match(/^AA([\s\S]+)ZZ$/)
     const uri = (match?.[1] ?? decoded).trim()
-    return /^(https?|ftp):\/\//i.test(uri) || /^magnet:\?/i.test(uri) ? uri : null
+    return /^(https?|ftp):\/\//i.test(uri) || /^magnet:\?/i.test(uri)
+      ? uri
+      : null
   } catch {
     return null
   }
@@ -287,7 +488,9 @@ export function normalizeTaskLink(value: string): string | null {
     return thunderLinkToUri(link)
   }
 
-  return /^(https?|ftp):\/\//i.test(link) || /^magnet:\?/i.test(link) ? link : null
+  return /^(https?|ftp):\/\//i.test(link) || /^magnet:\?/i.test(link)
+    ? link
+    : null
 }
 
 export function splitTaskLinks(input: string) {
