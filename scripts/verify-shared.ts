@@ -8,6 +8,7 @@ import {
   defaultTaskSchedulerRule,
   isSchedulerRuleActive,
   normalizeAria2Options,
+  normalizeDownloadDirectoryHistory,
   normalizeTaskSchedulerRule,
   parseCurlCommand,
   splitTaskLinks,
@@ -80,6 +81,17 @@ assert.deepEqual(
   ]
 )
 
+assert.deepEqual(
+  normalizeDownloadDirectoryHistory("/downloads/new", [
+    "/downloads/old",
+    "",
+    "/downloads/new",
+    "/downloads/older",
+    "/downloads/old",
+  ], 3),
+  ["/downloads/new", "/downloads/old", "/downloads/older"]
+)
+
 assert.deepEqual(parseCurlCommand("curl 'https://example.com/file.zip' -H 'Referer: https://example.com' -H 'Cookie: a=b' -A 'Agent/1.0' -o out.zip"), {
   uris: ["https://example.com/file.zip"],
   out: "out.zip",
@@ -135,6 +147,7 @@ assert.deepEqual(
     dhtListenPort: "6881",
     newTaskShowDownloading: false,
     noConfirmBeforeDeleteTask: true,
+    downloadDirectoryHistory: ["/downloads", "/archive"],
   }),
   {
     dir: "/downloads",

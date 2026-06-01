@@ -20,6 +20,7 @@ export type GrabbitPreferences = {
   dhtListenPort: string
   newTaskShowDownloading: boolean
   noConfirmBeforeDeleteTask: boolean
+  downloadDirectoryHistory: string[]
 }
 
 export type SchedulerSpeedMode = "manual" | "unlimited"
@@ -80,7 +81,20 @@ export function defaultGrabbitPreferences(downloadDir: string): GrabbitPreferenc
     dhtListenPort: "6881",
     newTaskShowDownloading: true,
     noConfirmBeforeDeleteTask: false,
+    downloadDirectoryHistory: downloadDir ? [downloadDir] : [],
   }
+}
+
+export function normalizeDownloadDirectoryHistory(
+  nextDirectory: string,
+  history: Array<string | null | undefined> = [],
+  limit = 8
+) {
+  return [nextDirectory, ...history]
+    .map((directory) => directory?.trim() ?? "")
+    .filter(Boolean)
+    .filter((directory, index, directories) => directories.indexOf(directory) === index)
+    .slice(0, limit)
 }
 
 const fullWeekDays = [1, 2, 3, 4, 5, 6, 0]

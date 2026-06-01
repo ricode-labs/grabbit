@@ -9,6 +9,7 @@ import {
   defaultGrabbitPreferences,
   defaultTaskSchedulerRule,
   normalizeAria2Options,
+  normalizeDownloadDirectoryHistory,
   normalizeTaskSchedulerRule,
   type GrabbitPreferences,
   type TaskSchedulerRule,
@@ -117,6 +118,10 @@ const readPreferences = async (): Promise<GrabbitPreferences> => {
         preferences.maxOverallUploadLimit ?? defaults.maxOverallUploadLimit,
       continueDownloads: preferences.continueDownloads ?? defaults.continueDownloads,
       allProxy: preferences.allProxy ?? defaults.allProxy,
+      downloadDirectoryHistory: normalizeDownloadDirectoryHistory(
+        preferences.downloadDir || defaults.downloadDir,
+        preferences.downloadDirectoryHistory ?? defaults.downloadDirectoryHistory
+      ),
     }
   } catch {
     return defaults
@@ -129,6 +134,10 @@ const writePreferences = async (preferences: GrabbitPreferences) => {
     ...defaults,
     ...preferences,
     downloadDir: preferences.downloadDir || defaults.downloadDir,
+    downloadDirectoryHistory: normalizeDownloadDirectoryHistory(
+      preferences.downloadDir || defaults.downloadDir,
+      preferences.downloadDirectoryHistory ?? defaults.downloadDirectoryHistory
+    ),
   }
   await fs.mkdir(app.getPath("userData"), { recursive: true })
   await fs.writeFile(getPreferencesPath(), JSON.stringify(nextPreferences, null, 2), "utf8")
