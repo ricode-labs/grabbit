@@ -24,10 +24,12 @@ import {
   RotateCw,
   Search,
   Settings,
+  SunMoon,
   Trash2,
   X,
 } from "lucide-react"
 
+import { useTheme } from "@/components/theme-provider"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -254,13 +256,16 @@ export function App() {
     }
   }, [status])
 
+  const { setTheme } = useTheme()
+
   useEffect(() => {
     void window.grabbit.getPreferences().then((nextPreferences) => {
       setPreferences(nextPreferences)
+      setTheme(nextPreferences.theme)
       setForm(buildInitialAddTaskForm(nextPreferences))
     })
     void window.grabbit.getScheduler().then(setSchedulerRule)
-  }, [])
+  }, [setTheme])
 
   useEffect(() => {
     const load = () => {
@@ -493,6 +498,7 @@ export function App() {
       const savedPreferences =
         await window.grabbit.setPreferences(nextPreferences)
       setPreferences(savedPreferences)
+      setTheme(savedPreferences.theme)
       setForm(buildInitialAddTaskForm(savedPreferences))
       setNotice({
         tone: "success",
@@ -2246,6 +2252,38 @@ function PreferencesPage({
                   onChange({ ...currentPreferences, showDockProgress: checked })
                 }
               />
+              <div className="space-y-2 rounded-lg border p-3 md:col-span-2">
+                <div className="flex items-center gap-2 text-sm font-medium">
+                  <SunMoon className="size-4" />
+                  主题
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  选择亮色、暗色或跟随系统；保存后会持久化到应用偏好。
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {(
+                    [
+                      ["system", "跟随系统"],
+                      ["light", "亮色"],
+                      ["dark", "暗色"],
+                    ] as const
+                  ).map(([theme, label]) => (
+                    <Button
+                      key={theme}
+                      type="button"
+                      variant={
+                        currentPreferences.theme === theme
+                          ? "default"
+                          : "outline"
+                      }
+                      size="sm"
+                      onClick={() => onChange({ ...currentPreferences, theme })}
+                    >
+                      {label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
             </div>
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground">

@@ -1,3 +1,5 @@
+export type GrabbitThemeMode = "light" | "dark" | "system"
+
 export type GrabbitPreferences = {
   downloadDir: string
   maxConcurrentDownloads: number
@@ -24,6 +26,7 @@ export type GrabbitPreferences = {
   openAtLogin: boolean
   notifyOnDownloadComplete: boolean
   showDockProgress: boolean
+  theme: GrabbitThemeMode
 }
 
 export type SchedulerSpeedMode = "manual" | "unlimited"
@@ -198,6 +201,7 @@ export function defaultGrabbitPreferences(
     openAtLogin: false,
     notifyOnDownloadComplete: true,
     showDockProgress: true,
+    theme: "system",
   }
 }
 
