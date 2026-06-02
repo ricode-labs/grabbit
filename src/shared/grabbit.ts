@@ -60,6 +60,19 @@ export type GrabbitPreferences = {
   closeToTray: boolean
 }
 
+export type EnginePathInfo = {
+  key:
+    | "aria2"
+    | "session"
+    | "preferences"
+    | "scheduler"
+    | "userData"
+    | "downloads"
+  label: string
+  path: string
+  kind: "file" | "directory"
+}
+
 export type SchedulerSpeedMode = "manual" | "unlimited"
 
 export type TaskSchedulerRule = {

@@ -25,6 +25,7 @@ import {
   normalizeTaskSchedulerRule,
   parseExternalTaskIntents,
   supportedExternalProtocols,
+  type EnginePathInfo,
   type ExternalTaskIntent,
   type GrabbitPreferences,
   type ParsedTorrentInfo,
@@ -333,6 +334,45 @@ const getWindowStatePath = () =>
   path.join(app.getPath("userData"), "window-state.json")
 const getFallbackDownloadDir = () =>
   path.join(app.getPath("downloads"), "Grabbit")
+
+const getEnginePaths = (): EnginePathInfo[] => [
+  {
+    key: "aria2",
+    label: "aria2c 可执行文件",
+    path: getAria2Executable(),
+    kind: "file",
+  },
+  {
+    key: "session",
+    label: "aria2 会话文件",
+    path: getSessionPath(),
+    kind: "file",
+  },
+  {
+    key: "preferences",
+    label: "偏好配置文件",
+    path: getPreferencesPath(),
+    kind: "file",
+  },
+  {
+    key: "scheduler",
+    label: "限速计划文件",
+    path: getSchedulerPath(),
+    kind: "file",
+  },
+  {
+    key: "userData",
+    label: "应用数据目录",
+    path: app.getPath("userData"),
+    kind: "directory",
+  },
+  {
+    key: "downloads",
+    label: "默认下载目录",
+    path: getFallbackDownloadDir(),
+    kind: "directory",
+  },
+]
 
 type WindowState = {
   width: number
@@ -1116,6 +1156,7 @@ ipcMain.handle("app:open-path", async (_event, targetPath: string) => {
 
   return shell.openPath(targetPath)
 })
+ipcMain.handle("app:get-engine-paths", () => getEnginePaths())
 ipcMain.handle("app:get-preferences", () => readPreferences())
 ipcMain.handle(
   "app:set-preferences",

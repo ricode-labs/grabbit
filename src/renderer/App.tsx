@@ -72,6 +72,7 @@ import {
   toFiniteNumber,
   userAgentTemplates,
   type AddTaskForm,
+  type EnginePathInfo,
   type ExternalTaskIntent,
   type GrabbitPreferences,
   type ParsedTorrentInfo,
@@ -228,6 +229,7 @@ export function App() {
   const [schedulerRule, setSchedulerRule] = useState<TaskSchedulerRule | null>(
     null
   )
+  const [enginePaths, setEnginePaths] = useState<EnginePathInfo[]>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [searchQuery, setSearchQuery] = useState("")
   const [notice, setNotice] = useState<Notice | null>(null)
@@ -266,6 +268,7 @@ export function App() {
       setForm(buildInitialAddTaskForm(nextPreferences))
     })
     void window.grabbit.getScheduler().then(setSchedulerRule)
+    void window.grabbit.getEnginePaths().then(setEnginePaths)
   }, [setTheme])
 
   useEffect(() => {
@@ -371,6 +374,25 @@ export function App() {
   const copyTaskLinks = async (task: Aria2Task) => {
     const links = getTaskUris(task)
     await copyText(links.join("\n"), "任务链接已复制")
+  }
+
+  const openLocalPath = async (targetPath: string) => {
+    if (!targetPath) {
+      setNotice({ tone: "error", message: "没有可打开的路径" })
+      return
+    }
+
+    try {
+      const errorMessage = await window.grabbit.openPath(targetPath)
+      if (errorMessage) {
+        setNotice({ tone: "error", message: errorMessage })
+      }
+    } catch (error) {
+      setNotice({
+        tone: "error",
+        message: error instanceof Error ? error.message : "打开路径失败",
+      })
+    }
   }
 
   const runTaskAction = async (
@@ -763,6 +785,7 @@ export function App() {
                       }}
                       onShowDetails={setDetailTask}
                       onCopyLinks={copyTaskLinks}
+                      onOpenPath={openLocalPath}
                       onAction={(task, action) => {
                         if (action === "remove") {
                           if (preferences?.noConfirmBeforeDeleteTask) {
@@ -789,11 +812,13 @@ export function App() {
         <PreferencesPage
           preferences={preferences}
           schedulerRule={schedulerRule}
+          enginePaths={enginePaths}
           onChange={setPreferences}
           onSchedulerChange={setSchedulerRule}
           onSave={savePreferences}
           onSaveScheduler={saveScheduler}
           onChooseDirectory={chooseDefaultDirectory}
+          onOpenPath={openLocalPath}
         />
       ) : null}
       {page === "about" ? <AboutPage /> : null}
@@ -1065,9 +1090,9 @@ export function App() {
             <TaskDetails
               task={detailTask}
               onCopy={(text, message) => void copyText(text, message)}
-              onOpenPath={(targetPath) =>
-                void window.grabbit.openPath(targetPath)
-              }
+              onOpenPath={(targetPath) => {
+                void openLocalPath(targetPath)
+              }}
             />
           ) : null}
           <DialogFooter className="mx-0 mb-0 shrink-0 border-t bg-background p-4">
@@ -1471,6 +1496,7 @@ function TaskCard({
   onSelectedChange,
   onShowDetails,
   onCopyLinks,
+  onOpenPath,
   onAction,
 }: {
   task: Aria2Task
@@ -1478,6 +1504,7 @@ function TaskCard({
   onSelectedChange: (checked: boolean) => void
   onShowDetails: (task: Aria2Task) => void
   onCopyLinks: (task: Aria2Task) => Promise<void>
+  onOpenPath: (targetPath: string) => Promise<void>
   onAction: (
     task: Aria2Task,
     action: "pause" | "resume" | "remove" | "restart"
@@ -1544,9 +1571,7 @@ function TaskCard({
                     <DropdownMenuItem onClick={() => void onCopyLinks(task)}>
                       <Clipboard /> 复制链接
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => void window.grabbit.openPath(taskPath)}
-                    >
+                    <DropdownMenuItem onClick={() => void onOpenPath(taskPath)}>
                       <Folder /> 打开位置
                     </DropdownMenuItem>
                     {task.status === "complete" ||
@@ -2058,19 +2083,23 @@ function LabeledTextarea({
 function PreferencesPage({
   preferences,
   schedulerRule,
+  enginePaths,
   onChange,
   onSchedulerChange,
   onSave,
   onSaveScheduler,
   onChooseDirectory,
+  onOpenPath,
 }: {
   preferences: GrabbitPreferences | null
   schedulerRule: TaskSchedulerRule | null
+  enginePaths: EnginePathInfo[]
   onChange: (preferences: GrabbitPreferences) => void
   onSchedulerChange: (rule: TaskSchedulerRule) => void
   onSave: (preferences: GrabbitPreferences) => Promise<void>
   onSaveScheduler: (rule: TaskSchedulerRule) => Promise<void>
   onChooseDirectory: () => Promise<void>
+  onOpenPath: (targetPath: string) => Promise<void>
 }) {
   const currentPreferences = preferences ?? defaultGrabbitPreferences("")
   const currentSchedulerRule = schedulerRule ?? defaultTaskSchedulerRule()
@@ -2113,6 +2142,42 @@ function PreferencesPage({
                 </Button>
               </div>
             </div>
+            {enginePaths.length > 0 ? (
+              <div className="rounded-lg border bg-muted/30 p-3">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-sm font-medium">引擎与配置路径</h3>
+                    <p className="text-xs text-muted-foreground">
+                      快速查看 aria2、会话与 Grabbit 配置所在位置。
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  {enginePaths.map((enginePath) => (
+                    <div
+                      key={enginePath.key}
+                      className="grid gap-2 rounded-md border bg-background p-3 md:grid-cols-[150px_1fr_auto] md:items-center"
+                    >
+                      <div className="text-sm font-medium">
+                        {enginePath.label}
+                      </div>
+                      <code className="rounded bg-muted px-2 py-1 text-xs break-all text-muted-foreground">
+                        {enginePath.path}
+                      </code>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => void onOpenPath(enginePath.path)}
+                      >
+                        <Folder />
+                        打开
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             <div className="grid gap-4 md:grid-cols-3">
               <NumberPreference
                 id="max-concurrent-downloads"

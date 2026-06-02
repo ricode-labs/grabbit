@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from "electron"
 import type {
+  EnginePathInfo,
   ExternalTaskIntent,
   GrabbitPreferences,
   ParsedTorrentInfo,
@@ -147,6 +148,8 @@ export const grabbitApi = {
     ) as Promise<ParsedTorrentInfo>,
   openPath: (targetPath: string) =>
     ipcRenderer.invoke("app:open-path", targetPath) as Promise<string>,
+  getEnginePaths: () =>
+    ipcRenderer.invoke("app:get-engine-paths") as Promise<EnginePathInfo[]>,
   getPreferences: () =>
     ipcRenderer.invoke("app:get-preferences") as Promise<GrabbitPreferences>,
   setPreferences: (preferences: GrabbitPreferences) =>
