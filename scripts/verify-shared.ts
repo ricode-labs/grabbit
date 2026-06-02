@@ -226,7 +226,6 @@ assert.deepEqual(
     "seed-time": "120",
     "bt-tracker":
       "udp://tracker.example:80/announce,https://tracker.example/announce",
-    "enable-upnp": "false",
     "listen-port": "51413",
     "dht-listen-port": "6881",
   }

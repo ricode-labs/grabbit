@@ -2216,6 +2216,36 @@ function PreferencesPage({
                   })
                 }
               />
+              <SwitchPreference
+                id="open-at-login"
+                label="开机自动启动"
+                description="保存后通过 Electron login item 注册，和 Motrix 的系统启动项行为对齐。"
+                checked={currentPreferences.openAtLogin}
+                onCheckedChange={(checked) =>
+                  onChange({ ...currentPreferences, openAtLogin: checked })
+                }
+              />
+              <SwitchPreference
+                id="notify-on-download-complete"
+                label="下载完成通知"
+                description="任务进入 complete 状态后发送系统通知；启动时已有的历史完成任务不会重复通知。"
+                checked={currentPreferences.notifyOnDownloadComplete}
+                onCheckedChange={(checked) =>
+                  onChange({
+                    ...currentPreferences,
+                    notifyOnDownloadComplete: checked,
+                  })
+                }
+              />
+              <SwitchPreference
+                id="show-dock-progress"
+                label="显示系统进度条"
+                description="根据当前活动任务总体完成度更新 Dock/任务栏进度。"
+                checked={currentPreferences.showDockProgress}
+                onCheckedChange={(checked) =>
+                  onChange({ ...currentPreferences, showDockProgress: checked })
+                }
+              />
             </div>
             <div className="flex items-center justify-between">
               <p className="text-xs text-muted-foreground">

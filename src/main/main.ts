@@ -3,6 +3,7 @@ import {
   app,
   BrowserWindow,
   Menu,
+  Notification,
   Tray,
   dialog,
   ipcMain,
@@ -124,6 +125,9 @@ let tray: Tray | null = null
 let pendingExternalIntents: ExternalTaskIntent[] = []
 let aria2Process: ChildProcessWithoutNullStreams | null = null
 let schedulerTimer: NodeJS.Timeout | null = null
+let taskMonitorTimer: NodeJS.Timeout | null = null
+let completedNotificationPrimed = false
+const notifiedCompletedGids = new Set<string>()
 
 const isSupportedExternalValue = (value: string) =>
   /^(https?|ftp|magnet|thunder|mo|motrix):/i.test(value) ||
@@ -171,7 +175,7 @@ const flushExternalIntents = () => {
 
 const showMainWindow = () => {
   if (!mainWindow) {
-    createWindow()
+    void createWindow()
     return
   }
   mainWindow.show()
@@ -323,8 +327,73 @@ const getPreferencesPath = () =>
   path.join(app.getPath("userData"), "preferences.json")
 const getSchedulerPath = () =>
   path.join(app.getPath("userData"), "scheduler.json")
+const getWindowStatePath = () =>
+  path.join(app.getPath("userData"), "window-state.json")
 const getFallbackDownloadDir = () =>
   path.join(app.getPath("downloads"), "Grabbit")
+
+type WindowState = {
+  width: number
+  height: number
+  x?: number
+  y?: number
+  maximized?: boolean
+}
+
+const defaultWindowState: WindowState = {
+  width: 1120,
+  height: 720,
+}
+
+const readWindowState = async (): Promise<WindowState> => {
+  try {
+    const raw = await fs.readFile(getWindowStatePath(), "utf8")
+    const state = JSON.parse(raw) as Partial<WindowState>
+    return {
+      width: Math.max(920, Number(state.width) || defaultWindowState.width),
+      height: Math.max(600, Number(state.height) || defaultWindowState.height),
+      x: Number.isFinite(state.x) ? state.x : undefined,
+      y: Number.isFinite(state.y) ? state.y : undefined,
+      maximized: state.maximized === true,
+    }
+  } catch {
+    return defaultWindowState
+  }
+}
+
+const saveWindowState = async () => {
+  if (!mainWindow) {
+    return
+  }
+
+  const bounds = mainWindow.getBounds()
+  const state: WindowState = {
+    width: bounds.width,
+    height: bounds.height,
+    x: bounds.x,
+    y: bounds.y,
+    maximized: mainWindow.isMaximized(),
+  }
+  await fs.mkdir(app.getPath("userData"), { recursive: true })
+  await fs.writeFile(
+    getWindowStatePath(),
+    JSON.stringify(state, null, 2),
+    "utf8"
+  )
+}
+
+const applyLoginItemPreference = (
+  preferences: Pick<GrabbitPreferences, "openAtLogin">
+) => {
+  if (!app.isReady()) {
+    return
+  }
+
+  app.setLoginItemSettings({
+    openAtLogin: preferences.openAtLogin,
+    path: process.execPath,
+  })
+}
 
 const readPreferences = async (): Promise<GrabbitPreferences> => {
   const defaults = defaultGrabbitPreferences(getFallbackDownloadDir())
@@ -348,6 +417,12 @@ const readPreferences = async (): Promise<GrabbitPreferences> => {
       continueDownloads:
         preferences.continueDownloads ?? defaults.continueDownloads,
       allProxy: preferences.allProxy ?? defaults.allProxy,
+      openAtLogin: preferences.openAtLogin ?? defaults.openAtLogin,
+      notifyOnDownloadComplete:
+        preferences.notifyOnDownloadComplete ??
+        defaults.notifyOnDownloadComplete,
+      showDockProgress:
+        preferences.showDockProgress ?? defaults.showDockProgress,
       downloadDirectoryHistory: normalizeDownloadDirectoryHistory(
         preferences.downloadDir || defaults.downloadDir,
         preferences.downloadDirectoryHistory ??
@@ -376,6 +451,8 @@ const writePreferences = async (preferences: GrabbitPreferences) => {
     JSON.stringify(nextPreferences, null, 2),
     "utf8"
   )
+
+  applyLoginItemPreference(nextPreferences)
 
   if (aria2Process) {
     await fs.mkdir(nextPreferences.downloadDir, { recursive: true })
@@ -443,6 +520,83 @@ const clearSchedulerTimer = () => {
   }
 }
 
+const updateTaskProgressAndNotifications = async () => {
+  if (!mainWindow || !aria2Process) {
+    return
+  }
+
+  const preferences = await readPreferences()
+
+  if (preferences.showDockProgress) {
+    const activeTasks = await callAria2<Aria2Task[]>("aria2.tellActive", [
+      ["gid", "totalLength", "completedLength"],
+    ])
+    const total = activeTasks.reduce(
+      (sum, task) => sum + Number(task.totalLength || 0),
+      0
+    )
+    const completed = activeTasks.reduce(
+      (sum, task) => sum + Number(task.completedLength || 0),
+      0
+    )
+    mainWindow.setProgressBar(total > 0 ? Math.min(1, completed / total) : -1)
+  } else {
+    mainWindow.setProgressBar(-1)
+  }
+
+  if (!preferences.notifyOnDownloadComplete || !Notification.isSupported()) {
+    return
+  }
+
+  const stoppedTasks = await callAria2<Aria2Task[]>("aria2.tellStopped", [
+    0,
+    50,
+    ["gid", "status", "files", "bittorrent"],
+  ])
+  const completedTasks = stoppedTasks.filter(
+    (task) => task.status === "complete"
+  )
+
+  if (!completedNotificationPrimed) {
+    completedTasks.forEach((task) => notifiedCompletedGids.add(task.gid))
+    completedNotificationPrimed = true
+    return
+  }
+
+  for (const task of completedTasks) {
+    if (notifiedCompletedGids.has(task.gid)) {
+      continue
+    }
+    notifiedCompletedGids.add(task.gid)
+    new Notification({
+      title: "下载完成",
+      body: task.bittorrent?.info?.name || task.files?.[0]?.path || task.gid,
+    }).show()
+  }
+}
+
+const ensureTaskMonitorTimer = () => {
+  if (taskMonitorTimer) {
+    return
+  }
+
+  taskMonitorTimer = setInterval(() => {
+    void updateTaskProgressAndNotifications().catch((error) => {
+      console.error("Failed to update task progress/notifications", error)
+    })
+  }, 2_000)
+}
+
+const clearTaskMonitorTimer = () => {
+  if (taskMonitorTimer) {
+    clearInterval(taskMonitorTimer)
+    taskMonitorTimer = null
+  }
+  if (mainWindow) {
+    mainWindow.setProgressBar(-1)
+  }
+}
+
 const getDefaultDownloadDir = async () => (await readPreferences()).downloadDir
 
 const startAria2 = async () => {
@@ -494,7 +648,6 @@ const startAria2 = async () => {
       ...(globalOptions["bt-tracker"]
         ? [`--bt-tracker=${globalOptions["bt-tracker"]}`]
         : []),
-      `--enable-upnp=${globalOptions["enable-upnp"]}`,
       `--listen-port=${globalOptions["listen-port"]}`,
       `--dht-listen-port=${globalOptions["dht-listen-port"]}`,
       "--min-split-size=1M",
@@ -514,6 +667,10 @@ const startAria2 = async () => {
   })
 
   ensureSchedulerTimer()
+  ensureTaskMonitorTimer()
+  void updateTaskProgressAndNotifications().catch((error) => {
+    console.error("Failed to update task progress/notifications", error)
+  })
 }
 
 const stopAria2 = async () => {
@@ -530,6 +687,7 @@ const stopAria2 = async () => {
   aria2Process.kill()
   aria2Process = null
   clearSchedulerTimer()
+  clearTaskMonitorTimer()
 }
 
 const callAria2 = async <T = unknown>(
@@ -717,16 +875,29 @@ const fetchTasks = async (status: "active" | "waiting" | "stopped") => {
   return callAria2<Aria2Task[]>("aria2.tellStopped", [0, 100, keys])
 }
 
-const createWindow = () => {
+const createWindow = async () => {
+  const windowState = await readWindowState()
   mainWindow = new BrowserWindow({
-    width: 1120,
-    height: 720,
+    width: windowState.width,
+    height: windowState.height,
+    x: windowState.x,
+    y: windowState.y,
     minWidth: 920,
     minHeight: 600,
     titleBarStyle: "hiddenInset",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
     },
+  })
+
+  if (windowState.maximized) {
+    mainWindow.maximize()
+  }
+
+  mainWindow.on("close", () => {
+    void saveWindowState().catch((error) => {
+      console.error("Failed to save window state", error)
+    })
   })
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
@@ -769,7 +940,8 @@ app.on("ready", () => {
   createTray()
   pendingExternalIntents.push(...collectExternalIntents(process.argv))
   void startAria2()
-  createWindow()
+  void createWindow()
+  void readPreferences().then(applyLoginItemPreference)
 })
 
 app.on("before-quit", () => {
@@ -784,7 +956,7 @@ app.on("window-all-closed", () => {
 
 app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow()
+    void createWindow()
   }
 })
 

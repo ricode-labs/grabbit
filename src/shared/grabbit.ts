@@ -21,6 +21,9 @@ export type GrabbitPreferences = {
   newTaskShowDownloading: boolean
   noConfirmBeforeDeleteTask: boolean
   downloadDirectoryHistory: string[]
+  openAtLogin: boolean
+  notifyOnDownloadComplete: boolean
+  showDockProgress: boolean
 }
 
 export type SchedulerSpeedMode = "manual" | "unlimited"
@@ -192,6 +195,9 @@ export function defaultGrabbitPreferences(
     newTaskShowDownloading: true,
     noConfirmBeforeDeleteTask: false,
     downloadDirectoryHistory: downloadDir ? [downloadDir] : [],
+    openAtLogin: false,
+    notifyOnDownloadComplete: true,
+    showDockProgress: true,
   }
 }
 
@@ -388,7 +394,6 @@ export function buildGlobalAria2Options(preferences: GrabbitPreferences) {
     seedRatio: preferences.seedRatio,
     seedTime: preferences.seedTime,
     btTracker: trackerList,
-    enableUpnp: preferences.enableUpnp,
     listenPort: preferences.listenPort,
     dhtListenPort: preferences.dhtListenPort,
   })
