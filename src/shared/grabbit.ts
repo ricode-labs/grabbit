@@ -27,6 +27,8 @@ export type GrabbitPreferences = {
   notifyOnDownloadComplete: boolean
   showDockProgress: boolean
   theme: GrabbitThemeMode
+  resumeAllOnLaunch: boolean
+  closeToTray: boolean
 }
 
 export type SchedulerSpeedMode = "manual" | "unlimited"
@@ -202,6 +204,8 @@ export function defaultGrabbitPreferences(
     notifyOnDownloadComplete: true,
     showDockProgress: true,
     theme: "system",
+    resumeAllOnLaunch: false,
+    closeToTray: false,
   }
 }
 

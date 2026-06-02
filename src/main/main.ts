@@ -127,6 +127,8 @@ let aria2Process: ChildProcessWithoutNullStreams | null = null
 let schedulerTimer: NodeJS.Timeout | null = null
 let taskMonitorTimer: NodeJS.Timeout | null = null
 let completedNotificationPrimed = false
+let isQuitting = false
+let closeToTrayEnabled = false
 const notifiedCompletedGids = new Set<string>()
 
 const isSupportedExternalValue = (value: string) =>
@@ -401,7 +403,7 @@ const readPreferences = async (): Promise<GrabbitPreferences> => {
   try {
     const raw = await fs.readFile(getPreferencesPath(), "utf8")
     const preferences = JSON.parse(raw) as Partial<GrabbitPreferences>
-    return {
+    const nextPreferences = {
       ...defaults,
       ...preferences,
       downloadDir: preferences.downloadDir || defaults.downloadDir,
@@ -423,12 +425,23 @@ const readPreferences = async (): Promise<GrabbitPreferences> => {
         defaults.notifyOnDownloadComplete,
       showDockProgress:
         preferences.showDockProgress ?? defaults.showDockProgress,
+      theme:
+        preferences.theme === "light" ||
+        preferences.theme === "dark" ||
+        preferences.theme === "system"
+          ? preferences.theme
+          : defaults.theme,
+      resumeAllOnLaunch:
+        preferences.resumeAllOnLaunch ?? defaults.resumeAllOnLaunch,
+      closeToTray: preferences.closeToTray ?? defaults.closeToTray,
       downloadDirectoryHistory: normalizeDownloadDirectoryHistory(
         preferences.downloadDir || defaults.downloadDir,
         preferences.downloadDirectoryHistory ??
           defaults.downloadDirectoryHistory
       ),
     }
+    closeToTrayEnabled = nextPreferences.closeToTray
+    return nextPreferences
   } catch {
     return defaults
   }
@@ -452,6 +465,7 @@ const writePreferences = async (preferences: GrabbitPreferences) => {
     "utf8"
   )
 
+  closeToTrayEnabled = nextPreferences.closeToTray
   applyLoginItemPreference(nextPreferences)
 
   if (aria2Process) {
@@ -668,6 +682,13 @@ const startAria2 = async () => {
 
   ensureSchedulerTimer()
   ensureTaskMonitorTimer()
+
+  if (preferences.resumeAllOnLaunch) {
+    void callAria2("aria2.unpauseAll").catch((error) => {
+      console.error("Failed to resume all tasks on launch", error)
+    })
+  }
+
   void updateTaskProgressAndNotifications().catch((error) => {
     console.error("Failed to update task progress/notifications", error)
   })
@@ -894,10 +915,19 @@ const createWindow = async () => {
     mainWindow.maximize()
   }
 
-  mainWindow.on("close", () => {
+  mainWindow.on("close", (event) => {
     void saveWindowState().catch((error) => {
       console.error("Failed to save window state", error)
     })
+
+    if (!isQuitting && closeToTrayEnabled && tray) {
+      event.preventDefault()
+      mainWindow?.hide()
+    }
+  })
+
+  mainWindow.on("closed", () => {
+    mainWindow = null
   })
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
@@ -945,6 +975,7 @@ app.on("ready", () => {
 })
 
 app.on("before-quit", () => {
+  isQuitting = true
   void stopAria2()
 })
 

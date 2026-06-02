@@ -81,6 +81,31 @@ assert.equal(thunderLinkToUri("thunder://not-base64"), null)
 assert.equal(buildTorrentSelectFileOption([2, 1, 2], 3), "1,2")
 assert.equal(buildTorrentSelectFileOption([1, 2, 3], 3), "")
 
+assert.deepEqual(
+  {
+    openAtLogin: defaultGrabbitPreferences("/tmp/grabbit-downloads")
+      .openAtLogin,
+    notifyOnDownloadComplete: defaultGrabbitPreferences(
+      "/tmp/grabbit-downloads"
+    ).notifyOnDownloadComplete,
+    showDockProgress: defaultGrabbitPreferences("/tmp/grabbit-downloads")
+      .showDockProgress,
+    theme: defaultGrabbitPreferences("/tmp/grabbit-downloads").theme,
+    resumeAllOnLaunch: defaultGrabbitPreferences("/tmp/grabbit-downloads")
+      .resumeAllOnLaunch,
+    closeToTray: defaultGrabbitPreferences("/tmp/grabbit-downloads")
+      .closeToTray,
+  },
+  {
+    openAtLogin: false,
+    notifyOnDownloadComplete: true,
+    showDockProgress: true,
+    theme: "system",
+    resumeAllOnLaunch: false,
+    closeToTray: false,
+  }
+)
+
 assert.deepEqual(parseExternalTaskIntent("magnet:?xt=urn:btih:abc"), {
   kind: "uri",
   value: "magnet:?xt=urn:btih:abc",

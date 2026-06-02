@@ -2232,6 +2232,27 @@ function PreferencesPage({
                 }
               />
               <SwitchPreference
+                id="resume-all-on-launch"
+                label="启动后恢复全部任务"
+                description="应用启动并恢复 aria2 会话后自动执行开始全部，用于继续上次未完成任务。"
+                checked={currentPreferences.resumeAllOnLaunch}
+                onCheckedChange={(checked) =>
+                  onChange({
+                    ...currentPreferences,
+                    resumeAllOnLaunch: checked,
+                  })
+                }
+              />
+              <SwitchPreference
+                id="close-to-tray"
+                label="关闭窗口时隐藏到托盘"
+                description="点击窗口关闭按钮时保留 aria2 后台运行，可从托盘重新显示或退出。"
+                checked={currentPreferences.closeToTray}
+                onCheckedChange={(checked) =>
+                  onChange({ ...currentPreferences, closeToTray: checked })
+                }
+              />
+              <SwitchPreference
                 id="notify-on-download-complete"
                 label="下载完成通知"
                 description="任务进入 complete 状态后发送系统通知；启动时已有的历史完成任务不会重复通知。"
