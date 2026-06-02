@@ -16,6 +16,8 @@ import {
   splitTaskLinks,
   thunderLinkToUri,
   buildTorrentSelectFileOption,
+  getUserAgentTemplate,
+  userAgentTemplates,
   calculateProgress,
   flattenAnnounceList,
   summarizeFiles,
@@ -80,6 +82,14 @@ assert.equal(thunderLinkToUri(thunderHttp), "https://example.com/thunder.zip")
 assert.equal(thunderLinkToUri("thunder://not-base64"), null)
 assert.equal(buildTorrentSelectFileOption([2, 1, 2], 3), "1,2")
 assert.equal(buildTorrentSelectFileOption([1, 2, 3], 3), "")
+
+assert.deepEqual(
+  userAgentTemplates.map((template) => template.label),
+  ["Aria2", "Transmission", "Chrome", "du"]
+)
+assert.equal(getUserAgentTemplate("Aria2"), "aria2/1.36.0")
+assert.match(getUserAgentTemplate("Chrome"), /Chrome\/120/)
+assert.match(getUserAgentTemplate("du"), /netdisk/)
 
 assert.deepEqual(
   {

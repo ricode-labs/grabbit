@@ -70,6 +70,7 @@ import {
   summarizeFiles,
   summarizePeers,
   toFiniteNumber,
+  userAgentTemplates,
   type AddTaskForm,
   type ExternalTaskIntent,
   type GrabbitPreferences,
@@ -2340,15 +2341,45 @@ function PreferencesPage({
               </p>
             </div>
             <Separator />
-            <TextPreference
-              id="global-user-agent"
-              label="全局 User-Agent"
-              placeholder="留空使用 aria2 默认值"
-              value={currentPreferences.userAgent}
-              onChange={(value) =>
-                onChange({ ...currentPreferences, userAgent: value })
-              }
-            />
+            <div className="space-y-2">
+              <TextPreference
+                id="global-user-agent"
+                label="全局 User-Agent"
+                placeholder="留空使用 aria2 默认值"
+                value={currentPreferences.userAgent}
+                onChange={(value) =>
+                  onChange({ ...currentPreferences, userAgent: value })
+                }
+              />
+              <div className="flex flex-wrap gap-2">
+                {userAgentTemplates.map((template) => (
+                  <Button
+                    key={template.label}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      onChange({
+                        ...currentPreferences,
+                        userAgent: template.value,
+                      })
+                    }
+                  >
+                    {template.label}
+                  </Button>
+                ))}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    onChange({ ...currentPreferences, userAgent: "" })
+                  }
+                >
+                  清空
+                </Button>
+              </div>
+            </div>
             <div className="grid gap-4 md:grid-cols-2">
               <NumberPreference
                 id="seed-ratio"

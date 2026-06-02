@@ -1,5 +1,34 @@
 export type GrabbitThemeMode = "light" | "dark" | "system"
 
+export const userAgentTemplates = [
+  {
+    label: "Aria2",
+    value: "aria2/1.36.0",
+  },
+  {
+    label: "Transmission",
+    value: "Transmission/4.0.5",
+  },
+  {
+    label: "Chrome",
+    value:
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  },
+  {
+    label: "du",
+    value: "netdisk;11.4.5;PC;PC-Windows;10.0.19045;WindowsBaiduYunGuanJia",
+  },
+] as const
+
+export type UserAgentTemplateLabel =
+  (typeof userAgentTemplates)[number]["label"]
+
+export function getUserAgentTemplate(label: UserAgentTemplateLabel) {
+  return (
+    userAgentTemplates.find((template) => template.label === label)?.value ?? ""
+  )
+}
+
 export type GrabbitPreferences = {
   downloadDir: string
   maxConcurrentDownloads: number
