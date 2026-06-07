@@ -49,24 +49,24 @@
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
+    --background: oklch(0.985 0.004 245);
+    --foreground: oklch(0.16 0.018 255);
+    --card: oklch(1 0 0 / 92%);
+    --card-foreground: oklch(0.16 0.018 255);
+    --popover: oklch(1 0 0 / 96%);
+    --popover-foreground: oklch(0.16 0.018 255);
+    --primary: oklch(0.58 0.22 280);
+    --primary-foreground: oklch(0.99 0 0);
+    --secondary: oklch(0.94 0.015 260);
+    --secondary-foreground: oklch(0.23 0.025 260);
+    --muted: oklch(0.94 0.012 255);
+    --muted-foreground: oklch(0.49 0.035 255);
+    --accent: oklch(0.91 0.055 285);
+    --accent-foreground: oklch(0.25 0.08 280);
+    --destructive: oklch(0.62 0.23 27);
+    --border: oklch(0.88 0.018 255);
+    --input: oklch(0.88 0.018 255);
+    --ring: oklch(0.63 0.18 280);
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);
@@ -84,24 +84,24 @@
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
+    --background: oklch(0.115 0.018 255);
+    --foreground: oklch(0.96 0.006 255);
+    --card: oklch(0.18 0.018 255 / 78%);
+    --card-foreground: oklch(0.96 0.006 255);
+    --popover: oklch(0.16 0.018 255 / 96%);
+    --popover-foreground: oklch(0.96 0.006 255);
+    --primary: oklch(0.72 0.18 285);
+    --primary-foreground: oklch(0.12 0.02 255);
+    --secondary: oklch(0.25 0.024 255 / 85%);
+    --secondary-foreground: oklch(0.95 0.006 255);
+    --muted: oklch(0.22 0.02 255 / 70%);
+    --muted-foreground: oklch(0.70 0.025 255);
+    --accent: oklch(0.30 0.065 285 / 78%);
+    --accent-foreground: oklch(0.95 0.02 285);
+    --destructive: oklch(0.70 0.19 22);
+    --border: oklch(1 0 0 / 11%);
+    --input: oklch(1 0 0 / 14%);
+    --ring: oklch(0.72 0.18 285);
     --chart-1: oklch(0.87 0 0);
     --chart-2: oklch(0.556 0 0);
     --chart-3: oklch(0.439 0 0);
@@ -122,7 +122,9 @@
     @apply border-border outline-ring/50;
     }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv01", "ss03", "calt", "kern";
+    letter-spacing: -0.01em;
     }
   button:not(:disabled), [role="button"]:not(:disabled) {
     cursor: pointer;
@@ -130,4 +132,47 @@
   html {
     @apply font-sans;
     }
+}
+
+@layer utilities {
+  .app-shell-bg {
+    background:
+      radial-gradient(circle at 18% 12%, color-mix(in oklab, var(--primary) 22%, transparent) 0, transparent 34%),
+      radial-gradient(circle at 86% 0%, color-mix(in oklab, #38bdf8 16%, transparent) 0, transparent 30%),
+      linear-gradient(135deg, color-mix(in oklab, var(--background) 94%, #111827 6%), var(--background));
+  }
+
+  .glass-panel {
+    background: color-mix(in oklab, var(--card) 78%, transparent);
+    border-color: color-mix(in oklab, var(--border) 72%, transparent);
+    box-shadow:
+      0 1px 0 color-mix(in oklab, white 12%, transparent) inset,
+      0 24px 70px color-mix(in oklab, black 14%, transparent);
+    backdrop-filter: blur(26px) saturate(150%);
+  }
+
+  .aurora-card {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .aurora-card::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    pointer-events: none;
+    background: linear-gradient(135deg, color-mix(in oklab, var(--primary) 20%, transparent), transparent 32%, color-mix(in oklab, #38bdf8 12%, transparent));
+    opacity: 0;
+    transition: opacity 180ms ease;
+  }
+
+  .aurora-card:hover::before {
+    opacity: 1;
+  }
+
+  .noise-overlay {
+    background-image: radial-gradient(color-mix(in oklab, var(--foreground) 10%, transparent) 0.8px, transparent 0.8px);
+    background-size: 18px 18px;
+    mask-image: linear-gradient(to bottom, black, transparent);
+  }
 }

@@ -24,6 +24,7 @@ import {
   RotateCw,
   Search,
   Settings,
+  Sparkles,
   SunMoon,
   Trash2,
   X,
@@ -83,10 +84,22 @@ import type {
   Aria2Peer,
   Aria2Server,
   Aria2Task,
-  DeleteTaskFilesResult,
   TaskListStatus,
-  TaskStatus,
 } from "../preload/preload"
+
+import {
+  describeDeleteFilesResult,
+  formatBytes,
+  getProgress,
+  getTaskName,
+  getTaskUris,
+  mergeDeleteResults,
+  statusLabels,
+  statusMeta,
+  statusText,
+  statusVariant,
+  toNumber,
+} from "./lib/task-display"
 
 type Page = "tasks" | "preferences" | "about"
 
@@ -99,120 +112,25 @@ const fallbackInitialForm = buildInitialAddTaskForm(
   defaultGrabbitPreferences("")
 )
 
-const statusLabels: Record<TaskListStatus, string> = {
-  active: "正在下载",
-  waiting: "等待中",
-  stopped: "已停止",
-}
-
-const statusVariant: Record<
-  TaskStatus,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  active: "default",
-  waiting: "secondary",
-  paused: "outline",
-  complete: "secondary",
-  error: "destructive",
-  removed: "outline",
-}
-
-const statusText: Record<TaskStatus, string> = {
-  active: "下载中",
-  waiting: "等待中",
-  paused: "已暂停",
-  complete: "已完成",
-  error: "错误",
-  removed: "已移除",
-}
-
-function getTaskUris(task: Aria2Task) {
-  return Array.from(
-    new Set(
-      task.files
-        ?.flatMap((file) => file.uris?.map((uri) => uri.uri) ?? [])
-        .filter(Boolean) ?? []
-    )
+function MetricChip({
+  label,
+  value,
+  accent,
+}: {
+  label: string
+  value: string
+  accent?: boolean
+}) {
+  return (
+    <div
+      className={`rounded-2xl border px-4 py-3 shadow-sm backdrop-blur ${accent ? "border-primary/30 bg-primary/15" : "bg-background/45"}`}
+    >
+      <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+        {label}
+      </div>
+      <div className="mt-1 text-lg font-semibold tracking-tight">{value}</div>
+    </div>
   )
-}
-
-function getTaskName(task: Aria2Task) {
-  const torrentName = task.bittorrent?.info?.name
-  if (torrentName) {
-    return torrentName
-  }
-
-  const firstPath = task.files?.[0]?.path
-  if (!firstPath) {
-    return task.gid
-  }
-
-  return firstPath.split(/[\\/]/).filter(Boolean).at(-1) ?? task.gid
-}
-
-function toNumber(value: string | number | undefined) {
-  const number = Number(value ?? 0)
-  return Number.isFinite(number) ? number : 0
-}
-
-function formatBytes(bytes: string | number | undefined) {
-  const value = toNumber(bytes)
-  if (value <= 0) {
-    return "0 B"
-  }
-
-  const units = ["B", "KB", "MB", "GB", "TB"]
-  const index = Math.min(
-    Math.floor(Math.log(value) / Math.log(1024)),
-    units.length - 1
-  )
-  return `${(value / 1024 ** index).toFixed(index === 0 ? 0 : 1)} ${units[index]}`
-}
-
-function getProgress(task: Aria2Task) {
-  return calculateProgress(task.completedLength, task.totalLength)
-}
-
-function describeDeleteFilesResult(result: DeleteTaskFilesResult | null) {
-  if (!result) {
-    return ""
-  }
-
-  const parts = []
-  if (result.deleted.length > 0) {
-    parts.push(`已移入回收站 ${result.deleted.length} 个文件`)
-  }
-  if (result.skipped.length > 0) {
-    parts.push(`跳过 ${result.skipped.length} 项`)
-  }
-  if (result.failed.length > 0) {
-    parts.push(`失败 ${result.failed.length} 项`)
-  }
-
-  return parts.length > 0 ? `，${parts.join("，")}` : "，没有可删除的本地文件"
-}
-
-function mergeDeleteResults(results: Array<DeleteTaskFilesResult | null>) {
-  const merged: DeleteTaskFilesResult = {
-    deleted: [],
-    skipped: [],
-    failed: [],
-  }
-
-  for (const result of results) {
-    if (!result) {
-      continue
-    }
-    merged.deleted.push(...result.deleted)
-    merged.skipped.push(...result.skipped)
-    merged.failed.push(...result.failed)
-  }
-
-  return merged.deleted.length > 0 ||
-    merged.skipped.length > 0 ||
-    merged.failed.length > 0
-    ? merged
-    : null
 }
 
 export function App() {
@@ -627,7 +545,8 @@ export function App() {
   }, [openAddTaskDialogWithIntents])
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background text-foreground">
+    <div className="app-shell-bg relative flex h-screen overflow-hidden bg-background text-foreground">
+      <div className="noise-overlay pointer-events-none absolute inset-0 opacity-35" />
       <PrimaryAside
         page={page}
         onNavigate={setPage}
@@ -635,7 +554,7 @@ export function App() {
       />
 
       {page === "tasks" ? (
-        <main className="flex min-w-0 flex-1 bg-muted/30">
+        <main className="relative z-10 flex min-w-0 flex-1 gap-4 p-4 pl-0">
           <TaskSubnav
             status={status}
             onStatusChange={(nextStatus) => {
@@ -643,18 +562,27 @@ export function App() {
               setStatus(nextStatus)
             }}
           />
-          <section className="flex min-w-0 flex-1 flex-col border-l bg-background/95">
-            <header className="flex h-[84px] items-center justify-between border-b px-6">
-              <div>
-                <h1 className="text-xl font-semibold tracking-tight">
-                  {statusLabels[status]}
-                </h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {visibleTasks.length} / {tasks.length} 个任务 · 当前速度{" "}
-                  {formatBytes(totalSpeed)}/s
-                </p>
+          <section className="glass-panel flex min-w-0 flex-1 flex-col overflow-hidden rounded-[28px] border">
+            <header className="relative overflow-hidden border-b px-6 py-5">
+              <div className={`pointer-events-none absolute inset-0 bg-gradient-to-r ${statusMeta[status].gradient}`} />
+              <div className="relative flex items-center justify-between gap-4">
+                <div>
+                  <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
+                    <Sparkles className="size-3.5 text-primary" /> Grabbit Command Center
+                  </div>
+                  <h1 className="text-3xl font-semibold tracking-[-0.04em]">
+                    {statusLabels[status]}
+                  </h1>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {statusMeta[status].caption}
+                  </p>
+                </div>
+                <div className="hidden items-center gap-3 xl:flex">
+                  <MetricChip label="可见任务" value={`${visibleTasks.length}/${tasks.length}`} />
+                  <MetricChip label="实时速度" value={`${formatBytes(totalSpeed)}/s`} accent />
+                </div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="relative mt-5 flex flex-wrap items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -706,7 +634,7 @@ export function App() {
             </header>
 
             {selected.size > 0 ? (
-              <div className="flex items-center justify-between border-b bg-muted/40 px-6 py-2 text-sm">
+              <div className="mx-4 mt-4 flex items-center justify-between rounded-2xl border bg-primary/10 px-4 py-3 text-sm text-primary shadow-sm">
                 <span>已选择 {selected.size} 个任务</span>
                 <div className="flex gap-2">
                   <Button
@@ -734,9 +662,10 @@ export function App() {
               </div>
             ) : null}
 
-            <div className="flex items-center gap-2 border-b px-6 py-3">
+            <div className="mx-4 mt-4 flex items-center gap-2 rounded-2xl border bg-background/55 px-4 py-3 shadow-sm backdrop-blur">
               <Search className="size-4 text-muted-foreground" />
               <Input
+                className="border-0 bg-transparent shadow-none focus-visible:ring-0"
                 aria-label="搜索任务"
                 placeholder="搜索任务名、GID、保存目录或原始链接"
                 value={searchQuery}
@@ -754,7 +683,7 @@ export function App() {
             </div>
 
             <ScrollArea className="min-h-0 flex-1">
-              <div className="space-y-4 p-4 pb-24">
+              <div className="space-y-4 p-4 pb-44">
                 {notice ? (
                   <NoticeBanner
                     notice={notice}
@@ -1220,33 +1149,35 @@ function PrimaryAside({
   onAddTask: () => void
 }) {
   return (
-    <aside className="flex w-[78px] shrink-0 flex-col items-center bg-zinc-950 text-white">
-      <div className="mt-9 flex size-9 items-center justify-center rounded-2xl bg-white text-zinc-950 shadow-sm">
-        <Download className="size-5" />
+    <aside className="relative z-10 flex w-[92px] shrink-0 flex-col items-center p-4 pr-3 text-white">
+      <div className="glass-panel flex h-full w-full flex-col items-center rounded-[28px] border border-white/10 bg-zinc-950/70 py-5 shadow-2xl">
+        <div className="flex size-12 items-center justify-center rounded-3xl bg-gradient-to-br from-white to-violet-200 text-zinc-950 shadow-[0_12px_40px_rgba(124,58,237,0.35)]">
+          <Download className="size-5" />
+        </div>
+        <nav className="mt-8 flex flex-1 flex-col gap-3">
+          <IconNav
+            active={page === "tasks"}
+            label="任务"
+            onClick={() => onNavigate("tasks")}
+            icon={<FileDown />}
+          />
+          <IconNav label="新建" onClick={onAddTask} icon={<Plus />} />
+        </nav>
+        <nav className="flex flex-col gap-3">
+          <IconNav
+            active={page === "preferences"}
+            label="偏好"
+            onClick={() => onNavigate("preferences")}
+            icon={<Settings />}
+          />
+          <IconNav
+            active={page === "about"}
+            label="关于"
+            onClick={() => onNavigate("about")}
+            icon={<Info />}
+          />
+        </nav>
       </div>
-      <nav className="mt-8 flex flex-1 flex-col gap-4">
-        <IconNav
-          active={page === "tasks"}
-          label="任务"
-          onClick={() => onNavigate("tasks")}
-          icon={<FileDown />}
-        />
-        <IconNav label="新建" onClick={onAddTask} icon={<Plus />} />
-      </nav>
-      <nav className="mb-6 flex flex-col gap-4">
-        <IconNav
-          active={page === "preferences"}
-          label="偏好"
-          onClick={() => onNavigate("preferences")}
-          icon={<Settings />}
-        />
-        <IconNav
-          active={page === "about"}
-          label="关于"
-          onClick={() => onNavigate("about")}
-          icon={<Info />}
-        />
-      </nav>
     </aside>
   )
 }
@@ -1268,7 +1199,7 @@ function IconNav({
       title={label}
       variant="ghost"
       size="icon"
-      className={`rounded-full text-white hover:bg-white/15 hover:text-white ${active ? "bg-white/20" : ""}`}
+      className={`size-11 rounded-2xl text-white/70 transition-all hover:bg-white/15 hover:text-white ${active ? "bg-white text-zinc-950 shadow-lg shadow-violet-500/20 hover:bg-white hover:text-zinc-950" : ""}`}
       onClick={onClick}
     >
       {icon}
@@ -1284,23 +1215,34 @@ function TaskSubnav({
   onStatusChange: (status: TaskListStatus) => void
 }) {
   return (
-    <aside className="hidden w-[200px] shrink-0 bg-muted/50 px-4 py-[84px] md:block">
+    <aside className="glass-panel hidden w-[230px] shrink-0 rounded-[28px] border p-4 md:block">
+      <div className="mb-6 px-2 pt-2">
+        <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">队列</p>
+        <h2 className="mt-2 text-lg font-semibold tracking-tight">下载空间</h2>
+      </div>
       <div className="space-y-2">
         {(Object.keys(statusLabels) as TaskListStatus[]).map((item) => (
           <Button
             key={item}
-            variant={status === item ? "secondary" : "ghost"}
-            className="w-full justify-start"
+            variant="ghost"
+            className={`h-auto w-full justify-start rounded-2xl px-3 py-3 text-left transition-all ${status === item ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary hover:text-primary-foreground" : "hover:bg-background/60"}`}
             onClick={() => onStatusChange(item)}
           >
-            {item === "active" ? (
-              <Activity />
-            ) : item === "waiting" ? (
-              <Loader2 />
-            ) : (
-              <CheckCircle2 />
-            )}
-            {statusLabels[item]}
+            <span className="flex size-9 items-center justify-center rounded-xl bg-background/60">
+              {item === "active" ? (
+                <Activity />
+              ) : item === "waiting" ? (
+                <Loader2 />
+              ) : (
+                <CheckCircle2 />
+              )}
+            </span>
+            <span className="min-w-0">
+              <span className="block font-medium">{statusLabels[item]}</span>
+              <span className="mt-0.5 block truncate text-xs opacity-70">
+                {statusMeta[item].caption}
+              </span>
+            </span>
           </Button>
         ))}
       </div>
@@ -1514,8 +1456,8 @@ function TaskCard({
   const taskPath = task.files?.[0]?.path || task.dir
 
   return (
-    <Card className={`transition-colors ${selected ? "border-primary" : ""}`}>
-      <CardContent className="p-4">
+    <Card className={`aurora-card glass-panel rounded-3xl transition-all hover:-translate-y-0.5 ${selected ? "border-primary shadow-primary/20" : ""}`}>
+      <CardContent className="relative p-5">
         <div className="flex items-start gap-3">
           <Checkbox
             checked={selected}
@@ -1524,8 +1466,8 @@ function TaskCard({
           />
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <h2 className="line-clamp-2 text-sm leading-6 font-medium break-all">
+              <div className="min-w-0 flex-1">
+                <h2 className="line-clamp-2 text-base leading-6 font-semibold tracking-tight break-all">
                   {getTaskName(task)}
                 </h2>
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -1593,7 +1535,7 @@ function TaskCard({
                 </DropdownMenu>
               </div>
             </div>
-            <div className="mt-5 space-y-2">
+            <div className="mt-5 space-y-2 rounded-2xl bg-background/45 p-3">
               <Progress value={progress} />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>{progress}%</span>
@@ -2041,9 +1983,9 @@ function Speedometer({
   activeCount: number
 }) {
   return (
-    <div className="fixed right-6 bottom-6 z-20 rounded-2xl border bg-background/95 p-4 shadow-lg backdrop-blur">
+    <div className="glass-panel fixed bottom-6 left-[108px] z-20 hidden w-[230px] rounded-3xl border p-4 shadow-2xl md:block">
       <div className="flex items-center gap-3">
-        <div className="flex size-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
+        <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/15 text-primary ring-1 ring-primary/25">
           <Gauge />
         </div>
         <div>
@@ -2105,11 +2047,15 @@ function PreferencesPage({
   const currentSchedulerRule = schedulerRule ?? defaultTaskSchedulerRule()
 
   return (
-    <main className="flex flex-1 flex-col bg-muted/30">
-      <header className="flex h-[84px] items-center border-b bg-background px-6">
-        <h1 className="text-xl font-semibold">偏好设置</h1>
+    <main className="relative flex flex-1 flex-col overflow-hidden rounded-[28px] border bg-background/55 shadow-2xl backdrop-blur-xl">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(139,92,246,0.18),transparent_34%),radial-gradient(circle_at_90%_10%,rgba(14,165,233,0.12),transparent_32%)]" />
+      <header className="relative flex h-[84px] items-center border-b bg-background/35 px-6 backdrop-blur">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">Control Center</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-[-0.035em]">偏好设置</h1>
+        </div>
       </header>
-      <div className="max-w-3xl space-y-4 overflow-auto p-6">
+      <div className="relative max-w-3xl space-y-4 overflow-auto p-6">
         <Card>
           <CardContent className="space-y-4 p-6">
             <div>
@@ -2810,12 +2756,16 @@ function TextPreference({
 
 function AboutPage() {
   return (
-    <main className="flex flex-1 flex-col bg-muted/30">
-      <header className="flex h-[84px] items-center border-b bg-background px-6">
-        <h1 className="text-xl font-semibold">关于 Grabbit</h1>
+    <main className="relative flex flex-1 flex-col overflow-hidden rounded-[28px] border bg-background/55 shadow-2xl backdrop-blur-xl">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(16,185,129,0.18),transparent_34%),radial-gradient(circle_at_84%_0%,rgba(139,92,246,0.16),transparent_30%)]" />
+      <header className="relative flex h-[84px] items-center border-b bg-background/35 px-6 backdrop-blur">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">About</p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-[-0.035em]">关于 Grabbit</h1>
+        </div>
       </header>
-      <div className="max-w-3xl p-6">
-        <Card>
+      <div className="relative max-w-3xl p-6">
+        <Card className="glass-panel border">
           <CardContent className="space-y-4 p-6">
             <div className="flex items-center gap-3">
               <div className="flex size-12 items-center justify-center rounded-2xl bg-zinc-950 text-white">
