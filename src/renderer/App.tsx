@@ -515,7 +515,7 @@ export function App() {
 
   return (
     <div className="app-shell-bg relative flex h-screen overflow-hidden bg-background text-foreground">
-      <div className="noise-overlay pointer-events-none absolute inset-0 opacity-35" />
+      <div className="noise-overlay pointer-events-none absolute inset-0 opacity-20" />
       <PrimaryAside
         page={page}
         onNavigate={setPage}
@@ -523,7 +523,7 @@ export function App() {
       />
 
       {page === "tasks" ? (
-        <main className="relative z-10 flex min-w-0 flex-1 gap-4 p-4 pl-0">
+        <main className="relative z-10 flex min-w-0 flex-1 gap-0">
           <TaskSubnav
             status={status}
             onStatusChange={(nextStatus) => {
@@ -531,15 +531,14 @@ export function App() {
               setStatus(nextStatus)
             }}
           />
-          <section className="glass-panel flex min-w-0 flex-1 flex-col overflow-hidden rounded-[28px] border">
-            <header className="relative overflow-hidden border-b px-6 py-5">
-              <div className={`pointer-events-none absolute inset-0 bg-gradient-to-r ${statusMeta[status].gradient}`} />
-              <div className="relative flex items-center justify-between gap-4">
+          <section className="flex min-w-0 flex-1 flex-col overflow-hidden bg-background">
+            <header className="border-b bg-background px-5 py-4">
+              <div className="flex items-center justify-between gap-4">
                 <div>
-                  <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
-                    <Sparkles className="size-3.5 text-primary" /> Grabbit Command Center
+                  <div className="mb-1 flex items-center gap-2 text-xs font-medium uppercase text-muted-foreground">
+                    <Sparkles className="size-3.5 text-primary" /> Grabbit
                   </div>
-                  <h1 className="text-3xl font-semibold tracking-[-0.04em]">
+                  <h1 className="text-lg font-semibold">
                     {statusLabels[status]}
                   </h1>
                   <p className="mt-2 text-sm text-muted-foreground">
@@ -551,7 +550,7 @@ export function App() {
                   <MetricChip label="实时速度" value={`${formatBytes(totalSpeed)}/s`} accent />
                 </div>
               </div>
-              <div className="relative mt-5 flex flex-wrap items-center gap-2">
+              <div className="mt-4 flex flex-wrap items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -603,7 +602,7 @@ export function App() {
             </header>
 
             {selected.size > 0 ? (
-              <div className="mx-4 mt-4 flex items-center justify-between rounded-2xl border bg-primary/10 px-4 py-3 text-sm text-primary shadow-sm">
+              <div className="mx-4 mt-4 flex items-center justify-between rounded-md border bg-primary/10 px-4 py-3 text-sm text-primary shadow-sm">
                 <span>已选择 {selected.size} 个任务</span>
                 <div className="flex gap-2">
                   <Button
@@ -631,7 +630,7 @@ export function App() {
               </div>
             ) : null}
 
-            <div className="mx-4 mt-4 flex items-center gap-2 rounded-2xl border bg-background/55 px-4 py-3 shadow-sm backdrop-blur">
+            <div className="mx-4 mt-4 flex items-center gap-2 rounded-md border bg-background px-4 py-2 shadow-sm">
               <Search className="size-4 text-muted-foreground" />
               <Input
                 className="border-0 bg-transparent shadow-none focus-visible:ring-0"
@@ -652,7 +651,7 @@ export function App() {
             </div>
 
             <ScrollArea className="min-h-0 flex-1">
-              <div className="space-y-4 p-4 pb-44">
+              <div className="space-y-3 p-4 pb-16">
                 {notice ? (
                   <NoticeBanner
                     notice={notice}

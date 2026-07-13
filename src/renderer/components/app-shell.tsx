@@ -29,12 +29,12 @@ export function MetricChip({
 }) {
   return (
     <div
-      className={`rounded-2xl border px-4 py-3 shadow-sm backdrop-blur ${accent ? "border-primary/30 bg-primary/15" : "bg-background/45"}`}
+      className={`rounded-md border px-3 py-2 ${accent ? "border-primary/25 bg-primary/10" : "bg-background"}`}
     >
-      <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+      <div className="text-[11px] font-medium uppercase text-muted-foreground">
         {label}
       </div>
-      <div className="mt-1 text-lg font-semibold tracking-tight">{value}</div>
+      <div className="mt-1 text-sm font-semibold">{value}</div>
     </div>
   )
 }
@@ -49,12 +49,18 @@ export function PrimaryAside({
   onAddTask: () => void
 }) {
   return (
-    <aside className="relative z-10 flex w-[92px] shrink-0 flex-col items-center p-4 pr-3 text-white">
-      <div className="glass-panel flex h-full w-full flex-col items-center rounded-[28px] border border-white/10 bg-zinc-950/70 py-5 shadow-2xl">
-        <div className="flex size-12 items-center justify-center rounded-3xl bg-gradient-to-br from-white to-violet-200 text-zinc-950 shadow-[0_12px_40px_rgba(124,58,237,0.35)]">
+    <aside className="relative z-10 flex w-[186px] shrink-0 flex-col border-r bg-sidebar text-sidebar-foreground">
+      <div className="flex h-14 items-center gap-3 border-b px-5">
+        <div className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
           <Download className="size-5" />
         </div>
-        <nav className="mt-8 flex flex-1 flex-col gap-3">
+        <div className="min-w-0">
+          <div className="text-sm font-semibold">Grabbit</div>
+          <div className="text-[11px] text-muted-foreground">Download Manager</div>
+        </div>
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col px-2 py-3">
+        <nav className="flex flex-1 flex-col gap-1">
           <IconNav
             active={page === "tasks"}
             label="任务"
@@ -63,7 +69,7 @@ export function PrimaryAside({
           />
           <IconNav label="新建" onClick={onAddTask} icon={<Plus />} />
         </nav>
-        <nav className="flex flex-col gap-3">
+        <nav className="flex flex-col gap-1 border-t pt-3">
           <IconNav
             active={page === "preferences"}
             label="偏好"
@@ -98,11 +104,11 @@ export function IconNav({
       aria-label={label}
       title={label}
       variant="ghost"
-      size="icon"
-      className={`size-11 rounded-2xl text-white/70 transition-all hover:bg-white/15 hover:text-white ${active ? "bg-white text-zinc-950 shadow-lg shadow-violet-500/20 hover:bg-white hover:text-zinc-950" : ""}`}
+      className={`h-10 w-full justify-start gap-3 rounded-md px-3 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${active ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary hover:text-primary-foreground" : ""}`}
       onClick={onClick}
     >
-      {icon}
+      <span className="flex size-4 items-center justify-center [&_svg]:size-4">{icon}</span>
+      <span>{label}</span>
     </Button>
   )
 }
@@ -115,20 +121,20 @@ export function TaskSubnav({
   onStatusChange: (status: TaskListStatus) => void
 }) {
   return (
-    <aside className="glass-panel hidden w-[230px] shrink-0 rounded-[28px] border p-4 md:block">
-      <div className="mb-6 px-2 pt-2">
-        <p className="text-xs font-medium uppercase tracking-[0.24em] text-muted-foreground">队列</p>
-        <h2 className="mt-2 text-lg font-semibold tracking-tight">下载空间</h2>
+    <aside className="hidden w-[190px] shrink-0 border-r bg-muted/25 md:block">
+      <div className="border-b px-4 py-3">
+        <p className="text-xs font-medium uppercase text-muted-foreground">队列</p>
+        <h2 className="mt-1 text-sm font-semibold">下载空间</h2>
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1 p-2">
         {(Object.keys(statusLabels) as TaskListStatus[]).map((item) => (
           <Button
             key={item}
             variant="ghost"
-            className={`h-auto w-full justify-start rounded-2xl px-3 py-3 text-left transition-all ${status === item ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary hover:text-primary-foreground" : "hover:bg-background/60"}`}
+            className={`h-auto w-full justify-start gap-3 rounded-md px-3 py-2.5 text-left transition-all ${status === item ? "bg-background text-foreground shadow-sm ring-1 ring-border hover:bg-background" : "hover:bg-background/70"}`}
             onClick={() => onStatusChange(item)}
           >
-            <span className="flex size-9 items-center justify-center rounded-xl bg-background/60">
+            <span className={`flex size-8 items-center justify-center rounded-md ${status === item ? "bg-primary/10 text-primary" : "bg-background text-muted-foreground"}`}> 
               {item === "active" ? (
                 <Activity />
               ) : item === "waiting" ? (
@@ -138,7 +144,7 @@ export function TaskSubnav({
               )}
             </span>
             <span className="min-w-0">
-              <span className="block font-medium">{statusLabels[item]}</span>
+              <span className="block text-sm font-medium">{statusLabels[item]}</span>
               <span className="mt-0.5 block truncate text-xs opacity-70">
                 {statusMeta[item].caption}
               </span>
@@ -152,9 +158,9 @@ export function TaskSubnav({
 
 export function EmptyTasks({ onAddTask }: { onAddTask: () => void }) {
   return (
-    <div className="flex h-[520px] items-center justify-center rounded-xl border border-dashed bg-muted/20 text-center">
+    <div className="flex h-[420px] items-center justify-center border border-dashed bg-muted/20 text-center">
       <div>
-        <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-muted">
+        <div className="mx-auto flex size-14 items-center justify-center rounded-md bg-muted">
           <FileDown className="size-8 text-muted-foreground" />
         </div>
         <h2 className="mt-4 text-lg font-medium">暂无任务</h2>
@@ -178,7 +184,7 @@ export function NoticeBanner({
 }) {
   return (
     <div
-      className={`flex items-center justify-between rounded-lg border px-4 py-3 text-sm ${notice.tone === "error" ? "border-destructive/40 bg-destructive/10 text-destructive" : "bg-muted"}`}
+      className={`flex items-center justify-between rounded-md border px-4 py-3 text-sm ${notice.tone === "error" ? "border-destructive/40 bg-destructive/10 text-destructive" : "bg-muted"}`}
     >
       <div className="flex items-center gap-2">
         {notice.tone === "error" ? (
@@ -203,16 +209,16 @@ export function Speedometer({
   activeCount: number
 }) {
   return (
-    <div className="glass-panel fixed bottom-6 left-[108px] z-20 hidden w-[230px] rounded-3xl border p-4 shadow-2xl md:block">
-      <div className="flex items-center gap-3">
-        <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/15 text-primary ring-1 ring-primary/25">
-          <Gauge />
+    <div className="fixed right-0 bottom-0 left-[186px] z-20 hidden h-9 border-t bg-background/95 px-4 shadow-sm backdrop-blur md:block">
+      <div className="flex h-full items-center justify-end gap-6 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2">
+          <Gauge className="size-4 text-primary" />
+          <span>下载速度</span>
+          <span className="font-semibold text-foreground">{formatBytes(speed)}/s</span>
         </div>
-        <div>
-          <div className="text-sm font-semibold">{formatBytes(speed)}/s</div>
-          <div className="text-xs text-muted-foreground">
-            {activeCount} 个活动任务
-          </div>
+        <div className="flex items-center gap-2">
+          <span>活动任务</span>
+          <span className="font-semibold text-foreground">{activeCount}</span>
         </div>
       </div>
     </div>
