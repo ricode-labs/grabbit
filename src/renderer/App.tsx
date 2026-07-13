@@ -1,15 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import {
-  Clipboard,
-  ExternalLink,
-  FileText,
-  FileUp,
-  Film,
   Folder,
-  Image,
   Loader2,
-  Music,
-  MoreHorizontal,
   Pause,
   Play,
   Plus,
@@ -32,10 +24,12 @@ import {
 import { AboutPage } from "@/components/about-page"
 import { PreferencesPage } from "@/components/preferences-page"
 import { LabeledTextarea } from "@/components/form-fields"
+import { DirectoryHistory } from "@/components/tasks/directory-history"
+import { TaskCard } from "@/components/tasks/task-card"
+import { TaskDetails } from "@/components/tasks/task-details"
+import { TorrentSelector } from "@/components/tasks/torrent-selector"
 import type { Notice, Page } from "./lib/app-types"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
@@ -45,15 +39,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Progress } from "@/components/ui/progress"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
@@ -61,15 +48,9 @@ import {
   buildAddTaskOptions,
   buildInitialAddTaskForm,
   buildTorrentSelectFileOption,
-  calculateProgress,
   defaultGrabbitPreferences,
-  flattenAnnounceList,
-  isMediaTorrentFile,
   parseCurlCommand,
   splitTaskLinks,
-  summarizeFiles,
-  summarizePeers,
-  toFiniteNumber,
   type AddTaskForm,
   type EnginePathInfo,
   type ExternalTaskIntent,
@@ -77,24 +58,16 @@ import {
   type ParsedTorrentInfo,
   type TaskSchedulerRule,
 } from "../shared/grabbit"
-import type {
-  Aria2Peer,
-  Aria2Server,
-  Aria2Task,
-  TaskListStatus,
-} from "../preload/preload"
+import type { Aria2Task, TaskListStatus } from "../preload/preload"
 
 import {
   describeDeleteFilesResult,
   formatBytes,
-  getProgress,
   getTaskName,
   getTaskUris,
   mergeDeleteResults,
   statusLabels,
   statusMeta,
-  statusText,
-  statusVariant,
   toNumber,
 } from "./lib/task-display"
 
@@ -535,7 +508,7 @@ export function App() {
             <header className="border-b bg-background px-5 py-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <div className="mb-1 flex items-center gap-2 text-xs font-medium uppercase text-muted-foreground">
+                  <div className="mb-1 flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase">
                     <Sparkles className="size-3.5 text-primary" /> Grabbit
                   </div>
                   <h1 className="text-lg font-semibold">
@@ -546,8 +519,15 @@ export function App() {
                   </p>
                 </div>
                 <div className="hidden items-center gap-3 xl:flex">
-                  <MetricChip label="可见任务" value={`${visibleTasks.length}/${tasks.length}`} />
-                  <MetricChip label="实时速度" value={`${formatBytes(totalSpeed)}/s`} accent />
+                  <MetricChip
+                    label="可见任务"
+                    value={`${visibleTasks.length}/${tasks.length}`}
+                  />
+                  <MetricChip
+                    label="实时速度"
+                    value={`${formatBytes(totalSpeed)}/s`}
+                    accent
+                  />
                 </div>
               </div>
               <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -1070,722 +1050,5 @@ export function App() {
     </div>
   )
 }
-
-function DirectoryHistory({
-  directories,
-  currentDirectory,
-  onChoose,
-}: {
-  directories: string[]
-  currentDirectory: string
-  onChoose: (directory: string) => void
-}) {
-  const options = directories.filter(
-    (directory) => directory && directory !== currentDirectory
-  )
-
-  if (options.length === 0) {
-    return null
-  }
-
-  return (
-    <div className="flex flex-wrap gap-2 pt-1">
-      {options.map((directory) => (
-        <Button
-          key={directory}
-          type="button"
-          variant="secondary"
-          size="sm"
-          className="max-w-full justify-start truncate text-xs"
-          title={directory}
-          onClick={() => onChoose(directory)}
-        >
-          {directory}
-        </Button>
-      ))}
-    </div>
-  )
-}
-
-function TorrentSelector({
-  torrentPath,
-  torrentInfo,
-  selectedIndexes,
-  loading,
-  onChoose,
-  onClear,
-  onSelectionChange,
-}: {
-  torrentPath: string
-  torrentInfo: ParsedTorrentInfo | null
-  selectedIndexes: Set<number>
-  loading: boolean
-  onChoose: () => void
-  onClear: () => void
-  onSelectionChange: (indexes: Set<number>) => void
-}) {
-  const selectedFiles =
-    torrentInfo?.files.filter((file) => selectedIndexes.has(file.index)) ?? []
-  const selectedSize = selectedFiles.reduce((sum, file) => sum + file.length, 0)
-  const allSelected =
-    Boolean(torrentInfo?.files.length) &&
-    selectedIndexes.size === torrentInfo?.files.length
-
-  const toggleIndex = (index: number, checked: boolean) => {
-    const next = new Set(selectedIndexes)
-    if (checked) {
-      next.add(index)
-    } else {
-      next.delete(index)
-    }
-    onSelectionChange(next)
-  }
-
-  const selectFiles = (indexes: number[]) => onSelectionChange(new Set(indexes))
-  const selectByKind = (kind: "video" | "audio" | "image" | "document") => {
-    selectFiles(
-      torrentInfo?.files
-        .filter((file) => isMediaTorrentFile(file, kind))
-        .map((file) => file.index) ?? []
-    )
-  }
-
-  return (
-    <div className="space-y-3 rounded-lg border border-dashed p-4">
-      <div className="flex items-start gap-3">
-        <FileUp className="mt-1 text-muted-foreground" />
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <Label>种子文件</Label>
-              <p className="mt-1 text-sm text-muted-foreground">
-                选择本地 .torrent 后会先解析文件列表，可选择部分文件再通过
-                aria2.addTorrent 提交。
-              </p>
-            </div>
-            {torrentPath ? (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onClear}
-                title="清除种子"
-              >
-                <Trash2 />
-              </Button>
-            ) : null}
-          </div>
-          <div className="mt-3 flex gap-2">
-            <Input
-              value={torrentPath}
-              placeholder="尚未选择 .torrent 文件"
-              readOnly
-            />
-            <Button variant="outline" onClick={onChoose} disabled={loading}>
-              {loading ? <Loader2 className="animate-spin" /> : null}
-              选择文件
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {torrentInfo ? (
-        <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <h3 className="text-sm font-medium break-all">
-                {torrentInfo.name}
-              </h3>
-              <p className="mt-1 text-xs text-muted-foreground">
-                已选择 {selectedFiles.length} / {torrentInfo.files.length}{" "}
-                个文件 · {formatBytes(selectedSize)} /{" "}
-                {formatBytes(torrentInfo.totalLength)}
-              </p>
-            </div>
-            <div className="flex shrink-0 gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  selectFiles(torrentInfo.files.map((file) => file.index))
-                }
-              >
-                全选
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => selectFiles([])}
-              >
-                全不选
-              </Button>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => selectByKind("video")}
-            >
-              <Film /> 视频
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => selectByKind("audio")}
-            >
-              <Music /> 音频
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => selectByKind("image")}
-            >
-              <Image /> 图片
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => selectByKind("document")}
-            >
-              <FileText /> 文档
-            </Button>
-            <Badge variant={allSelected ? "secondary" : "outline"}>
-              {allSelected ? "全部文件" : "部分文件"}
-            </Badge>
-          </div>
-
-          <div className="max-h-64 overflow-auto rounded-md border bg-background">
-            <div className="divide-y">
-              {torrentInfo.files.map((file) => (
-                <label
-                  key={`${file.index}-${file.path}`}
-                  className="flex cursor-pointer items-start gap-3 p-3 text-sm hover:bg-muted/40"
-                >
-                  <Checkbox
-                    checked={selectedIndexes.has(file.index)}
-                    onCheckedChange={(checked) =>
-                      toggleIndex(file.index, checked === true)
-                    }
-                    className="mt-1"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="font-medium break-all">{file.path}</div>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      #{file.index} ·{" "}
-                      {file.extension
-                        ? file.extension.replace(/^\./, "").toUpperCase()
-                        : "无扩展名"}{" "}
-                      · {formatBytes(file.length)}
-                    </div>
-                  </div>
-                </label>
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : null}
-    </div>
-  )
-}
-
-function TaskCard({
-  task,
-  selected,
-  onSelectedChange,
-  onShowDetails,
-  onCopyLinks,
-  onOpenPath,
-  onAction,
-}: {
-  task: Aria2Task
-  selected: boolean
-  onSelectedChange: (checked: boolean) => void
-  onShowDetails: (task: Aria2Task) => void
-  onCopyLinks: (task: Aria2Task) => Promise<void>
-  onOpenPath: (targetPath: string) => Promise<void>
-  onAction: (
-    task: Aria2Task,
-    action: "pause" | "resume" | "remove" | "restart"
-  ) => Promise<void>
-}) {
-  const progress = getProgress(task)
-  const taskPath = task.files?.[0]?.path || task.dir
-
-  return (
-    <Card className={`aurora-card glass-panel rounded-3xl transition-all hover:-translate-y-0.5 ${selected ? "border-primary shadow-primary/20" : ""}`}>
-      <CardContent className="relative p-5">
-        <div className="flex items-start gap-3">
-          <Checkbox
-            checked={selected}
-            onCheckedChange={(checked) => onSelectedChange(checked === true)}
-            className="mt-1"
-          />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <h2 className="line-clamp-2 text-base leading-6 font-semibold tracking-tight break-all">
-                  {getTaskName(task)}
-                </h2>
-                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <Badge variant={statusVariant[task.status] ?? "outline"}>
-                    {statusText[task.status] ?? task.status}
-                  </Badge>
-                  <span>
-                    {formatBytes(task.completedLength)} /{" "}
-                    {formatBytes(task.totalLength)}
-                  </span>
-                  <span>{formatBytes(task.downloadSpeed)}/s</span>
-                  <span>{task.connections || "0"} 连接</span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                {task.status === "active" ? (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => void onAction(task, "pause")}
-                    title="暂停"
-                  >
-                    <Pause />
-                  </Button>
-                ) : (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => void onAction(task, "resume")}
-                    title="开始"
-                  >
-                    <Play />
-                  </Button>
-                )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger>
-                    <MoreHorizontal />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onShowDetails(task)}>
-                      <FileText /> 查看详情
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => void onCopyLinks(task)}>
-                      <Clipboard /> 复制链接
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => void onOpenPath(taskPath)}>
-                      <Folder /> 打开位置
-                    </DropdownMenuItem>
-                    {task.status === "complete" ||
-                    task.status === "error" ||
-                    task.status === "removed" ? (
-                      <DropdownMenuItem
-                        onClick={() => void onAction(task, "restart")}
-                      >
-                        <RotateCw /> 重新下载
-                      </DropdownMenuItem>
-                    ) : null}
-                    <DropdownMenuItem
-                      className="text-destructive"
-                      onClick={() => void onAction(task, "remove")}
-                    >
-                      <Trash2 /> 移除任务
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-            <div className="mt-5 space-y-2 rounded-2xl bg-background/45 p-3">
-              <Progress value={progress} />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{progress}%</span>
-                <span className="truncate pl-4">{taskPath}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
-}
-
-function TaskDetails({
-  task,
-  onCopy,
-  onOpenPath,
-}: {
-  task: Aria2Task
-  onCopy: (text: string, message: string) => void
-  onOpenPath: (targetPath: string) => void
-}) {
-  const [peers, setPeers] = useState<Aria2Peer[]>([])
-  const [servers, setServers] = useState<Aria2Server[]>([])
-  const [networkLoading, setNetworkLoading] = useState(false)
-  const [networkError, setNetworkError] = useState<string | null>(null)
-  const taskUris = getTaskUris(task)
-  const progress = getProgress(task)
-  const taskPath = task.files?.[0]?.path || task.dir
-  const fileSummary = summarizeFiles(task.files ?? [])
-  const trackers = flattenAnnounceList(task.bittorrent?.announceList)
-  const peerSummary = summarizePeers(peers)
-  const activityRows = [
-    { label: "任务 GID", value: task.gid },
-    { label: "当前状态", value: statusText[task.status] ?? task.status },
-    { label: "下载速度", value: `${formatBytes(task.downloadSpeed)}/s` },
-    { label: "上传速度", value: `${formatBytes(task.uploadSpeed)}/s` },
-    { label: "连接数", value: task.connections || "0" },
-    { label: "做种数", value: task.numSeeders || "0" },
-    { label: "校验完成", value: formatBytes(task.verifiedLength) },
-    {
-      label: "等待校验",
-      value: task.verifyIntegrityPending === "true" ? "是" : "否",
-    },
-  ]
-
-  useEffect(() => {
-    let cancelled = false
-
-    const loadNetworkDetails = async () => {
-      setNetworkLoading(true)
-      setNetworkError(null)
-      try {
-        const [nextPeers, nextServers] = await Promise.all([
-          window.grabbit.getTaskPeers(task.gid),
-          window.grabbit.getTaskServers(task.gid),
-        ])
-        if (!cancelled) {
-          setPeers(nextPeers)
-          setServers(nextServers)
-        }
-      } catch (error) {
-        if (!cancelled) {
-          setPeers([])
-          setServers([])
-          setNetworkError(
-            error instanceof Error ? error.message : "读取 BT 网络详情失败"
-          )
-        }
-      } finally {
-        if (!cancelled) {
-          setNetworkLoading(false)
-        }
-      }
-    }
-
-    void loadNetworkDetails()
-    const timer = window.setInterval(loadNetworkDetails, 3000)
-
-    return () => {
-      cancelled = true
-      window.clearInterval(timer)
-    }
-  }, [task.gid])
-
-  return (
-    <Tabs defaultValue="activity" className="min-h-0 flex-1 px-4 py-4">
-      <TabsList className="shrink-0">
-        <TabsTrigger value="activity">Activity</TabsTrigger>
-        <TabsTrigger value="files">Files</TabsTrigger>
-        <TabsTrigger value="trackers">Trackers</TabsTrigger>
-        <TabsTrigger value="peers">Peers</TabsTrigger>
-      </TabsList>
-      <ScrollArea className="mt-4 h-[calc(86vh-210px)] pr-3">
-        <TabsContent value="activity" className="mt-0 space-y-4">
-          <div className="grid gap-3 text-sm md:grid-cols-2">
-            <DetailItem label="名称" value={getTaskName(task)} />
-            <DetailItem label="保存目录" value={task.dir || "-"} />
-            <DetailItem label="总大小" value={formatBytes(task.totalLength)} />
-            <DetailItem
-              label="已完成"
-              value={formatBytes(task.completedLength)}
-            />
-            <DetailItem
-              label="文件"
-              value={`${fileSummary.selectedCount}/${fileSummary.count} 已选择`}
-            />
-            <DetailItem label="BT 模式" value={task.bittorrent?.mode || "-"} />
-          </div>
-
-          <div className="space-y-2 rounded-lg border p-3">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-medium">进度</h3>
-                <p className="text-xs text-muted-foreground">
-                  {formatBytes(task.completedLength)} /{" "}
-                  {formatBytes(task.totalLength)}
-                </p>
-              </div>
-              <span className="text-sm font-medium">{progress}%</span>
-            </div>
-            <Progress value={progress} />
-          </div>
-
-          <div className="grid gap-2 md:grid-cols-2">
-            {activityRows.map((row) => (
-              <DetailItem key={row.label} label={row.label} value={row.value} />
-            ))}
-          </div>
-
-          {task.errorCode || task.errorMessage ? (
-            <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-              <div className="font-medium">错误 {task.errorCode || ""}</div>
-              <div className="mt-1 break-all">
-                {task.errorMessage || "aria2 未返回错误详情"}
-              </div>
-            </div>
-          ) : null}
-
-          <div className="space-y-2 rounded-lg border p-3">
-            <div className="flex items-center justify-between gap-2">
-              <h3 className="text-sm font-medium">原始链接</h3>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onCopy(taskUris.join("\n"), "任务链接已复制")}
-                disabled={taskUris.length === 0}
-              >
-                <Clipboard /> 复制全部
-              </Button>
-            </div>
-            {taskUris.length > 0 ? (
-              <div className="space-y-2">
-                {taskUris.map((uri) => (
-                  <div
-                    key={uri}
-                    className="flex items-start justify-between gap-2 rounded-md bg-muted/40 p-2 text-xs"
-                  >
-                    <code className="min-w-0 break-all">{uri}</code>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="size-7 shrink-0"
-                      onClick={() => onCopy(uri, "链接已复制")}
-                    >
-                      <Clipboard />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                aria2
-                没有返回原始链接；种子任务或部分历史记录可能只包含文件信息。
-              </p>
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="files" className="mt-0 space-y-3">
-          <div className="grid gap-3 text-sm md:grid-cols-4">
-            <DetailItem label="文件数" value={String(fileSummary.count)} />
-            <DetailItem
-              label="已选"
-              value={String(fileSummary.selectedCount)}
-            />
-            <DetailItem
-              label="总大小"
-              value={formatBytes(fileSummary.totalLength)}
-            />
-            <DetailItem label="完成" value={`${fileSummary.progress}%`} />
-          </div>
-          <div className="flex justify-end">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onOpenPath(taskPath)}
-              disabled={!taskPath}
-            >
-              <ExternalLink /> 打开位置
-            </Button>
-          </div>
-          {task.files?.length ? (
-            <div className="divide-y rounded-md border">
-              {task.files.map((file, index) => {
-                const fileProgress = calculateProgress(
-                  file.completedLength,
-                  file.length
-                )
-                const fileUris =
-                  file.uris?.map((uri) => uri.uri).filter(Boolean) ?? []
-                return (
-                  <div
-                    key={`${file.path}-${index}`}
-                    className="space-y-2 p-3 text-sm"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="font-medium break-all">
-                          {file.path || `文件 ${file.index ?? index + 1}`}
-                        </div>
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          #{file.index ?? index + 1} ·{" "}
-                          {formatBytes(file.completedLength)} /{" "}
-                          {formatBytes(file.length)} ·{" "}
-                          {file.selected === "true" ? "已选择" : "未选择"}
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="size-7 shrink-0"
-                        onClick={() => onCopy(file.path, "文件路径已复制")}
-                      >
-                        <Clipboard />
-                      </Button>
-                    </div>
-                    <Progress value={fileProgress} />
-                    {fileUris.length > 0 ? (
-                      <div className="space-y-1 rounded-md bg-muted/30 p-2 text-xs">
-                        {fileUris.map((uri) => (
-                          <div key={uri} className="break-all">
-                            {uri}
-                          </div>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">暂无文件信息。</p>
-          )}
-        </TabsContent>
-
-        <TabsContent value="trackers" className="mt-0 space-y-3">
-          <div className="grid gap-3 text-sm md:grid-cols-3">
-            <DetailItem label="Tracker 数" value={String(trackers.length)} />
-            <DetailItem
-              label="BT 名称"
-              value={task.bittorrent?.info?.name || "-"}
-            />
-            <DetailItem
-              label="创建时间"
-              value={
-                task.bittorrent?.creationDate
-                  ? new Date(
-                      toFiniteNumber(task.bittorrent.creationDate) * 1000
-                    ).toLocaleString()
-                  : "-"
-              }
-            />
-          </div>
-          {task.bittorrent?.comment ? (
-            <div className="rounded-lg border p-3 text-sm">
-              <div className="text-xs text-muted-foreground">Comment</div>
-              <div className="mt-1 break-all">{task.bittorrent.comment}</div>
-            </div>
-          ) : null}
-          {trackers.length > 0 ? (
-            <div className="divide-y rounded-md border">
-              {trackers.map((tracker) => (
-                <div
-                  key={tracker}
-                  className="flex items-start justify-between gap-2 p-3 text-sm"
-                >
-                  <code className="min-w-0 break-all">{tracker}</code>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="size-7 shrink-0"
-                    onClick={() => onCopy(tracker, "Tracker 已复制")}
-                  >
-                    <Clipboard />
-                  </Button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              aria2 暂未返回 Tracker 列表；HTTP 任务不会包含该信息。
-            </p>
-          )}
-        </TabsContent>
-
-        <TabsContent value="peers" className="mt-0 space-y-3">
-          <div className="grid gap-3 text-sm md:grid-cols-4">
-            <DetailItem
-              label="Peer 数"
-              value={networkLoading ? "读取中..." : String(peerSummary.count)}
-            />
-            <DetailItem label="Seeder" value={String(peerSummary.seeders)} />
-            <DetailItem
-              label="下行"
-              value={`${formatBytes(peerSummary.downloadSpeed)}/s`}
-            />
-            <DetailItem
-              label="上行"
-              value={`${formatBytes(peerSummary.uploadSpeed)}/s`}
-            />
-          </div>
-          {networkError ? (
-            <p className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
-              {networkError}
-            </p>
-          ) : null}
-          {peers.length > 0 ? (
-            <div className="divide-y rounded-md border">
-              {peers.map((peer, index) => (
-                <div
-                  key={`${peer.ip}-${peer.port}-${index}`}
-                  className="grid gap-2 p-3 text-sm md:grid-cols-[1fr_auto]"
-                >
-                  <div className="min-w-0">
-                    <div className="font-medium break-all">
-                      {peer.ip}:{peer.port}
-                    </div>
-                    <div className="mt-1 text-xs text-muted-foreground">
-                      {peer.peerId || "未知客户端"} ·{" "}
-                      {peer.seeder === "true" ? "Seeder" : "Leecher"}
-                    </div>
-                  </div>
-                  <div className="text-xs text-muted-foreground md:text-right">
-                    ↓ {formatBytes(peer.downloadSpeed)}/s · ↑{" "}
-                    {formatBytes(peer.uploadSpeed)}/s
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              暂无 Peer 信息；非 BT 任务或无活动连接时为空。
-            </p>
-          )}
-          {servers.length > 0 ? (
-            <div className="space-y-2 rounded-lg border p-3">
-              <h3 className="text-sm font-medium">HTTP/FTP Servers</h3>
-              {servers
-                .flatMap((entry) =>
-                  entry.servers.map((server) => ({
-                    ...server,
-                    index: entry.index,
-                  }))
-                )
-                .map((server) => (
-                  <div
-                    key={`${server.index}-${server.uri}`}
-                    className="rounded-md bg-muted/30 p-2 text-xs"
-                  >
-                    <div className="font-medium break-all">
-                      #{server.index} {server.currentUri || server.uri}
-                    </div>
-                    <div className="mt-1 text-muted-foreground">
-                      {formatBytes(server.downloadSpeed)}/s
-                    </div>
-                  </div>
-                ))}
-            </div>
-          ) : null}
-        </TabsContent>
-      </ScrollArea>
-    </Tabs>
-  )
-}
-function DetailItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border bg-muted/20 p-3">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="mt-1 text-sm font-medium break-all">{value || "-"}</div>
-    </div>
-  )
-}
-
 
 export default App

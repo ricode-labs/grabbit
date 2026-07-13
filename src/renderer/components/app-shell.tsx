@@ -31,7 +31,7 @@ export function MetricChip({
     <div
       className={`rounded-md border px-3 py-2 ${accent ? "border-primary/25 bg-primary/10" : "bg-background"}`}
     >
-      <div className="text-[11px] font-medium uppercase text-muted-foreground">
+      <div className="text-[11px] font-medium text-muted-foreground uppercase">
         {label}
       </div>
       <div className="mt-1 text-sm font-semibold">{value}</div>
@@ -56,7 +56,9 @@ export function PrimaryAside({
         </div>
         <div className="min-w-0">
           <div className="text-sm font-semibold">Grabbit</div>
-          <div className="text-[11px] text-muted-foreground">Download Manager</div>
+          <div className="text-[11px] text-muted-foreground">
+            Download Manager
+          </div>
         </div>
       </div>
       <div className="flex min-h-0 flex-1 flex-col px-2 py-3">
@@ -107,7 +109,9 @@ export function IconNav({
       className={`h-10 w-full justify-start gap-3 rounded-md px-3 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${active ? "bg-primary text-primary-foreground shadow-sm hover:bg-primary hover:text-primary-foreground" : ""}`}
       onClick={onClick}
     >
-      <span className="flex size-4 items-center justify-center [&_svg]:size-4">{icon}</span>
+      <span className="flex size-4 items-center justify-center [&_svg]:size-4">
+        {icon}
+      </span>
       <span>{label}</span>
     </Button>
   )
@@ -123,7 +127,9 @@ export function TaskSubnav({
   return (
     <aside className="hidden w-[190px] shrink-0 border-r bg-muted/25 md:block">
       <div className="border-b px-4 py-3">
-        <p className="text-xs font-medium uppercase text-muted-foreground">队列</p>
+        <p className="text-xs font-medium text-muted-foreground uppercase">
+          队列
+        </p>
         <h2 className="mt-1 text-sm font-semibold">下载空间</h2>
       </div>
       <div className="space-y-1 p-2">
@@ -134,7 +140,9 @@ export function TaskSubnav({
             className={`h-auto w-full justify-start gap-3 rounded-md px-3 py-2.5 text-left transition-all ${status === item ? "bg-background text-foreground shadow-sm ring-1 ring-border hover:bg-background" : "hover:bg-background/70"}`}
             onClick={() => onStatusChange(item)}
           >
-            <span className={`flex size-8 items-center justify-center rounded-md ${status === item ? "bg-primary/10 text-primary" : "bg-background text-muted-foreground"}`}> 
+            <span
+              className={`flex size-8 items-center justify-center rounded-md ${status === item ? "bg-primary/10 text-primary" : "bg-background text-muted-foreground"}`}
+            >
               {item === "active" ? (
                 <Activity />
               ) : item === "waiting" ? (
@@ -144,7 +152,9 @@ export function TaskSubnav({
               )}
             </span>
             <span className="min-w-0">
-              <span className="block text-sm font-medium">{statusLabels[item]}</span>
+              <span className="block text-sm font-medium">
+                {statusLabels[item]}
+              </span>
               <span className="mt-0.5 block truncate text-xs opacity-70">
                 {statusMeta[item].caption}
               </span>
@@ -214,7 +224,9 @@ export function Speedometer({
         <div className="flex items-center gap-2">
           <Gauge className="size-4 text-primary" />
           <span>下载速度</span>
-          <span className="font-semibold text-foreground">{formatBytes(speed)}/s</span>
+          <span className="font-semibold text-foreground">
+            {formatBytes(speed)}/s
+          </span>
         </div>
         <div className="flex items-center gap-2">
           <span>活动任务</span>
@@ -224,4 +236,3 @@ export function Speedometer({
     </div>
   )
 }
-

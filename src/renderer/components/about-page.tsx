@@ -8,8 +8,12 @@ export function AboutPage() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(16,185,129,0.18),transparent_34%),radial-gradient(circle_at_84%_0%,rgba(139,92,246,0.16),transparent_30%)]" />
       <header className="relative flex h-[84px] items-center border-b bg-background/35 px-6 backdrop-blur">
         <div>
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">About</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-[-0.035em]">关于 Grabbit</h1>
+          <p className="text-xs font-medium tracking-[0.22em] text-muted-foreground uppercase">
+            About
+          </p>
+          <h1 className="mt-1 text-2xl font-semibold tracking-[-0.035em]">
+            关于 Grabbit
+          </h1>
         </div>
       </header>
       <div className="relative max-w-3xl p-6">
@@ -37,4 +41,3 @@ export function AboutPage() {
     </main>
   )
 }
-
