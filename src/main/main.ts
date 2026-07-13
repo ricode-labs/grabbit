@@ -33,297 +33,321 @@ import {
   type TorrentFileEntry,
 } from "../shared/grabbit"
 
+// Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit()
 }
 
-type JsonRpcSuccess<T> = {
-  id: string
-  jsonrpc: "2.0"
-  result: T
-}
-
-type JsonRpcFailure = {
-  id: string
-  jsonrpc: "2.0"
-  error: {
-    code: number
-    message: string
-  }
-}
-
-type Aria2Task = {
-  gid: string
-  status: string
-  totalLength: string
-  completedLength: string
-  downloadSpeed: string
-  uploadSpeed: string
-  connections: string
-  dir: string
-  files?: Array<{
-    index?: string
-    path: string
-    length: string
-    completedLength: string
-    selected: string
-    uris?: Array<{ uri: string; status: string }>
-  }>
-  bittorrent?: {
-    announceList?: string[][]
-    comment?: string
-    creationDate?: string
-    mode?: string
-    info?: { name?: string }
-  }
-  verifiedLength?: string
-  verifyIntegrityPending?: string
-  numSeeders?: string
-  seeder?: string
-  errorCode?: string
-  errorMessage?: string
-}
-
-type AddTaskPayload = {
-  uris: string[]
-  options?: Record<string, string | number | boolean | undefined>
-}
-
-type AddTorrentPayload = {
-  torrentPath: string
-  options?: Record<string, string | number | boolean | undefined>
-}
-
-type ParsedTorrentFile = {
-  path?: string
-  name?: string
-  length?: number
-}
-
-type ParsedTorrent = {
-  name?: string
-  files?: ParsedTorrentFile[]
-  length?: number
-}
-
-type RestartTaskPayload = {
-  task: Aria2Task
-  options?: Record<string, string | number | boolean | undefined>
-}
-
-type DeleteTaskFilesResult = {
-  deleted: string[]
-  skipped: Array<{ path: string; reason: string }>
-  failed: Array<{ path: string; error: string }>
-}
-
-const RPC_PORT = 16800
-const RPC_SECRET = "grabbit"
-const RPC_URL = `http://127.0.0.1:${RPC_PORT}/jsonrpc`
-
-let mainWindow: BrowserWindow | null = null
-let tray: Tray | null = null
-let pendingExternalIntents: ExternalTaskIntent[] = []
-let aria2Process: ChildProcessWithoutNullStreams | null = null
-let schedulerTimer: NodeJS.Timeout | null = null
-let taskMonitorTimer: NodeJS.Timeout | null = null
-let completedNotificationPrimed = false
-let isQuitting = false
-let closeToTrayEnabled = false
-const notifiedCompletedGids = new Set<string>()
-
-const isSupportedExternalValue = (value: string) =>
-  /^(https?|ftp|magnet|thunder|mo|motrix):/i.test(value) ||
-  /\.torrent(?:$|[?#])/i.test(value)
-
-const collectExternalIntents = (values: string[]) =>
-  parseExternalTaskIntents(values.filter(isSupportedExternalValue))
-
-const registerProtocolClients = () => {
-  for (const protocol of supportedExternalProtocols) {
-    if (process.defaultApp && process.argv.length >= 2) {
-      app.setAsDefaultProtocolClient(protocol, process.execPath, [
-        path.resolve(process.argv[1]),
-      ])
-    } else {
-      app.setAsDefaultProtocolClient(protocol)
-    }
-  }
-}
-
-const sendExternalIntents = (intents: ExternalTaskIntent[]) => {
-  if (intents.length === 0) {
-    return
-  }
-
-  if (!mainWindow || mainWindow.webContents.isLoading()) {
-    pendingExternalIntents.push(...intents)
-    return
-  }
-
-  mainWindow.show()
-  mainWindow.focus()
-  mainWindow.webContents.send("external:task-intents", intents)
-}
-
-const flushExternalIntents = () => {
-  if (pendingExternalIntents.length === 0) {
-    return
-  }
-
-  const nextIntents = pendingExternalIntents
-  pendingExternalIntents = []
-  sendExternalIntents(nextIntents)
-}
-
-const showMainWindow = () => {
-  if (!mainWindow) {
-    void createWindow()
-    return
-  }
-  mainWindow.show()
-  mainWindow.focus()
-}
-
-const createNativeMenu = () => {
-  const template: MenuItemConstructorOptions[] = [
-    ...(process.platform === "darwin"
-      ? [
-          {
-            label: app.name,
-            submenu: [
-              { role: "about" },
-              { type: "separator" },
-              { role: "services" },
-              { type: "separator" },
-              { role: "hide" },
-              { role: "hideOthers" },
-              { role: "unhide" },
-              { type: "separator" },
-              { role: "quit" },
-            ],
-          } satisfies MenuItemConstructorOptions,
-        ]
-      : []),
-    {
-      label: "任务",
-      submenu: [
-        {
-          label: "新建下载任务",
-          accelerator: "CmdOrCtrl+N",
-          click: () =>
-            sendExternalIntents([
-              { kind: "command", value: "menu:new-task", command: "new-task" },
-            ]),
-        },
-        {
-          label: "打开 Torrent 文件…",
-          accelerator: "CmdOrCtrl+O",
-          click: async () => {
-            const { canceled, filePaths } = await dialog.showOpenDialog({
-              properties: ["openFile"],
-              filters: [{ name: "Torrent", extensions: ["torrent"] }],
-            })
-            if (!canceled) {
-              sendExternalIntents(
-                filePaths.map((filePath) => ({
-                  kind: "torrent",
-                  value: filePath,
-                }))
-              )
-            }
-          },
-        },
-        { type: "separator" },
-        { label: "暂停全部", click: () => void callAria2("aria2.pauseAll") },
-        { label: "开始全部", click: () => void callAria2("aria2.unpauseAll") },
-      ],
+function createWindow() {
+  // Create the browser window.
+  const mainWindow = new BrowserWindow({
+    width: 800,
+    height: 600,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
     },
-    {
-      label: "视图",
-      submenu: [
-        { role: "reload" },
-        { role: "forceReload" },
-        { role: "toggleDevTools" },
-        { type: "separator" },
-        { role: "resetZoom" },
-        { role: "zoomIn" },
-        { role: "zoomOut" },
-        { type: "separator" },
-        { role: "togglefullscreen" },
-      ],
-    },
-    {
-      label: "窗口",
-      submenu: [{ role: "minimize" }, { role: "close" }],
-    },
-  ]
+  });
 
-  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
-}
-
-const createTray = () => {
-  if (tray) {
-    return
+  // and load the index.html of the app.
+  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
+  } else {
+    mainWindow.loadFile(
+      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
+    );
   }
 
-  const image = nativeImage.createFromDataURL(
-    "data:image/svg+xml;utf8," +
-      encodeURIComponent(
-        '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#18181b"/><path d="M16 6v14m0 0 6-6m-6 6-6-6M9 25h14" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-      )
-  )
-  image.setTemplateImage(process.platform === "darwin")
+  // Open the DevTools.
+  // mainWindow.webContents.openDevTools();
+};
 
-  tray = new Tray(image)
-  tray.setToolTip("Grabbit")
-  tray.setContextMenu(
-    Menu.buildFromTemplate([
-      { label: "显示 Grabbit", click: showMainWindow },
-      {
-        label: "新建下载任务",
-        click: () =>
-          sendExternalIntents([
-            { kind: "command", value: "tray:new-task", command: "new-task" },
-          ]),
-      },
-      {
-        label: "打开 Torrent 文件…",
-        click: async () => {
-          const { canceled, filePaths } = await dialog.showOpenDialog({
-            properties: ["openFile"],
-            filters: [{ name: "Torrent", extensions: ["torrent"] }],
-          })
-          if (!canceled) {
-            sendExternalIntents(
-              filePaths.map((filePath) => ({
-                kind: "torrent",
-                value: filePath,
-              }))
-            )
-          }
-        },
-      },
-      { type: "separator" },
-      { label: "退出", click: () => app.quit() },
-    ])
-  )
-  tray.on("click", showMainWindow)
-}
+// type JsonRpcSuccess<T> = {
+//   id: string
+//   jsonrpc: "2.0"
+//   result: T
+// }
 
-const getAria2Executable = () => {
-  if (app.isPackaged) {
-    return path.join(process.resourcesPath, "aria2", "linux-x64", "aria2c")
-  }
+// type JsonRpcFailure = {
+//   id: string
+//   jsonrpc: "2.0"
+//   error: {
+//     code: number
+//     message: string
+//   }
+// }
 
-  return path.join(
-    app.getAppPath(),
-    "resources",
-    "aria2",
-    "linux-x64",
-    "aria2c"
-  )
-}
+// type Aria2Task = {
+//   gid: string
+//   status: string
+//   totalLength: string
+//   completedLength: string
+//   downloadSpeed: string
+//   uploadSpeed: string
+//   connections: string
+//   dir: string
+//   files?: Array<{
+//     index?: string
+//     path: string
+//     length: string
+//     completedLength: string
+//     selected: string
+//     uris?: Array<{ uri: string; status: string }>
+//   }>
+//   bittorrent?: {
+//     announceList?: string[][]
+//     comment?: string
+//     creationDate?: string
+//     mode?: string
+//     info?: { name?: string }
+//   }
+//   verifiedLength?: string
+//   verifyIntegrityPending?: string
+//   numSeeders?: string
+//   seeder?: string
+//   errorCode?: string
+//   errorMessage?: string
+// }
+
+// type AddTaskPayload = {
+//   uris: string[]
+//   options?: Record<string, string | number | boolean | undefined>
+// }
+
+// type AddTorrentPayload = {
+//   torrentPath: string
+//   options?: Record<string, string | number | boolean | undefined>
+// }
+
+// type ParsedTorrentFile = {
+//   path?: string
+//   name?: string
+//   length?: number
+// }
+
+// type ParsedTorrent = {
+//   name?: string
+//   files?: ParsedTorrentFile[]
+//   length?: number
+// }
+
+// type RestartTaskPayload = {
+//   task: Aria2Task
+//   options?: Record<string, string | number | boolean | undefined>
+// }
+
+// type DeleteTaskFilesResult = {
+//   deleted: string[]
+//   skipped: Array<{ path: string; reason: string }>
+//   failed: Array<{ path: string; error: string }>
+// }
+
+// const RPC_PORT = 16800
+// const RPC_SECRET = "grabbit"
+// const RPC_URL = `http://127.0.0.1:${RPC_PORT}/jsonrpc`
+
+// let mainWindow: BrowserWindow | null = null
+// let tray: Tray | null = null
+// let pendingExternalIntents: ExternalTaskIntent[] = []
+// let aria2Process: ChildProcessWithoutNullStreams | null = null
+// let schedulerTimer: NodeJS.Timeout | null = null
+// let taskMonitorTimer: NodeJS.Timeout | null = null
+// let completedNotificationPrimed = false
+// let isQuitting = false
+// let closeToTrayEnabled = false
+// const notifiedCompletedGids = new Set<string>()
+
+// const isSupportedExternalValue = (value: string) =>
+//   /^(https?|ftp|magnet|thunder|mo|motrix):/i.test(value) ||
+//   /\.torrent(?:$|[?#])/i.test(value)
+
+// const collectExternalIntents = (values: string[]) =>
+//   parseExternalTaskIntents(values.filter(isSupportedExternalValue))
+
+// const registerProtocolClients = () => {
+//   for (const protocol of supportedExternalProtocols) {
+//     if (process.defaultApp && process.argv.length >= 2) {
+//       app.setAsDefaultProtocolClient(protocol, process.execPath, [
+//         path.resolve(process.argv[1]),
+//       ])
+//     } else {
+//       app.setAsDefaultProtocolClient(protocol)
+//     }
+//   }
+// }
+
+// const sendExternalIntents = (intents: ExternalTaskIntent[]) => {
+//   if (intents.length === 0) {
+//     return
+//   }
+
+  // if (!mainWindow || mainWindow.webContents.isLoading()) {
+  //   pendingExternalIntents.push(...intents)
+  //   return
+  // }
+
+//   mainWindow.show()
+//   mainWindow.focus()
+//   mainWindow.webContents.send("external:task-intents", intents)
+// }
+
+// const flushExternalIntents = () => {
+//   if (pendingExternalIntents.length === 0) {
+//     return
+//   }
+
+//   const nextIntents = pendingExternalIntents
+//   pendingExternalIntents = []
+//   sendExternalIntents(nextIntents)
+// }
+
+// const showMainWindow = () => {
+//   if (!mainWindow) {
+//     void createWindow()
+//     return
+//   }
+//   mainWindow.show()
+//   mainWindow.focus()
+// }
+
+// const createNativeMenu = () => {
+//   const template: MenuItemConstructorOptions[] = [
+//     ...(process.platform === "darwin"
+//       ? [
+//           {
+//             label: app.name,
+//             submenu: [
+//               { role: "about" },
+//               { type: "separator" },
+//               { role: "services" },
+//               { type: "separator" },
+//               { role: "hide" },
+//               { role: "hideOthers" },
+//               { role: "unhide" },
+//               { type: "separator" },
+//               { role: "quit" },
+//             ],
+//           } satisfies MenuItemConstructorOptions,
+//         ]
+//       : []),
+//     {
+//       label: "任务",
+//       submenu: [
+//         {
+//           label: "新建下载任务",
+//           accelerator: "CmdOrCtrl+N",
+//           click: () =>
+//             sendExternalIntents([
+//               { kind: "command", value: "menu:new-task", command: "new-task" },
+//             ]),
+//         },
+//         {
+//           label: "打开 Torrent 文件…",
+//           accelerator: "CmdOrCtrl+O",
+//           click: async () => {
+//             const { canceled, filePaths } = await dialog.showOpenDialog({
+//               properties: ["openFile"],
+//               filters: [{ name: "Torrent", extensions: ["torrent"] }],
+//             })
+//             if (!canceled) {
+//               sendExternalIntents(
+//                 filePaths.map((filePath) => ({
+//                   kind: "torrent",
+//                   value: filePath,
+//                 }))
+//               )
+//             }
+//           },
+//         },
+//         { type: "separator" },
+//         { label: "暂停全部", click: () => void callAria2("aria2.pauseAll") },
+//         { label: "开始全部", click: () => void callAria2("aria2.unpauseAll") },
+//       ],
+//     },
+//     {
+//       label: "视图",
+//       submenu: [
+//         { role: "reload" },
+//         { role: "forceReload" },
+//         { role: "toggleDevTools" },
+//         { type: "separator" },
+//         { role: "resetZoom" },
+//         { role: "zoomIn" },
+//         { role: "zoomOut" },
+//         { type: "separator" },
+//         { role: "togglefullscreen" },
+//       ],
+//     },
+//     {
+//       label: "窗口",
+//       submenu: [{ role: "minimize" }, { role: "close" }],
+//     },
+//   ]
+
+//   Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+// }
+
+// const createTray = () => {
+//   if (tray) {
+//     return
+//   }
+
+//   const image = nativeImage.createFromDataURL(
+//     "data:image/svg+xml;utf8," +
+//       encodeURIComponent(
+//         '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#18181b"/><path d="M16 6v14m0 0 6-6m-6 6-6-6M9 25h14" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+//       )
+//   )
+//   image.setTemplateImage(process.platform === "darwin")
+
+//   tray = new Tray(image)
+//   tray.setToolTip("Grabbit")
+//   tray.setContextMenu(
+//     Menu.buildFromTemplate([
+//       { label: "显示 Grabbit", click: showMainWindow },
+//       {
+//         label: "新建下载任务",
+//         click: () =>
+//           sendExternalIntents([
+//             { kind: "command", value: "tray:new-task", command: "new-task" },
+//           ]),
+//       },
+//       {
+//         label: "打开 Torrent 文件…",
+//         click: async () => {
+//           const { canceled, filePaths } = await dialog.showOpenDialog({
+//             properties: ["openFile"],
+//             filters: [{ name: "Torrent", extensions: ["torrent"] }],
+//           })
+//           if (!canceled) {
+//             sendExternalIntents(
+//               filePaths.map((filePath) => ({
+//                 kind: "torrent",
+//                 value: filePath,
+//               }))
+//             )
+//           }
+//         },
+//       },
+//       { type: "separator" },
+//       { label: "退出", click: () => app.quit() },
+//     ])
+//   )
+//   tray.on("click", showMainWindow)
+// }
+
+// const getAria2Executable = () => {
+//   if (app.isPackaged) {
+//     return path.join(process.resourcesPath, "aria2", "linux-x64", "aria2c")
+//   }
+
+//   return path.join(
+//     app.getAppPath(),
+//     "resources",
+//     "aria2",
+//     "linux-x64",
+//     "aria2c"
+//   )
+// }
 
 const getSessionPath = () => path.join(app.getPath("userData"), "aria2.session")
 const getPreferencesPath = () =>
@@ -374,18 +398,18 @@ const getEnginePaths = (): EnginePathInfo[] => [
   },
 ]
 
-type WindowState = {
-  width: number
-  height: number
-  x?: number
-  y?: number
-  maximized?: boolean
-}
+// type WindowState = {
+//   width: number
+//   height: number
+//   x?: number
+//   y?: number
+//   maximized?: boolean
+// }
 
-const defaultWindowState: WindowState = {
-  width: 1120,
-  height: 720,
-}
+// const defaultWindowState: WindowState = {
+//   width: 1120,
+//   height: 720,
+// }
 
 const readWindowState = async (): Promise<WindowState> => {
   try {
@@ -936,100 +960,114 @@ const fetchTasks = async (status: "active" | "waiting" | "stopped") => {
   return callAria2<Aria2Task[]>("aria2.tellStopped", [0, 100, keys])
 }
 
-const createWindow = async () => {
-  const windowState = await readWindowState()
-  mainWindow = new BrowserWindow({
-    width: windowState.width,
-    height: windowState.height,
-    x: windowState.x,
-    y: windowState.y,
-    minWidth: 920,
-    minHeight: 600,
-    titleBarStyle: "hiddenInset",
-    webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
-    },
-  })
+// const createWindow = async () => {
+//   const windowState = await readWindowState()
+//   mainWindow = new BrowserWindow({
+//     width: windowState.width,
+//     height: windowState.height,
+//     x: windowState.x,
+//     y: windowState.y,
+//     minWidth: 920,
+//     minHeight: 600,
+//     titleBarStyle: "hiddenInset",
+//     webPreferences: {
+//       preload: path.join(__dirname, "preload.js"),
+//     },
+//   })
 
-  if (windowState.maximized) {
-    mainWindow.maximize()
-  }
+//   if (windowState.maximized) {
+//     mainWindow.maximize()
+//   }
 
-  mainWindow.on("close", (event) => {
-    void saveWindowState().catch((error) => {
-      console.error("Failed to save window state", error)
-    })
+//   mainWindow.on("close", (event) => {
+//     void saveWindowState().catch((error) => {
+//       console.error("Failed to save window state", error)
+//     })
 
-    if (!isQuitting && closeToTrayEnabled && tray) {
-      event.preventDefault()
-      mainWindow?.hide()
-    }
-  })
+//     if (!isQuitting && closeToTrayEnabled && tray) {
+//       event.preventDefault()
+//       mainWindow?.hide()
+//     }
+//   })
 
-  mainWindow.on("closed", () => {
-    mainWindow = null
-  })
+//   mainWindow.on("closed", () => {
+//     mainWindow = null
+//   })
 
-  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL)
-  } else {
-    mainWindow.loadFile(
-      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
-    )
-  }
+//   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+//     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL)
+//   } else {
+//     mainWindow.loadFile(
+//       path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
+//     )
+//   }
 
-  mainWindow.webContents.once("did-finish-load", flushExternalIntents)
-}
+//   mainWindow.webContents.once("did-finish-load", flushExternalIntents)
+// }
 
-const gotSingleInstanceLock = app.requestSingleInstanceLock()
+// const gotSingleInstanceLock = app.requestSingleInstanceLock()
 
-if (!gotSingleInstanceLock) {
-  app.quit()
-} else {
-  app.on("second-instance", (_event, argv) => {
-    showMainWindow()
-    sendExternalIntents(collectExternalIntents(argv))
-  })
-}
+// if (!gotSingleInstanceLock) {
+//   app.quit()
+// } else {
+//   app.on("second-instance", (_event, argv) => {
+//     showMainWindow()
+//     sendExternalIntents(collectExternalIntents(argv))
+//   })
+// }
 
-app.on("open-url", (event, url) => {
-  event.preventDefault()
-  sendExternalIntents(collectExternalIntents([url]))
-})
+// app.on("open-url", (event, url) => {
+//   event.preventDefault()
+//   sendExternalIntents(collectExternalIntents([url]))
+// })
 
-app.on("open-file", (event, filePath) => {
-  if (/\.torrent$/i.test(filePath)) {
-    event.preventDefault()
-    sendExternalIntents([{ kind: "torrent", value: filePath }])
-  }
-})
+// app.on("open-file", (event, filePath) => {
+//   if (/\.torrent$/i.test(filePath)) {
+//     event.preventDefault()
+//     sendExternalIntents([{ kind: "torrent", value: filePath }])
+//   }
+// })
 
+// This method will be called when Electron has finished
+// initialization and is ready to create browser windows.
+// Some APIs can only be used after this event occurs.
 app.on("ready", () => {
-  registerProtocolClients()
-  createNativeMenu()
-  createTray()
-  pendingExternalIntents.push(...collectExternalIntents(process.argv))
-  void startAria2()
-  void createWindow()
-  void readPreferences().then(applyLoginItemPreference)
+  // registerProtocolClients()
+  // createNativeMenu()
+  // createTray()
+  // pendingExternalIntents.push(...collectExternalIntents(process.argv))
+  startAria2()
+  createWindow()
+  // void readPreferences().then(applyLoginItemPreference)
 })
 
-app.on("before-quit", () => {
-  isQuitting = true
-  void stopAria2()
-})
-
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit()
+// Quit when all windows are closed, except on macOS. There, it's common
+// for applications and their menu bar to stay active until the user quits
+// explicitly with Cmd + Q.
+app.on('window-all-closed', () => {
+  if (process.platform !== 'darwin') {
+    app.quit();
   }
-})
+});
 
-app.on("activate", () => {
+app.on('activate', () => {
+  // On OS X it's common to re-create a window in the app when the
+  // dock icon is clicked and there are no other windows open.
   if (BrowserWindow.getAllWindows().length === 0) {
-    void createWindow()
+    createWindow();
   }
-})
+});
+
+// app.on("before-quit", () => {
+//   isQuitting = true
+//   void stopAria2()
+// })
+
+// app.on("activate", () => {
+//   if (BrowserWindow.getAllWindows().length === 0) {
+//     void createWindow()
+//   }
+// })
 
 ipcMain.handle(
   "tasks:list",
