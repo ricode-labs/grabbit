@@ -2,18 +2,16 @@ import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process"
 import { app, Notification } from "electron"
 import fs from "node:fs/promises"
 
+import { buildSchedulerGlobalOptions } from "../shared/grabbit"
 import {
-  buildGlobalAria2Options,
-  buildSchedulerGlobalOptions,
-} from "../shared/grabbit"
+  ARIA2_RPC_SECRET,
+  ARIA2_RPC_URL,
+  buildAria2StartupArgs,
+} from "./aria2.conf"
 import { getMainWindow } from "./app-state"
 import { getAria2Executable, getSessionPath } from "./paths"
 import { readPreferences, readSchedulerRule } from "./stores"
 import type { Aria2Task, JsonRpcFailure, JsonRpcSuccess } from "./types"
-
-const RPC_PORT = 16800
-const RPC_SECRET = "grabbit"
-const RPC_URL = `http://127.0.0.1:${RPC_PORT}/jsonrpc`
 
 let aria2Process: ChildProcessWithoutNullStreams | null = null
 let schedulerTimer: NodeJS.Timeout | null = null
@@ -27,7 +25,7 @@ export const callAria2 = async <T = unknown>(
   method: string,
   params: unknown[] = []
 ): Promise<T> => {
-  const response = await fetch(RPC_URL, {
+  const response = await fetch(ARIA2_RPC_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -36,7 +34,7 @@ export const callAria2 = async <T = unknown>(
       id: crypto.randomUUID(),
       jsonrpc: "2.0",
       method,
-      params: [`token:${RPC_SECRET}`, ...params],
+      params: [`token:${ARIA2_RPC_SECRET}`, ...params],
     }),
   })
 
@@ -175,48 +173,10 @@ export const startAria2 = async () => {
   await fs.mkdir(downloadDir, { recursive: true })
   await fs.mkdir(app.getPath("userData"), { recursive: true })
   const sessionPath = getSessionPath()
-  const globalOptions = {
-    ...buildGlobalAria2Options(preferences),
-    ...buildSchedulerGlobalOptions(schedulerRule, preferences),
-  }
 
   aria2Process = spawn(
     aria2Path,
-    [
-      "--enable-rpc=true",
-      "--rpc-listen-all=false",
-      `--rpc-listen-port=${RPC_PORT}`,
-      `--rpc-secret=${RPC_SECRET}`,
-      `--dir=${globalOptions.dir}`,
-      `--input-file=${sessionPath}`,
-      `--save-session=${sessionPath}`,
-      "--save-session-interval=15",
-      `--continue=${globalOptions.continue}`,
-      `--max-concurrent-downloads=${globalOptions["max-concurrent-downloads"]}`,
-      `--max-connection-per-server=${globalOptions["max-connection-per-server"]}`,
-      `--split=${globalOptions.split}`,
-      `--max-overall-download-limit=${globalOptions["max-overall-download-limit"]}`,
-      `--max-overall-upload-limit=${globalOptions["max-overall-upload-limit"]}`,
-      ...(globalOptions["all-proxy"]
-        ? [`--all-proxy=${globalOptions["all-proxy"]}`]
-        : []),
-      ...(globalOptions["user-agent"]
-        ? [`--user-agent=${globalOptions["user-agent"]}`]
-        : []),
-      `--bt-save-metadata=${globalOptions["bt-save-metadata"]}`,
-      `--bt-force-encryption=${globalOptions["bt-force-encryption"]}`,
-      `--follow-torrent=${globalOptions["follow-torrent"]}`,
-      `--follow-metalink=${globalOptions["follow-metalink"]}`,
-      `--seed-ratio=${globalOptions["seed-ratio"]}`,
-      `--seed-time=${globalOptions["seed-time"]}`,
-      ...(globalOptions["bt-tracker"]
-        ? [`--bt-tracker=${globalOptions["bt-tracker"]}`]
-        : []),
-      `--listen-port=${globalOptions["listen-port"]}`,
-      `--dht-listen-port=${globalOptions["dht-listen-port"]}`,
-      "--min-split-size=1M",
-      "--summary-interval=0",
-    ],
+    buildAria2StartupArgs({ preferences, schedulerRule, sessionPath }),
     { stdio: "pipe" }
   )
 
