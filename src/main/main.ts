@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron"
+import { app, BrowserWindow } from "electron/main"
 import started from "electron-squirrel-startup"
 import { startAria2, stopAria2 } from "./aria2"
 // import { setIsQuitting } from "./app-state"
@@ -17,7 +17,7 @@ import { registerIpcHandlers } from "./ipc"
 //   setWindowDidFinishLoadHandler,
 //   showMainWindow,
 // } from "./window"
-import path from "node:path"
+import path from "path"
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
