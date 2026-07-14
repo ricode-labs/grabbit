@@ -5,5 +5,3 @@ declare global {
     grabbit: typeof grabbitApi
   }
 }
-
-export {}
