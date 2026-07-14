@@ -1,6 +1,6 @@
 import { app, BrowserWindow } from "electron"
 import started from "electron-squirrel-startup"
-// import { startAria2, stopAria2 } from "./aria2"
+import { startAria2, stopAria2 } from "./aria2"
 // import { setIsQuitting } from "./app-state"
 // import {
 //   collectExternalIntents,
@@ -8,7 +8,7 @@ import started from "electron-squirrel-startup"
 //   registerProtocolClients,
 //   sendExternalIntents,
 // } from "./external-intents"
-// import { registerIpcHandlers } from "./ipc"
+import { registerIpcHandlers } from "./ipc"
 // import { createNativeMenu } from "./menu"
 // import { applyLoginItemPreference, readPreferences } from "./stores"
 // import { createTray } from "./tray"
@@ -56,6 +56,7 @@ app.whenReady().then(() => {
   // createTray()
   // sendExternalIntents(collectExternalIntents(process.argv))
   // startAria2()
+  registerIpcHandlers()
   createWindow()
   // void readPreferences().then(applyLoginItemPreference)
   
@@ -78,7 +79,7 @@ app.on('window-all-closed', () => {
 });
 
 // setWindowDidFinishLoadHandler(flushExternalIntents)
-// registerIpcHandlers()
+
 
 // const gotSingleInstanceLock = app.requestSingleInstanceLock()
 
