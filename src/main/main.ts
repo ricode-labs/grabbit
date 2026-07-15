@@ -17,7 +17,7 @@ import { registerIpcHandlers } from "./ipc"
 //   setWindowDidFinishLoadHandler,
 //   showMainWindow,
 // } from "./window"
-import path from "path"
+import path from "node:path"
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {

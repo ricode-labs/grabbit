@@ -1,9 +1,11 @@
+import path from "node:path"
 import {
   buildGlobalAria2Options,
   buildSchedulerGlobalOptions,
   type GrabbitPreferences,
   type TaskSchedulerRule,
 } from "../shared/grabbit"
+import { app } from "electron/main"
 
 export const ARIA2_RPC_PORT = 16800
 export const ARIA2_RPC_SECRET = "grabbit"
@@ -65,3 +67,52 @@ export const buildAria2StartupArgs = ({
     `--summary-interval=${SUMMARY_INTERVAL_SECONDS}`,
   ]
 }
+
+const basicOptions = [
+  // The directory to store the downloaded file
+  `--dir=${path.join(app.getPath("downloads"), "Grabbit")}`,
+  // Downloads the URIs listed in FILE
+  `--input-file=${path.join(app.getPath("userData"), "aria2.session")}`,
+  // Set the maximum number of parallel downloads for every queue item
+  `--max-concurrent-downloads=5`,
+  // Check file integrity by validating piece hashes or a hash of entire file
+  "--check-integrity=true",
+  // Continue downloading a partially downloaded file
+  `--continue=true`
+]
+
+const httpFtpSftpOptions = [
+  // The maximum number of connections to one server for each download
+  "--max-connection-per-server=16",
+  // aria2 does not split less than 2*SIZE byte range
+  "--min-split-size=1M",
+  // Specify the file name to which performance profile of the servers is saved
+  `--server-stat-of=${path.join(app.getPath("userData"), "aria2.server-stat")}`,
+  // Specify the file name to load performance profile of the servers
+  `--server-stat-if=${path.join(app.getPath("userData"), "aria2.server-stat")}`,
+  // Download a file using N connections
+  "--split=16",
+  // Specify piece selection algorithm used in HTTP/FTP download
+  "--stream-piece-selector=geom",
+]
+
+const httpSpecificOptions = [
+  
+]
+
+const ftpSftpSpecificOptions = [
+  
+]
+
+const bitTorrentMetalinkOptions = []
+
+const bitTorrentSpecificOptions = [
+  // Exclude seed only downloads when counting concurrent active downloads
+  "--bt-detach-seed-only=true",
+  // Before getting torrent metadata from DHT when downloading with magnet link, first try to read file saved by --bt-save-metadata option
+  "--bt-load-saved-metadata=true",
+  // Specify maximum number of files to open in multi-file BitTorrent/Metalink download globally
+  "--bt-max-open-files=200",
+  // Specify the maximum number of peers per torrent
+  "--bt-max-peers=100",
+]
