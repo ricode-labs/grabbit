@@ -88,6 +88,8 @@ const httpFtpSftpOptions = [
   "--max-connection-per-server=16",
   // aria2 does not split less than 2*SIZE byte range
   "--min-split-size=1M",
+  // Specify the path to the netrc file
+  `--netrc-path=${path.join(app.getPath("userData"), "aria2.netrc")}`,
   // Specify the file name to which performance profile of the servers is saved
   `--server-stat-of=${path.join(app.getPath("userData"), "aria2.server-stat")}`,
   // Specify the file name to load performance profile of the servers
@@ -174,5 +176,7 @@ const advancedOptions = [
   // Save error/unfinished downloads to FILE on exit
   `--save-session=${path.join(app.getPath("userData"), "aria2.session")}`,
   // Save error/unfinished downloads to a file specified by --save-session option every SEC seconds
-  "--save-session-interval=10"
+  "--save-session-interval=10",
+  // Stop application when process PID is not running
+  `--stop-with-process=${process.pid}`,
 ]
