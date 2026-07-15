@@ -73,6 +73,8 @@ const basicOptions = [
   `--dir=${path.join(app.getPath("downloads"), "Grabbit")}`,
   // Downloads the URIs listed in FILE
   `--input-file=${path.join(app.getPath("userData"), "aria2.session")}`,
+  // The file name of the log file
+  `--log=${path.join(app.getPath("userData"), "aria2.log")}`,
   // Set the maximum number of parallel downloads for every queue item
   `--max-concurrent-downloads=5`,
   // Check file integrity by validating piece hashes or a hash of entire file
@@ -109,6 +111,8 @@ const bitTorrentMetalinkOptions = []
 const bitTorrentSpecificOptions = [
   // Exclude seed only downloads when counting concurrent active downloads
   "--bt-detach-seed-only=true",
+  // Enable Local Peer Discovery
+  "--bt-enable-lpd=true",
   // Before getting torrent metadata from DHT when downloading with magnet link, first try to read file saved by --bt-save-metadata option
   "--bt-load-saved-metadata=true",
   // Specify maximum number of files to open in multi-file BitTorrent/Metalink download globally
@@ -122,6 +126,44 @@ const bitTorrentSpecificOptions = [
   // Save metadata as ".torrent" file
   "--bt-save-metadata=true",
   // Comma separated list of additional BitTorrent tracker's announce URI
-  `--bt-tracker`,
-  
+  `--bt-tracker=https://cdn.jsdelivr.net/gh/ngosang/trackerslist@master/trackers_all.txt`,
+  // Change the IPv4 DHT routing table file to PATH
+  `--dht-file-path=${path.join(app.getPath("userData"), "aria2.dht.dat")}`,
+  // Change the IPv6 DHT routing table file to PATH
+  `--dht-file-path6=${path.join(app.getPath("userData"), "aria2.dht6.dat")}`,
+  // Enable IPv6 DHT functionality
+  "--enable-dht6=true",
+  // Set max overall upload speed in bytes/sec
+  `--max-overall-upload-limit=0`,
+  // Specify share ratio
+  `--seed-ratio=0.0`,
+  // pecify seeding time in (fractional) minutes
+  `--seed-time=-1`,
+]
+
+const metalinkSpecificOptions = []
+
+const rpcOptions = [
+  // Enable JSON-RPC/XML-RPC server
+  "--enable-rpc=true",
+  // Specify a port number for JSON-RPC/XML-RPC server to listen to
+  "--rpc-listen-port=6800"
+]
+
+const advancedOptions = [
+  "--conf-path???",
+  // Set log level to output to console
+  "--console-log-level=warn",
+  // Handle quoted string in Content-Disposition header as UTF-8 instead of ISO-8859-1
+  "--content-disposition-default-utf8=true",
+  // Enable disk cache
+  "--disk-cache=128M",
+  // Specify file allocation method
+  "--file-allocation=none",
+  // Set log level to output
+  "--log-level=warn",
+  // Show console readout
+  "--show-console-readout=false",
+  // Set interval in seconds to output download progress summary
+  "--summary-interval=0",
 ]
