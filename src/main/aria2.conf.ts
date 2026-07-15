@@ -151,7 +151,8 @@ const rpcOptions = [
 ]
 
 const advancedOptions = [
-  "--conf-path???",
+  // Save a control file(*.aria2) every SEC seconds
+  "--auto-save-interval=10",
   // Set log level to output to console
   "--console-log-level=warn",
   // Handle quoted string in Content-Disposition header as UTF-8 instead of ISO-8859-1
@@ -166,4 +167,12 @@ const advancedOptions = [
   "--show-console-readout=false",
   // Set interval in seconds to output download progress summary
   "--summary-interval=0",
+  // Set max overall download speed in bytes/sec
+  `--max-overall-download-limit=0`,
+  // Disable loading aria2.conf file
+  "--no-conf=true",
+  // Save error/unfinished downloads to FILE on exit
+  `--save-session=${path.join(app.getPath("userData"), "aria2.session")}`,
+  // Save error/unfinished downloads to a file specified by --save-session option every SEC seconds
+  "--save-session-interval=10"
 ]
