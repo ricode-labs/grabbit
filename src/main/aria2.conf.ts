@@ -115,4 +115,13 @@ const bitTorrentSpecificOptions = [
   "--bt-max-open-files=200",
   // Specify the maximum number of peers per torrent
   "--bt-max-peers=100",
+  // Try to download first and last pieces of each file first
+  "--bt-prioritize-piece=head=50M,tail=10M",
+  // If the whole download speed of every torrent is lower than SPEED, aria2 temporarily increases the number of peers to try for more download speed
+  "--bt-request-peer-speed-limit=1M",
+  // Save metadata as ".torrent" file
+  "--bt-save-metadata=true",
+  // Comma separated list of additional BitTorrent tracker's announce URI
+  `--bt-tracker`,
+  
 ]
