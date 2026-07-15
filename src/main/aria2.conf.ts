@@ -26,46 +26,10 @@ export const buildAria2StartupArgs = ({
   schedulerRule,
   sessionPath,
 }: BuildAria2StartupArgsInput) => {
-  const globalOptions = {
-    ...buildGlobalAria2Options(preferences),
-    ...buildSchedulerGlobalOptions(schedulerRule, preferences),
-  }
-
-  return [
-    "--enable-rpc=true",
-    "--rpc-listen-all=false",
-    `--rpc-listen-port=${ARIA2_RPC_PORT}`,
-    `--rpc-secret=${ARIA2_RPC_SECRET}`,
-    `--dir=${globalOptions.dir}`,
-    `--input-file=${sessionPath}`,
-    `--save-session=${sessionPath}`,
-    `--save-session-interval=${SAVE_SESSION_INTERVAL_SECONDS}`,
-    `--continue=${globalOptions.continue}`,
-    `--max-concurrent-downloads=${globalOptions["max-concurrent-downloads"]}`,
-    `--max-connection-per-server=${globalOptions["max-connection-per-server"]}`,
-    `--split=${globalOptions.split}`,
-    `--max-overall-download-limit=${globalOptions["max-overall-download-limit"]}`,
-    `--max-overall-upload-limit=${globalOptions["max-overall-upload-limit"]}`,
-    ...(globalOptions["all-proxy"]
-      ? [`--all-proxy=${globalOptions["all-proxy"]}`]
-      : []),
-    ...(globalOptions["user-agent"]
-      ? [`--user-agent=${globalOptions["user-agent"]}`]
-      : []),
-    `--bt-save-metadata=${globalOptions["bt-save-metadata"]}`,
-    `--bt-force-encryption=${globalOptions["bt-force-encryption"]}`,
-    `--follow-torrent=${globalOptions["follow-torrent"]}`,
-    `--follow-metalink=${globalOptions["follow-metalink"]}`,
-    `--seed-ratio=${globalOptions["seed-ratio"]}`,
-    `--seed-time=${globalOptions["seed-time"]}`,
-    ...(globalOptions["bt-tracker"]
-      ? [`--bt-tracker=${globalOptions["bt-tracker"]}`]
-      : []),
-    `--listen-port=${globalOptions["listen-port"]}`,
-    `--dht-listen-port=${globalOptions["dht-listen-port"]}`,
-    `--min-split-size=${MIN_SPLIT_SIZE}`,
-    `--summary-interval=${SUMMARY_INTERVAL_SECONDS}`,
-  ]
+  // const globalOptions = {
+  //   ...buildGlobalAria2Options(preferences),
+  //   ...buildSchedulerGlobalOptions(schedulerRule, preferences),
+  // }
 }
 
 const basicOptions = [
@@ -85,7 +49,7 @@ const basicOptions = [
 
 const httpFtpSftpOptions = [
   // The maximum number of connections to one server for each download
-  "--max-connection-per-server=16",
+  "--max-connection-per-server=8",
   // aria2 does not split less than 2*SIZE byte range
   "--min-split-size=1M",
   // Specify the path to the netrc file
@@ -95,7 +59,7 @@ const httpFtpSftpOptions = [
   // Specify the file name to load performance profile of the servers
   `--server-stat-if=${path.join(app.getPath("userData"), "aria2.server-stat")}`,
   // Download a file using N connections
-  "--split=16",
+  "--split=8",
   // Specify piece selection algorithm used in HTTP/FTP download
   "--stream-piece-selector=geom",
 ]
