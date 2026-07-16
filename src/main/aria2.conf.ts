@@ -1,4 +1,5 @@
 import path from "node:path"
+import fs from "node:fs/promises"
 import {
   buildGlobalAria2Options,
   buildSchedulerGlobalOptions,
@@ -6,7 +7,26 @@ import {
   type TaskSchedulerRule,
 } from "../shared/grabbit"
 import { app } from "electron/main"
+import ky from "ky"
 
+// update trackers
+async function updateTrackers() {
+  const text = await ky
+    .get(
+      "https://cdn.jsdelivr.net/gh/ngosang/trackerslist@master/trackers_all.txt"
+    )
+    .text()
+  const trackers = text.split("\n").join(",")
+  await fs.writeFile(
+    path.join(app.getPath("userData"), "aria2.bt-tracker.txt"),
+    trackers  )
+}
+
+// read trackers
+async function readTrackers() {
+  const trackers = await fs.readFile(path.join(app.getPath("userData"), "aria2.bt-tracker.txt"))
+  return trackers
+}
 
 type BuildAria2StartupArgsInput = {
   preferences: GrabbitPreferences
@@ -37,7 +57,7 @@ const basicOptions = [
   // Check file integrity by validating piece hashes or a hash of entire file
   "--check-integrity=true",
   // Continue downloading a partially downloaded file
-  `--continue=true`
+  `--continue=true`,
 ]
 
 const httpFtpSftpOptions = [
@@ -57,13 +77,9 @@ const httpFtpSftpOptions = [
   "--stream-piece-selector=geom",
 ]
 
-const httpSpecificOptions = [
-  
-]
+const httpSpecificOptions = []
 
-const ftpSftpSpecificOptions = [
-  
-]
+const ftpSftpSpecificOptions = []
 
 const bitTorrentMetalinkOptions = []
 
@@ -85,7 +101,7 @@ const bitTorrentSpecificOptions = [
   // Save metadata as ".torrent" file
   "--bt-save-metadata=true",
   // Comma separated list of additional BitTorrent tracker's announce URI
-  `--bt-tracker=https://cdn.jsdelivr.net/gh/ngosang/trackerslist@master/trackers_all.txt`,
+  // `--bt-tracker=${btTrackerList}` is added after reading the cached list.
   // Change the IPv4 DHT routing table file to PATH
   `--dht-file-path=${path.join(app.getPath("userData"), "aria2.dht.dat")}`,
   // Change the IPv6 DHT routing table file to PATH
@@ -106,7 +122,7 @@ const rpcOptions = [
   // Enable JSON-RPC/XML-RPC server
   "--enable-rpc=true",
   // Specify a port number for JSON-RPC/XML-RPC server to listen to
-  "--rpc-listen-port=6800"
+  "--rpc-listen-port=6800",
 ]
 
 const advancedOptions = [
