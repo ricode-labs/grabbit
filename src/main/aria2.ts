@@ -4,21 +4,19 @@ import { app, Notification } from "electron"
 import fs from "node:fs/promises"
 import ky from "ky"
 
-import { buildSchedulerGlobalOptions } from "../shared/grabbit"
-import { getMainWindow } from "./app-state"
+// import { buildSchedulerGlobalOptions } from "../shared/grabbit"
+// import { getMainWindow } from "./app-state"
 import { downloadDirectoryPath, getAria2Executable } from "./paths"
-import { readPreferences, readSchedulerRule } from "./stores"
+// import { readPreferences, readSchedulerRule } from "./stores"
 import type { Aria2Task, JsonRpcFailure, JsonRpcSuccess } from "./types"
 import { aria2StartupArgs } from "./aria2.conf"
-import { randomUUID } from "node:crypto"
-
 let aria2Process: ChildProcessWithoutNullStreams | null = null
 let rpcPort: number | null = null
 let rpcSecret = ""
-let schedulerTimer: NodeJS.Timeout | null = null
-let taskMonitorTimer: NodeJS.Timeout | null = null
-let completedNotificationPrimed = false
-const notifiedCompletedGids = new Set<string>()
+// let schedulerTimer: NodeJS.Timeout | null = null
+// let taskMonitorTimer: NodeJS.Timeout | null = null
+// let completedNotificationPrimed = false
+// const notifiedCompletedGids = new Set<string>()
 
 export const isAria2Running = () => Boolean(aria2Process)
 
@@ -46,128 +44,17 @@ export async function callAria2<T = unknown>(
   const data = await ky
     .post(`http://127.0.0.1:${rpcPort}/jsonrpc`, {
       json: {
-        id: randomUUID(),
+        id: crypto.randomUUID(),
         jsonrpc: "2.0",
         method,
         params: [`token:${rpcSecret}`, ...params],
       },
     })
     .json<JsonRpcSuccess<T> | JsonRpcFailure>()
-
   if ("error" in data) {
     throw new Error(data.error.message)
   }
-
   return data.result
-}
-
-export const applySchedulerRule = async () => {
-  if (!aria2Process) {
-    return
-  }
-
-  const [preferences, schedulerRule] = await Promise.all([
-    readPreferences(),
-    readSchedulerRule(),
-  ])
-  const nextOptions = buildSchedulerGlobalOptions(schedulerRule, preferences)
-
-  await callAria2("aria2.changeGlobalOption", [nextOptions])
-}
-
-const ensureSchedulerTimer = () => {
-  if (schedulerTimer) {
-    return
-  }
-
-  schedulerTimer = setInterval(() => {
-    void applySchedulerRule().catch((error) => {
-      console.error("Failed to apply scheduler rule", error)
-    })
-  }, 60_000)
-}
-
-const clearSchedulerTimer = () => {
-  if (schedulerTimer) {
-    clearInterval(schedulerTimer)
-    schedulerTimer = null
-  }
-}
-
-const updateTaskProgressAndNotifications = async () => {
-  const mainWindow = getMainWindow()
-  if (!mainWindow || !aria2Process) {
-    return
-  }
-
-  const preferences = await readPreferences()
-
-  if (preferences.showDockProgress) {
-    const activeTasks = await callAria2<Aria2Task[]>("aria2.tellActive", [
-      ["gid", "totalLength", "completedLength"],
-    ])
-    const total = activeTasks.reduce(
-      (sum, task) => sum + Number(task.totalLength || 0),
-      0
-    )
-    const completed = activeTasks.reduce(
-      (sum, task) => sum + Number(task.completedLength || 0),
-      0
-    )
-    mainWindow.setProgressBar(total > 0 ? Math.min(1, completed / total) : -1)
-  } else {
-    mainWindow.setProgressBar(-1)
-  }
-
-  if (!preferences.notifyOnDownloadComplete || !Notification.isSupported()) {
-    return
-  }
-
-  const stoppedTasks = await callAria2<Aria2Task[]>("aria2.tellStopped", [
-    0,
-    50,
-    ["gid", "status", "files", "bittorrent"],
-  ])
-  const completedTasks = stoppedTasks.filter(
-    (task) => task.status === "complete"
-  )
-
-  if (!completedNotificationPrimed) {
-    completedTasks.forEach((task) => notifiedCompletedGids.add(task.gid))
-    completedNotificationPrimed = true
-    return
-  }
-
-  for (const task of completedTasks) {
-    if (notifiedCompletedGids.has(task.gid)) {
-      continue
-    }
-    notifiedCompletedGids.add(task.gid)
-    new Notification({
-      title: "下载完成",
-      body: task.bittorrent?.info?.name || task.files?.[0]?.path || task.gid,
-    }).show()
-  }
-}
-
-const ensureTaskMonitorTimer = () => {
-  if (taskMonitorTimer) {
-    return
-  }
-
-  taskMonitorTimer = setInterval(() => {
-    void updateTaskProgressAndNotifications().catch((error) => {
-      console.error("Failed to update task progress/notifications", error)
-    })
-  }, 2_000)
-}
-
-const clearTaskMonitorTimer = () => {
-  if (taskMonitorTimer) {
-    clearInterval(taskMonitorTimer)
-    taskMonitorTimer = null
-  }
-  getMainWindow()?.setProgressBar(-1)
 }
 
 export async function startAria2() {
@@ -176,7 +63,7 @@ export async function startAria2() {
   }
 
   rpcPort = await getAvailablePort()
-  rpcSecret = randomUUID()
+  rpcSecret = crypto.randomUUID()
   const aria2Path = getAria2Executable()
   // const preferences = await readPreferences()
   // const schedulerRule = await readSchedulerRule()
@@ -223,8 +110,4 @@ export async function stopAria2() {
 
   aria2Process.kill()
   aria2Process = null
-  aria2RpcPort = null
-  aria2RpcSecret = ""
-  clearSchedulerTimer()
-  clearTaskMonitorTimer()
 }
