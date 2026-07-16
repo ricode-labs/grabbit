@@ -1,29 +1,56 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process"
+import net from "node:net"
 import { app, Notification } from "electron"
 import fs from "node:fs/promises"
 
 import { buildSchedulerGlobalOptions } from "../shared/grabbit"
-import {
-  aria2StartupArgs,
-} from "./aria2.conf"
 import { getMainWindow } from "./app-state"
 import { downloadDirectoryPath, getAria2Executable } from "./paths"
 import { readPreferences, readSchedulerRule } from "./stores"
 import type { Aria2Task, JsonRpcFailure, JsonRpcSuccess } from "./types"
+import { aria2StartupArgs } from "./aria2.conf"
 
 let aria2Process: ChildProcessWithoutNullStreams | null = null
+let aria2RpcPort: number | null = null
 let schedulerTimer: NodeJS.Timeout | null = null
 let taskMonitorTimer: NodeJS.Timeout | null = null
 let completedNotificationPrimed = false
 const notifiedCompletedGids = new Set<string>()
+const ARIA2_RPC_SECRET = "grabbit"
 
 export const isAria2Running = () => Boolean(aria2Process)
+
+const getAvailablePort = () =>
+  new Promise<number>((resolve, reject) => {
+    const server = net.createServer()
+
+    server.on("error", reject)
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address()
+      if (!address || typeof address === "string") {
+        server.close()
+        reject(new Error("Failed to get available aria2 RPC port"))
+        return
+      }
+
+      const port = address.port
+      server.close(() => resolve(port))
+    })
+  })
+
+const getAria2RpcUrl = () => {
+  if (!aria2RpcPort) {
+    throw new Error("aria2 RPC port is not initialized")
+  }
+
+  return `http://127.0.0.1:${aria2RpcPort}/jsonrpc`
+}
 
 export const callAria2 = async <T = unknown>(
   method: string,
   params: unknown[] = []
 ): Promise<T> => {
-  const response = await fetch(ARIA2_RPC_URL, {
+  const response = await fetch(getAria2RpcUrl(), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -165,6 +192,7 @@ export async function startAria2() {
   }
 
   const aria2Path = getAria2Executable()
+  const rpcPort = await getAvailablePort()
   // const preferences = await readPreferences()
   // const schedulerRule = await readSchedulerRule()
   // const downloadDir = preferences.downloadDir
@@ -173,12 +201,14 @@ export async function startAria2() {
 
   aria2Process = spawn(
     aria2Path,
-    aria2StartupArgs,
+    aria2StartupArgs(rpcPort),
     { stdio: "pipe" }
   )
+  aria2RpcPort = rpcPort
 
   aria2Process.on("exit", () => {
     aria2Process = null
+    aria2RpcPort = null
   })
 
   aria2Process.stderr.on("data", (chunk) => {
@@ -212,6 +242,7 @@ export async function stopAria2() {
 
   aria2Process.kill()
   aria2Process = null
+  aria2RpcPort = null
   clearSchedulerTimer()
   clearTaskMonitorTimer()
 }

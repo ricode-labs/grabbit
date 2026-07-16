@@ -25,20 +25,13 @@ async function updateTrackers() {
     )
     .text()
   const trackers = text.split("\n").join(",")
-  await fs.writeFile(
-    btTrackerPath,
-    trackers,
-    "utf8"
-  )
+  await fs.writeFile(btTrackerPath, trackers, "utf8")
 }
 
 // read trackers
 async function readTrackers() {
   try {
-    const trackers = await fs.readFile(
-      btTrackerPath,
-      "utf8"
-    )
+    const trackers = await fs.readFile(btTrackerPath, "utf8")
     return trackers
   } catch {
     return ""
@@ -56,10 +49,10 @@ async function readTrackers() {
 //   schedulerRule,
 //   sessionPath,
 // }: BuildAria2StartupArgsInput) => {
-  // const globalOptions = {
-  //   ...buildGlobalAria2Options(preferences),
-  //   ...buildSchedulerGlobalOptions(schedulerRule, preferences),
-  // }
+// const globalOptions = {
+//   ...buildGlobalAria2Options(preferences),
+//   ...buildSchedulerGlobalOptions(schedulerRule, preferences),
+// }
 // }
 
 const basicOptions = [
@@ -135,12 +128,14 @@ const bitTorrentSpecificOptions = [
 
 // const metalinkSpecificOptions = []
 
-const rpcOptions = [
-  // Enable JSON-RPC/XML-RPC server
-  "--enable-rpc=true",
-  // Specify a port number for JSON-RPC/XML-RPC server to listen to
-  "--rpc-listen-port=6800",
-]
+function rpcOptions(rpcPort: number) {
+  return [
+    // Enable JSON-RPC/XML-RPC server
+    "--enable-rpc=true",
+    // Specify a port number for JSON-RPC/XML-RPC server to listen to
+    `--rpc-listen-port=${rpcPort}`,
+  ]
+}
 
 const advancedOptions = [
   // Save a control file(*.aria2) every SEC seconds
@@ -171,4 +166,12 @@ const advancedOptions = [
   `--stop-with-process=${process.pid}`,
 ]
 
-export const aria2StartupArgs = [...basicOptions, ...httpFtpSftpOptions, ...bitTorrentSpecificOptions, ...rpcOptions, ...advancedOptions]
+export function aria2StartupArgs(rpcPort: number) {
+  return [
+    ...basicOptions,
+    ...httpFtpSftpOptions,
+    ...bitTorrentSpecificOptions,
+    ...rpcOptions(rpcPort),
+    ...advancedOptions,
+  ]
+}
