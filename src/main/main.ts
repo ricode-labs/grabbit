@@ -18,6 +18,7 @@ import { registerIpcHandlers } from "./ipc"
 //   showMainWindow,
 // } from "./window"
 import path from "node:path"
+import { updateTrackers } from "./aria2.conf"
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -60,6 +61,7 @@ app.whenReady().then(async () => {
   } catch (error) {
     console.error("Failed to start aria2", error)
   }
+  updateTrackers()
   registerIpcHandlers()
   createWindow()
   // void readPreferences().then(applyLoginItemPreference)

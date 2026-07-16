@@ -18,7 +18,7 @@ import {
 } from "./paths"
 
 // update trackers
-async function updateTrackers() {
+export async function updateTrackers() {
   const text = await ky
     .get(
       "https://cdn.jsdelivr.net/gh/ngosang/trackerslist@master/trackers_all.txt"
