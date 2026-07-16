@@ -16,15 +16,13 @@ let schedulerTimer: NodeJS.Timeout | null = null
 let taskMonitorTimer: NodeJS.Timeout | null = null
 let completedNotificationPrimed = false
 const notifiedCompletedGids = new Set<string>()
-const ARIA2_RPC_SECRET = "grabbit"
 
 export const isAria2Running = () => Boolean(aria2Process)
 
-const getAvailablePort = () =>
-  new Promise<number>((resolve, reject) => {
+function getAvailablePort() {
+  return new Promise<number>((resolve, reject) => {
     const server = net.createServer()
-
-    server.on("error", reject)
+    server.once("error", reject)
     server.listen(0, "127.0.0.1", () => {
       const address = server.address()
       if (!address || typeof address === "string") {
@@ -32,11 +30,11 @@ const getAvailablePort = () =>
         reject(new Error("Failed to get available aria2 RPC port"))
         return
       }
-
       const port = address.port
       server.close(() => resolve(port))
     })
   })
+}
 
 const getAria2RpcUrl = () => {
   if (!aria2RpcPort) {
