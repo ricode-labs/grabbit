@@ -94,16 +94,24 @@ export function registerIpcHandlers() {
   //   return result.canceled ? null : result.filePaths[0]
   // })
 
-  // ipcMain.handle("tasks:resume", (_event, gid: string) =>
-  //   callAria2("aria2.unpause", [gid])
-  // )
-
   ipcMain.handle("aria2.remove", async (_event, payload: GidPayload) => {
     return await callAria2("aria2.remove", [payload.gid])
   })
 
   ipcMain.handle("aria2:pause", async (_event, payload: GidPayload) => {
     return await callAria2("aria2.pause", [payload.gid])
+  })
+
+  ipcMain.handle("aria2:pause-all", async () => {
+    return await callAria2("aria2.pauseAll")
+  })
+
+  ipcMain.handle("aria2:unpause", async (_event, payload: GidPayload) => {
+    return await callAria2("aria2.unpause", [payload.gid])
+  })
+
+  ipcMain.handle("aria2.unpauseAll", async () => {
+    return await callAria2("aria2.unpauseAll")
   })
   // ipcMain.handle(
   //   "tasks:remove-result",
@@ -119,9 +127,6 @@ export function registerIpcHandlers() {
   // ipcMain.handle("tasks:delete-files", (_event, task: Aria2Task) =>
   //   deleteTaskFiles(task)
   // )
-
-  // ipcMain.handle("tasks:pause-all", () => callAria2("aria2.pauseAll"))
-  // ipcMain.handle("tasks:resume-all", () => callAria2("aria2.unpauseAll"))
 
   // ipcMain.handle("app:select-directory", async () => {
   //   const window = BrowserWindow.getFocusedWindow() ?? getMainWindow()

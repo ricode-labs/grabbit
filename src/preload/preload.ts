@@ -191,4 +191,19 @@ contextBridge.exposeInMainWorld("aria2", {
   pause: (payload: GidPayload) => {
     ipcRenderer.invoke("aria2.pause", payload)
   },
+
+  // This method is equal to calling aria2.pause() for every active/waiting download
+  pauseAll: () => {
+    ipcRenderer.invoke("aria2.pauseAll")
+  },
+
+  // This method changes the status of the download denoted by gid (string) from paused to waiting, making the download eligible to be restarted
+  unpause: (payload: GidPayload) => {
+    ipcRenderer.invoke("aria2.unpause", payload)
+  },
+
+  // This method is equal to calling aria2.unpause() for every paused download
+  unpauseAll: () => {
+    ipcRenderer.invoke("aria2.unpauseAll")
+  },
 })
