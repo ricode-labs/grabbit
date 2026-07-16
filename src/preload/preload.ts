@@ -206,4 +206,15 @@ contextBridge.exposeInMainWorld("aria2", {
   unpauseAll: () => {
     ipcRenderer.invoke("aria2.unpauseAll")
   },
+
+  // This method returns the progress of the download denoted by gid (string)
+  tellStatus: (payload: GidPayload) => {
+    ipcRenderer.invoke("aria2.tellStatus", payload)
+  },
+
+  // This method returns a list peers of the download denoted by gid (string)
+  getPeers: (payload: GidPayload) => {
+    ipcRenderer.invoke("aria2.getPeers", payload)
+  },
+  
 })

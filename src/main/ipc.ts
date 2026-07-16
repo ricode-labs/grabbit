@@ -15,10 +15,6 @@ export function registerIpcHandlers() {
   //   (_event, status: "active" | "waiting" | "stopped") => fetchTasks(status)
   // )
 
-  // ipcMain.handle("tasks:get-peers", (_event, gid: string) =>
-  //   callAria2("aria2.getPeers", [gid])
-  // )
-
   // ipcMain.handle("tasks:get-servers", (_event, gid: string) =>
   //   callAria2("aria2.getServers", [gid])
   // )
@@ -112,6 +108,14 @@ export function registerIpcHandlers() {
 
   ipcMain.handle("aria2.unpauseAll", async () => {
     return await callAria2("aria2.unpauseAll")
+  })
+
+  ipcMain.handle("aria2:tellStatus", async (_event, payload: GidPayload) => {
+    return await callAria2("aria2.tellStatus", [payload.gid])
+  })
+
+  ipcMain.handle("aria2.getPeers", async (_event, payload: GidPayload) => {
+    return await callAria2("aria2.getPeers", [payload.gid])
   })
   // ipcMain.handle(
   //   "tasks:remove-result",
