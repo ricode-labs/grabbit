@@ -7,13 +7,6 @@ import {
 } from "../shared/grabbit"
 import { app } from "electron/main"
 
-export const ARIA2_RPC_PORT = 16800
-export const ARIA2_RPC_SECRET = "grabbit"
-export const ARIA2_RPC_URL = `http://127.0.0.1:${ARIA2_RPC_PORT}/jsonrpc`
-
-const SAVE_SESSION_INTERVAL_SECONDS = 15
-const MIN_SPLIT_SIZE = "1M"
-const SUMMARY_INTERVAL_SECONDS = 0
 
 type BuildAria2StartupArgsInput = {
   preferences: GrabbitPreferences
