@@ -17,8 +17,8 @@ import { registerIpcHandlers } from "./ipc"
 //   setWindowDidFinishLoadHandler,
 //   showMainWindow,
 // } from "./window"
-import path from "node:path"
 import { updateTrackers } from "./aria2.conf"
+import { join } from "node:path"
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -31,7 +31,7 @@ function createWindow() {
     width: 800,
     height: 600,
     webPreferences: {
-      preload: path.join(__dirname, "preload.js"),
+      preload: join(__dirname, "preload.js"),
     },
   })
 
@@ -40,7 +40,7 @@ function createWindow() {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL)
   } else {
     mainWindow.loadFile(
-      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
+      join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
     )
   }
 

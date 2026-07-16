@@ -1,4 +1,3 @@
-import fs from "node:fs/promises"
 // import {
 //   buildGlobalAria2Options,
 //   buildSchedulerGlobalOptions,
@@ -16,6 +15,7 @@ import {
   serverStatPath,
   sessionPath,
 } from "./paths"
+import { readFile, stat, writeFile } from "node:fs/promises"
 
 // update trackers
 export async function updateTrackers() {
@@ -25,13 +25,13 @@ export async function updateTrackers() {
     )
     .text()
   const trackers = text.split("\n").join(",")
-  await fs.writeFile(btTrackerPath, trackers, "utf8")
+  await writeFile(btTrackerPath, trackers, "utf8")
 }
 
 // read trackers
 async function readTrackers() {
   try {
-    const trackers = await fs.readFile(btTrackerPath, "utf8")
+    const trackers = await readFile(btTrackerPath, "utf8")
     return trackers
   } catch {
     return ""
@@ -40,7 +40,7 @@ async function readTrackers() {
 
 async function fileExists(filePath: string) {
   try {
-    const stats = await fs.stat(filePath)
+    const stats = await stat(filePath)
     return stats.isFile()
   } catch {
     return false

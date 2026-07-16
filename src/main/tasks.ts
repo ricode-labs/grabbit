@@ -1,7 +1,7 @@
 import { shell } from "electron"
 import fs from "node:fs/promises"
 import path from "node:path"
-import parseTorrent from "parse-torrent"
+// import parseTorrent from "parse-torrent"
 
 import {
   normalizeAria2Options,
@@ -9,7 +9,7 @@ import {
   type TorrentFileEntry,
 } from "../shared/grabbit"
 import { callAria2 } from "./aria2"
-import { getFallbackDownloadDir } from "./paths"
+import { downloadDirectoryPath } from "./paths"
 import type { Aria2Task, DeleteTaskFilesResult, ParsedTorrent } from "./types"
 
 export const normalizeOptions = normalizeAria2Options
@@ -19,34 +19,34 @@ const getFileExtension = (filePath: string) => {
   return extension || ""
 }
 
-export const parseTorrentFile = async (
-  torrentPath: string
-): Promise<ParsedTorrentInfo> => {
-  const torrent = await fs.readFile(torrentPath)
-  const parsed = parseTorrent(torrent) as ParsedTorrent
-  const filesSource = parsed.files?.length
-    ? parsed.files
-    : [{ path: parsed.name, name: parsed.name, length: parsed.length }]
+// export const parseTorrentFile = async (
+//   torrentPath: string
+// ): Promise<ParsedTorrentInfo> => {
+//   const torrent = await fs.readFile(torrentPath)
+//   const parsed = parseTorrent(torrent) as ParsedTorrent
+//   const filesSource = parsed.files?.length
+//     ? parsed.files
+//     : [{ path: parsed.name, name: parsed.name, length: parsed.length }]
 
-  const files: TorrentFileEntry[] = filesSource.map((file, index) => {
-    const filePath =
-      file.path || file.name || `${parsed.name || "torrent"}-${index + 1}`
-    const name = path.basename(filePath)
-    return {
-      index: index + 1,
-      path: filePath,
-      name,
-      extension: getFileExtension(name),
-      length: Number(file.length ?? 0),
-    }
-  })
+//   const files: TorrentFileEntry[] = filesSource.map((file, index) => {
+//     const filePath =
+//       file.path || file.name || `${parsed.name || "torrent"}-${index + 1}`
+//     const name = path.basename(filePath)
+//     return {
+//       index: index + 1,
+//       path: filePath,
+//       name,
+//       extension: getFileExtension(name),
+//       length: Number(file.length ?? 0),
+//     }
+//   })
 
-  return {
-    name: parsed.name || path.basename(torrentPath),
-    files,
-    totalLength: files.reduce((sum, file) => sum + file.length, 0),
-  }
-}
+//   return {
+//     name: parsed.name || path.basename(torrentPath),
+//     files,
+//     totalLength: files.reduce((sum, file) => sum + file.length, 0),
+//   }
+// }
 
 const isStoppedTask = (task: Pick<Aria2Task, "status">) =>
   task.status === "complete" ||
@@ -69,7 +69,7 @@ export const deleteTaskFiles = async (
     skipped: [],
     failed: [],
   }
-  const taskDir = path.resolve(task.dir || getFallbackDownloadDir())
+  const taskDir = path.resolve(task.dir || downloadDirectoryPath)
   const rawPaths = Array.from(
     new Set(task.files?.map((file) => file.path.trim()).filter(Boolean) ?? [])
   )

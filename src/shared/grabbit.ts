@@ -738,3 +738,4 @@ export function parseCurlCommand(command: string): ParsedCurlCommand | null {
 
   return result.uris.length > 0 ? result : null
 }
+

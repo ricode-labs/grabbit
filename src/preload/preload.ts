@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron"
+import type { AddMetalinkPayload, AddTorrentPayload, AddUriPayload, GidPayload } from "../shared/aria2"
 // import type {
 //   EnginePathInfo,
 //   ExternalTaskIntent,
@@ -168,7 +169,26 @@ import { contextBridge, ipcRenderer } from "electron"
 contextBridge.exposeInMainWorld("grabbit", {})
 
 contextBridge.exposeInMainWorld("aria2", {
-  addUri: () => {
-    ipcRenderer.invoke("aria2.addUri")
+  // This method adds a new download
+  addUri: (payload: AddUriPayload) => {
+    ipcRenderer.invoke("aria2.addUri", payload)
+  },
+  // This method adds a BitTorrent download by uploading a ".torrent" file
+  addTorrent: (payload: AddTorrentPayload) => {
+    ipcRenderer.invoke("aria2.addTorrent", payload)
+  },
+  // This method adds a Metalink download by uploading a ".metalink" file
+  addMetalink: (payload: AddMetalinkPayload) => {
+    ipcRenderer.invoke("aria2.addMetalink", payload)
+  },
+
+  // This method removes the download denoted by gid (string)
+  remove: (payload: GidPayload) => {
+    ipcRenderer.invoke("aria2.remove", payload)
+  },
+
+  // This method pauses the download denoted by gid (string)
+  pause: (payload: GidPayload) => {
+    ipcRenderer.invoke("aria2.pause", payload)
   },
 })

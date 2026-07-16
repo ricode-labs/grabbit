@@ -1,7 +1,5 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process"
-import net from "node:net"
 import { app, Notification } from "electron"
-import fs from "node:fs/promises"
 import ky from "ky"
 
 // import { buildSchedulerGlobalOptions } from "../shared/grabbit"
@@ -10,6 +8,8 @@ import { downloadDirectoryPath, getAria2Executable } from "./paths"
 // import { readPreferences, readSchedulerRule } from "./stores"
 import type { Aria2Task, JsonRpcFailure, JsonRpcSuccess } from "./types"
 import { aria2StartupArgs } from "./aria2.conf"
+import { mkdir } from "node:fs/promises"
+import { createServer } from "node:net"
 let aria2Process: ChildProcessWithoutNullStreams | null = null
 let rpcPort: number | null = null
 let rpcSecret = ""
@@ -22,7 +22,7 @@ export const isAria2Running = () => Boolean(aria2Process)
 
 function getAvailablePort() {
   return new Promise<number>((resolve, reject) => {
-    const server = net.createServer()
+    const server = createServer()
     server.once("error", reject)
     server.listen(0, "127.0.0.1", () => {
       const address = server.address()
@@ -68,8 +68,8 @@ export async function startAria2() {
   // const preferences = await readPreferences()
   // const schedulerRule = await readSchedulerRule()
   // const downloadDir = preferences.downloadDir
-  await fs.mkdir(downloadDirectoryPath, { recursive: true })
-  await fs.mkdir(app.getPath("userData"), { recursive: true })
+  await mkdir(downloadDirectoryPath, { recursive: true })
+  await mkdir(app.getPath("userData"), { recursive: true })
 
   aria2Process = spawn(aria2Path, await aria2StartupArgs(rpcPort, rpcSecret), {
     stdio: "pipe",
