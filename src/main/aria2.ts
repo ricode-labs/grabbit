@@ -161,15 +161,15 @@ const clearTaskMonitorTimer = () => {
   getMainWindow()?.setProgressBar(-1)
 }
 
-export const startAria2 = async () => {
+async function startAria2() {
   if (aria2Process) {
     return
   }
 
   const aria2Path = getAria2Executable()
-  const preferences = await readPreferences()
-  const schedulerRule = await readSchedulerRule()
-  const downloadDir = preferences.downloadDir
+  // const preferences = await readPreferences()
+  // const schedulerRule = await readSchedulerRule()
+  // const downloadDir = preferences.downloadDir
   await fs.mkdir(downloadDir, { recursive: true })
   await fs.mkdir(app.getPath("userData"), { recursive: true })
   const sessionPath = getSessionPath()

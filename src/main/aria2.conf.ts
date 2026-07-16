@@ -8,6 +8,7 @@ import {
 } from "../shared/grabbit"
 import { app } from "electron/main"
 import ky from "ky"
+import { btTrackerPath, downloadDirectoryPath, logPath, netrcPath, sessionPath } from "./paths"
 
 // update trackers
 async function updateTrackers() {
@@ -18,14 +19,23 @@ async function updateTrackers() {
     .text()
   const trackers = text.split("\n").join(",")
   await fs.writeFile(
-    path.join(app.getPath("userData"), "aria2.bt-tracker.txt"),
-    trackers  )
+    btTrackerPath,
+    trackers,
+    "utf8"
+  )
 }
 
 // read trackers
 async function readTrackers() {
-  const trackers = await fs.readFile(path.join(app.getPath("userData"), "aria2.bt-tracker.txt"))
-  return trackers
+  try {
+    const trackers = await fs.readFile(
+      btTrackerPath,
+      "utf8"
+    )
+    return trackers
+  } catch {
+    return ""
+  }
 }
 
 type BuildAria2StartupArgsInput = {
@@ -47,11 +57,11 @@ export const buildAria2StartupArgs = ({
 
 const basicOptions = [
   // The directory to store the downloaded file
-  `--dir=${path.join(app.getPath("downloads"), "Grabbit")}`,
+  `--dir=${downloadDirectoryPath}`,
   // Downloads the URIs listed in FILE
-  `--input-file=${path.join(app.getPath("userData"), "aria2.session")}`,
+  `--input-file=${sessionPath}`,
   // The file name of the log file
-  `--log=${path.join(app.getPath("userData"), "aria2.log")}`,
+  `--log=${logPath}`,
   // Set the maximum number of parallel downloads for every queue item
   `--max-concurrent-downloads=5`,
   // Check file integrity by validating piece hashes or a hash of entire file
@@ -66,7 +76,7 @@ const httpFtpSftpOptions = [
   // aria2 does not split less than 2*SIZE byte range
   "--min-split-size=1M",
   // Specify the path to the netrc file
-  `--netrc-path=${path.join(app.getPath("userData"), "aria2.netrc")}`,
+  `--netrc-path=${netrcPath}`,
   // Specify the file name to which performance profile of the servers is saved
   `--server-stat-of=${path.join(app.getPath("userData"), "aria2.server-stat")}`,
   // Specify the file name to load performance profile of the servers
@@ -101,7 +111,7 @@ const bitTorrentSpecificOptions = [
   // Save metadata as ".torrent" file
   "--bt-save-metadata=true",
   // Comma separated list of additional BitTorrent tracker's announce URI
-  // `--bt-tracker=${btTrackerList}` is added after reading the cached list.
+  `--bt-tracker=${readTrackers()}`,
   // Change the IPv4 DHT routing table file to PATH
   `--dht-file-path=${path.join(app.getPath("userData"), "aria2.dht.dat")}`,
   // Change the IPv6 DHT routing table file to PATH
