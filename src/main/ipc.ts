@@ -6,7 +6,7 @@ import {
   type GrabbitPreferences,
   type TaskSchedulerRule,
 } from "../shared/grabbit"
-import { applySchedulerRule, callAria2, isAria2Running } from "./aria2"
+import { callAria2, isAria2Running } from "./aria2"
 import { getMainWindow } from "./app-state"
 import {
   getDefaultDownloadDir,
@@ -30,7 +30,7 @@ import type {
   RestartTaskPayload,
 } from "./types"
 
-export const registerIpcHandlers = () => {
+export function registerIpcHandlers() {
   ipcMain.handle(
     "tasks:list",
     (_event, status: "active" | "waiting" | "stopped") => fetchTasks(status)

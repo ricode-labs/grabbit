@@ -8,7 +8,7 @@ import { startAria2, stopAria2 } from "./aria2"
 //   registerProtocolClients,
 //   sendExternalIntents,
 // } from "./external-intents"
-// import { registerIpcHandlers } from "./ipc"
+import { registerIpcHandlers } from "./ipc"
 // import { createNativeMenu } from "./menu"
 // import { applyLoginItemPreference, readPreferences } from "./stores"
 // import { createTray } from "./tray"
@@ -50,13 +50,17 @@ function createWindow() {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
   // registerProtocolClients()
   // createNativeMenu()
   // createTray()
   // sendExternalIntents(collectExternalIntents(process.argv))
-  startAria2()
-  // registerIpcHandlers()
+  try {
+    await startAria2()
+  } catch (error) {
+    console.error("Failed to start aria2", error)
+  }
+  registerIpcHandlers()
   createWindow()
   // void readPreferences().then(applyLoginItemPreference)
 
