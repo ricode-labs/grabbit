@@ -36,13 +36,13 @@ function getAvailablePort() {
   })
 }
 
-const getAria2RpcUrl = () => {
-  if (!aria2RpcPort) {
-    throw new Error("aria2 RPC port is not initialized")
-  }
+// const getAria2RpcUrl = () => {
+//   if (!aria2RpcPort) {
+//     throw new Error("aria2 RPC port is not initialized")
+//   }
 
-  return `http://127.0.0.1:${aria2RpcPort}/jsonrpc`
-}
+//   return `http://127.0.0.1:${aria2RpcPort}/jsonrpc`
+// }
 
 export const callAria2 = async <T = unknown>(
   method: string,
@@ -189,8 +189,8 @@ export async function startAria2() {
     return
   }
 
+  aria2RpcPort = await getAvailablePort()
   const aria2Path = getAria2Executable()
-  const rpcPort = await getAvailablePort()
   // const preferences = await readPreferences()
   // const schedulerRule = await readSchedulerRule()
   // const downloadDir = preferences.downloadDir
