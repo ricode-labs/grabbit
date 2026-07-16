@@ -34,3 +34,6 @@ export const downloadDirectoryPath = path.join(app.getPath("downloads"), "Grabbi
 export const sessionPath = path.join(app.getPath("userData"), "aria2.session")
 export const logPath = path.join(app.getPath("userData"), "aria2.log")
 export const netrcPath = path.join(app.getPath("userData"), "aria2.netrc")
+export const serverStatPath = path.join(app.getPath("userData"), "aria2.server-stat")
+export const dhtPath = path.join(app.getPath("userData"), "aria2.dht.dat")
+export const dht6Path = path.join(app.getPath("userData"), "aria2.dht6.dat")

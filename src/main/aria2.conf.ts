@@ -1,4 +1,3 @@
-import path from "node:path"
 import fs from "node:fs/promises"
 import {
   buildGlobalAria2Options,
@@ -6,9 +5,17 @@ import {
   type GrabbitPreferences,
   type TaskSchedulerRule,
 } from "../shared/grabbit"
-import { app } from "electron/main"
 import ky from "ky"
-import { btTrackerPath, downloadDirectoryPath, logPath, netrcPath, sessionPath } from "./paths"
+import {
+  btTrackerPath,
+  dht6Path,
+  dhtPath,
+  downloadDirectoryPath,
+  logPath,
+  netrcPath,
+  serverStatPath,
+  sessionPath,
+} from "./paths"
 
 // update trackers
 async function updateTrackers() {
@@ -78,9 +85,9 @@ const httpFtpSftpOptions = [
   // Specify the path to the netrc file
   `--netrc-path=${netrcPath}`,
   // Specify the file name to which performance profile of the servers is saved
-  `--server-stat-of=${path.join(app.getPath("userData"), "aria2.server-stat")}`,
+  `--server-stat-of=${serverStatPath}`,
   // Specify the file name to load performance profile of the servers
-  `--server-stat-if=${path.join(app.getPath("userData"), "aria2.server-stat")}`,
+  `--server-stat-if=${serverStatPath}`,
   // Download a file using N connections
   "--split=8",
   // Specify piece selection algorithm used in HTTP/FTP download
@@ -113,9 +120,9 @@ const bitTorrentSpecificOptions = [
   // Comma separated list of additional BitTorrent tracker's announce URI
   `--bt-tracker=${readTrackers()}`,
   // Change the IPv4 DHT routing table file to PATH
-  `--dht-file-path=${path.join(app.getPath("userData"), "aria2.dht.dat")}`,
+  `--dht-file-path=${dhtPath}`,
   // Change the IPv6 DHT routing table file to PATH
-  `--dht-file-path6=${path.join(app.getPath("userData"), "aria2.dht6.dat")}`,
+  `--dht-file-path6=${dht6Path}`,
   // Enable IPv6 DHT functionality
   "--enable-dht6=true",
   // Set max overall upload speed in bytes/sec
@@ -157,7 +164,7 @@ const advancedOptions = [
   // Disable loading aria2.conf file
   "--no-conf=true",
   // Save error/unfinished downloads to FILE on exit
-  `--save-session=${path.join(app.getPath("userData"), "aria2.session")}`,
+  `--save-session=${sessionPath}`,
   // Save error/unfinished downloads to a file specified by --save-session option every SEC seconds
   "--save-session-interval=10",
   // Stop application when process PID is not running
