@@ -38,6 +38,15 @@ async function readTrackers() {
   }
 }
 
+async function fileExists(filePath: string) {
+  try {
+    const stats = await fs.stat(filePath)
+    return stats.isFile()
+  } catch {
+    return false
+  }
+}
+
 // type BuildAria2StartupArgsInput = {
 //   preferences: GrabbitPreferences
 //   schedulerRule: TaskSchedulerRule
@@ -55,20 +64,25 @@ async function readTrackers() {
 // }
 // }
 
-const basicOptions = [
-  // The directory to store the downloaded file
-  `--dir=${downloadDirectoryPath}`,
-  // Downloads the URIs listed in FILE
-  `--input-file=${sessionPath}`,
-  // The file name of the log file
-  `--log=${logPath}`,
-  // Set the maximum number of parallel downloads for every queue item
-  `--max-concurrent-downloads=5`,
-  // Check file integrity by validating piece hashes or a hash of entire file
-  "--check-integrity=true",
-  // Continue downloading a partially downloaded file
-  `--continue=true`,
-]
+async function basicOptions() {
+  const options = [
+    // The directory to store the downloaded file
+    `--dir=${downloadDirectoryPath}`,
+    // The file name of the log file
+    `--log=${logPath}`,
+    // Set the maximum number of parallel downloads for every queue item
+    `--max-concurrent-downloads=5`,
+    // Check file integrity by validating piece hashes or a hash of entire file
+    "--check-integrity=true",
+    // Continue downloading a partially downloaded file
+    `--continue=true`,
+  ]
+  if (await fileExists(sessionPath)) {
+    // Downloads the URIs listed in FILE
+    options.push(`--input-file=${sessionPath}`)
+  }
+  return options
+}
 
 const httpFtpSftpOptions = [
   // The maximum number of connections to one server for each download
@@ -171,7 +185,7 @@ const advancedOptions = [
 
 export async function aria2StartupArgs(rpcPort: number, rpcSecret: string) {
   return [
-    ...basicOptions,
+    ...await basicOptions(),
     ...httpFtpSftpOptions,
     ...await bitTorrentSpecificOptions(),
     ...rpcOptions(rpcPort, rpcSecret),
