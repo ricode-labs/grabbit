@@ -71,7 +71,7 @@ export async function startAria2() {
   await fs.mkdir(downloadDirectoryPath, { recursive: true })
   await fs.mkdir(app.getPath("userData"), { recursive: true })
 
-  aria2Process = spawn(aria2Path, aria2StartupArgs(rpcPort, rpcSecret), {
+  aria2Process = spawn(aria2Path, await aria2StartupArgs(rpcPort, rpcSecret), {
     stdio: "pipe",
   })
 

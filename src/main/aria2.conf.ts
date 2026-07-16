@@ -93,39 +93,40 @@ const httpFtpSftpOptions = [
 
 // const bitTorrentMetalinkOptions = []
 
-const bitTorrentSpecificOptions = [
-  // Exclude seed only downloads when counting concurrent active downloads
-  "--bt-detach-seed-only=true",
-  // Enable Local Peer Discovery
-  "--bt-enable-lpd=true",
-  // Before getting torrent metadata from DHT when downloading with magnet link, first try to read file saved by --bt-save-metadata option
-  "--bt-load-saved-metadata=true",
-  // Specify maximum number of files to open in multi-file BitTorrent/Metalink download globally
-  "--bt-max-open-files=200",
-  // Specify the maximum number of peers per torrent
-  "--bt-max-peers=100",
-  // Try to download first and last pieces of each file first
-  "--bt-prioritize-piece=head=50M,tail=10M",
-  // If the whole download speed of every torrent is lower than SPEED, aria2 temporarily increases the number of peers to try for more download speed
-  "--bt-request-peer-speed-limit=1M",
-  // Save metadata as ".torrent" file
-  "--bt-save-metadata=true",
-  // Comma separated list of additional BitTorrent tracker's announce URI
-  `--bt-tracker=${readTrackers()}`,
-  // Change the IPv4 DHT routing table file to PATH
-  `--dht-file-path=${dhtPath}`,
-  // Change the IPv6 DHT routing table file to PATH
-  `--dht-file-path6=${dht6Path}`,
-  // Enable IPv6 DHT functionality
-  "--enable-dht6=true",
-  // Set max overall upload speed in bytes/sec
-  `--max-overall-upload-limit=0`,
-  // Specify share ratio
-  `--seed-ratio=0.0`,
-  // pecify seeding time in (fractional) minutes
-  `--seed-time=-1`,
-]
-
+async function bitTorrentSpecificOptions() {
+  return [
+    // Exclude seed only downloads when counting concurrent active downloads
+    "--bt-detach-seed-only=true",
+    // Enable Local Peer Discovery
+    "--bt-enable-lpd=true",
+    // Before getting torrent metadata from DHT when downloading with magnet link, first try to read file saved by --bt-save-metadata option
+    "--bt-load-saved-metadata=true",
+    // Specify maximum number of files to open in multi-file BitTorrent/Metalink download globally
+    "--bt-max-open-files=200",
+    // Specify the maximum number of peers per torrent
+    "--bt-max-peers=100",
+    // Try to download first and last pieces of each file first
+    "--bt-prioritize-piece=head=50M,tail=10M",
+    // If the whole download speed of every torrent is lower than SPEED, aria2 temporarily increases the number of peers to try for more download speed
+    "--bt-request-peer-speed-limit=1M",
+    // Save metadata as ".torrent" file
+    "--bt-save-metadata=true",
+    // Comma separated list of additional BitTorrent tracker's announce URI
+    `--bt-tracker=${await readTrackers()}`,
+    // Change the IPv4 DHT routing table file to PATH
+    `--dht-file-path=${dhtPath}`,
+    // Change the IPv6 DHT routing table file to PATH
+    `--dht-file-path6=${dht6Path}`,
+    // Enable IPv6 DHT functionality
+    "--enable-dht6=true",
+    // Set max overall upload speed in bytes/sec
+    `--max-overall-upload-limit=0`,
+    // Specify share ratio
+    `--seed-ratio=0.0`,
+    // pecify seeding time in (fractional) minutes
+    `--seed-time=0`,
+  ]
+}
 // const metalinkSpecificOptions = []
 
 function rpcOptions(rpcPort: number, rpcSecret: string) {
@@ -168,11 +169,11 @@ const advancedOptions = [
   `--stop-with-process=${process.pid}`,
 ]
 
-export function aria2StartupArgs(rpcPort: number, rpcSecret: string) {
+export async function aria2StartupArgs(rpcPort: number, rpcSecret: string) {
   return [
     ...basicOptions,
     ...httpFtpSftpOptions,
-    ...bitTorrentSpecificOptions,
+    ...await bitTorrentSpecificOptions(),
     ...rpcOptions(rpcPort, rpcSecret),
     ...advancedOptions,
   ]

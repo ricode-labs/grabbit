@@ -8,7 +8,7 @@ import { startAria2, stopAria2 } from "./aria2"
 //   registerProtocolClients,
 //   sendExternalIntents,
 // } from "./external-intents"
-import { registerIpcHandlers } from "./ipc"
+// import { registerIpcHandlers } from "./ipc"
 // import { createNativeMenu } from "./menu"
 // import { applyLoginItemPreference, readPreferences } from "./stores"
 // import { createTray } from "./tray"
@@ -56,7 +56,7 @@ app.whenReady().then(() => {
   // createTray()
   // sendExternalIntents(collectExternalIntents(process.argv))
   startAria2()
-  registerIpcHandlers()
+  // registerIpcHandlers()
   createWindow()
   // void readPreferences().then(applyLoginItemPreference)
 
