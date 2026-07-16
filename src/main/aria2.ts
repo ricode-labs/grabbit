@@ -4,12 +4,10 @@ import fs from "node:fs/promises"
 
 import { buildSchedulerGlobalOptions } from "../shared/grabbit"
 import {
-  ARIA2_RPC_SECRET,
-  ARIA2_RPC_URL,
-  buildAria2StartupArgs,
+  aria2StartupArgs,
 } from "./aria2.conf"
 import { getMainWindow } from "./app-state"
-import { getAria2Executable, getSessionPath } from "./paths"
+import { downloadDirectoryPath, getAria2Executable } from "./paths"
 import { readPreferences, readSchedulerRule } from "./stores"
 import type { Aria2Task, JsonRpcFailure, JsonRpcSuccess } from "./types"
 
@@ -161,7 +159,7 @@ const clearTaskMonitorTimer = () => {
   getMainWindow()?.setProgressBar(-1)
 }
 
-async function startAria2() {
+export async function startAria2() {
   if (aria2Process) {
     return
   }
@@ -170,13 +168,12 @@ async function startAria2() {
   // const preferences = await readPreferences()
   // const schedulerRule = await readSchedulerRule()
   // const downloadDir = preferences.downloadDir
-  await fs.mkdir(downloadDir, { recursive: true })
+  await fs.mkdir(downloadDirectoryPath, { recursive: true })
   await fs.mkdir(app.getPath("userData"), { recursive: true })
-  const sessionPath = getSessionPath()
 
   aria2Process = spawn(
     aria2Path,
-    buildAria2StartupArgs({ preferences, schedulerRule, sessionPath }),
+    aria2StartupArgs,
     { stdio: "pipe" }
   )
 
@@ -188,21 +185,21 @@ async function startAria2() {
     console.error(`[aria2] ${chunk}`)
   })
 
-  ensureSchedulerTimer()
-  ensureTaskMonitorTimer()
+  // ensureSchedulerTimer()
+  // ensureTaskMonitorTimer()
 
-  if (preferences.resumeAllOnLaunch) {
-    void callAria2("aria2.unpauseAll").catch((error) => {
-      console.error("Failed to resume all tasks on launch", error)
-    })
-  }
+  // if (preferences.resumeAllOnLaunch) {
+  //   void callAria2("aria2.unpauseAll").catch((error) => {
+  //     console.error("Failed to resume all tasks on launch", error)
+  //   })
+  // }
 
-  void updateTaskProgressAndNotifications().catch((error) => {
-    console.error("Failed to update task progress/notifications", error)
-  })
+  // void updateTaskProgressAndNotifications().catch((error) => {
+  //   console.error("Failed to update task progress/notifications", error)
+  // })
 }
 
-export const stopAria2 = async () => {
+export async function stopAria2() {
   if (!aria2Process) {
     return
   }

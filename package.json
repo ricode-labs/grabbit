@@ -12,8 +12,7 @@
     "publish": "electron-forge publish",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
-    "typecheck": "tsc --noEmit",
-    "verify:shared": "tsx scripts/verify-shared.ts"
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [],
   "author": {

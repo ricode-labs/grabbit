@@ -1,10 +1,10 @@
 import fs from "node:fs/promises"
-import {
-  buildGlobalAria2Options,
-  buildSchedulerGlobalOptions,
-  type GrabbitPreferences,
-  type TaskSchedulerRule,
-} from "../shared/grabbit"
+// import {
+//   buildGlobalAria2Options,
+//   buildSchedulerGlobalOptions,
+//   type GrabbitPreferences,
+//   type TaskSchedulerRule,
+// } from "../shared/grabbit"
 import ky from "ky"
 import {
   btTrackerPath,
@@ -45,22 +45,22 @@ async function readTrackers() {
   }
 }
 
-type BuildAria2StartupArgsInput = {
-  preferences: GrabbitPreferences
-  schedulerRule: TaskSchedulerRule
-  sessionPath: string
-}
+// type BuildAria2StartupArgsInput = {
+//   preferences: GrabbitPreferences
+//   schedulerRule: TaskSchedulerRule
+//   sessionPath: string
+// }
 
-export const buildAria2StartupArgs = ({
-  preferences,
-  schedulerRule,
-  sessionPath,
-}: BuildAria2StartupArgsInput) => {
+// export const buildAria2StartupArgs = ({
+//   preferences,
+//   schedulerRule,
+//   sessionPath,
+// }: BuildAria2StartupArgsInput) => {
   // const globalOptions = {
   //   ...buildGlobalAria2Options(preferences),
   //   ...buildSchedulerGlobalOptions(schedulerRule, preferences),
   // }
-}
+// }
 
 const basicOptions = [
   // The directory to store the downloaded file
@@ -94,11 +94,11 @@ const httpFtpSftpOptions = [
   "--stream-piece-selector=geom",
 ]
 
-const httpSpecificOptions = []
+// const httpSpecificOptions = []
 
-const ftpSftpSpecificOptions = []
+// const ftpSftpSpecificOptions = []
 
-const bitTorrentMetalinkOptions = []
+// const bitTorrentMetalinkOptions = []
 
 const bitTorrentSpecificOptions = [
   // Exclude seed only downloads when counting concurrent active downloads
@@ -133,7 +133,7 @@ const bitTorrentSpecificOptions = [
   `--seed-time=-1`,
 ]
 
-const metalinkSpecificOptions = []
+// const metalinkSpecificOptions = []
 
 const rpcOptions = [
   // Enable JSON-RPC/XML-RPC server
@@ -170,3 +170,5 @@ const advancedOptions = [
   // Stop application when process PID is not running
   `--stop-with-process=${process.pid}`,
 ]
+
+export const aria2StartupArgs = [...basicOptions, ...httpFtpSftpOptions, ...bitTorrentSpecificOptions, ...rpcOptions, ...advancedOptions]
