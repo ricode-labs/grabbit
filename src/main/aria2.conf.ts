@@ -128,12 +128,14 @@ const bitTorrentSpecificOptions = [
 
 // const metalinkSpecificOptions = []
 
-function rpcOptions(rpcPort: number) {
+function rpcOptions(rpcPort: number, rpcSecret: string) {
   return [
     // Enable JSON-RPC/XML-RPC server
     "--enable-rpc=true",
     // Specify a port number for JSON-RPC/XML-RPC server to listen to
     `--rpc-listen-port=${rpcPort}`,
+    // Set RPC authorization secret for this app session
+    `--rpc-secret=${rpcSecret}`,
   ]
 }
 
@@ -166,12 +168,12 @@ const advancedOptions = [
   `--stop-with-process=${process.pid}`,
 ]
 
-export function aria2StartupArgs(rpcPort: number) {
+export function aria2StartupArgs(rpcPort: number, rpcSecret: string) {
   return [
     ...basicOptions,
     ...httpFtpSftpOptions,
     ...bitTorrentSpecificOptions,
-    ...rpcOptions(rpcPort),
+    ...rpcOptions(rpcPort, rpcSecret),
     ...advancedOptions,
   ]
 }

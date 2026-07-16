@@ -2,6 +2,7 @@ import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process"
 import net from "node:net"
 import { app, Notification } from "electron"
 import fs from "node:fs/promises"
+import ky from "ky"
 
 import { buildSchedulerGlobalOptions } from "../shared/grabbit"
 import { getMainWindow } from "./app-state"
@@ -9,9 +10,11 @@ import { downloadDirectoryPath, getAria2Executable } from "./paths"
 import { readPreferences, readSchedulerRule } from "./stores"
 import type { Aria2Task, JsonRpcFailure, JsonRpcSuccess } from "./types"
 import { aria2StartupArgs } from "./aria2.conf"
+import { randomUUID } from "node:crypto"
 
 let aria2Process: ChildProcessWithoutNullStreams | null = null
-let aria2RpcPort: number | null = null
+let rpcPort: number | null = null
+let rpcSecret = ""
 let schedulerTimer: NodeJS.Timeout | null = null
 let taskMonitorTimer: NodeJS.Timeout | null = null
 let completedNotificationPrimed = false
@@ -36,38 +39,21 @@ function getAvailablePort() {
   })
 }
 
-// const getAria2RpcUrl = () => {
-//   if (!aria2RpcPort) {
-//     throw new Error("aria2 RPC port is not initialized")
-//   }
-
-//   return `http://127.0.0.1:${aria2RpcPort}/jsonrpc`
-// }
-
-export const callAria2 = async <T = unknown>(
+export async function callAria2<T = unknown>(
   method: string,
   params: unknown[] = []
-): Promise<T> => {
-  const response = await fetch(getAria2RpcUrl(), {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      id: crypto.randomUUID(),
-      jsonrpc: "2.0",
-      method,
-      params: [`token:${ARIA2_RPC_SECRET}`, ...params],
-    }),
-  })
+): Promise<T> {
+  const data = await ky
+    .post(`http://127.0.0.1:${rpcPort}/jsonrpc`, {
+      json: {
+        id: randomUUID(),
+        jsonrpc: "2.0",
+        method,
+        params: [`token:${rpcSecret}`, ...params],
+      },
+    })
+    .json<JsonRpcSuccess<T> | JsonRpcFailure>()
 
-  if (!response.ok) {
-    throw new Error(
-      `aria2 RPC failed: ${response.status} ${response.statusText}`
-    )
-  }
-
-  const data = (await response.json()) as JsonRpcSuccess<T> | JsonRpcFailure
   if ("error" in data) {
     throw new Error(data.error.message)
   }
@@ -189,7 +175,8 @@ export async function startAria2() {
     return
   }
 
-  aria2RpcPort = await getAvailablePort()
+  rpcPort = await getAvailablePort()
+  rpcSecret = randomUUID()
   const aria2Path = getAria2Executable()
   // const preferences = await readPreferences()
   // const schedulerRule = await readSchedulerRule()
@@ -197,16 +184,12 @@ export async function startAria2() {
   await fs.mkdir(downloadDirectoryPath, { recursive: true })
   await fs.mkdir(app.getPath("userData"), { recursive: true })
 
-  aria2Process = spawn(
-    aria2Path,
-    aria2StartupArgs(rpcPort),
-    { stdio: "pipe" }
-  )
-  aria2RpcPort = rpcPort
+  aria2Process = spawn(aria2Path, aria2StartupArgs(rpcPort, rpcSecret), {
+    stdio: "pipe",
+  })
 
   aria2Process.on("exit", () => {
     aria2Process = null
-    aria2RpcPort = null
   })
 
   aria2Process.stderr.on("data", (chunk) => {
@@ -241,6 +224,7 @@ export async function stopAria2() {
   aria2Process.kill()
   aria2Process = null
   aria2RpcPort = null
+  aria2RpcSecret = ""
   clearSchedulerTimer()
   clearTaskMonitorTimer()
 }
