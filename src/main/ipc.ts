@@ -34,19 +34,14 @@ export function registerIpcHandlers() {
     }
   )
 
-  
   ipcMain.handle(
     "aria2.addMetalink",
     async (_event, payload: AddMetalinkPayload) => {
       const metalink = await readFile(payload.metalinkPath)
-      return callAria2<string[]>(
-        "aria2.addMetalink",
-        [
-          metalink.toString("base64"),
-          payload.options ?? {},
-          payload.position,
-        ].filter((param) => param !== undefined)
-      )
+      return callAria2<string[]>("aria2.addMetalink", [
+        metalink.toString("base64"),
+        payload.options,
+      ])
     }
   )
 

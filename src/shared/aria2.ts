@@ -15,7 +15,6 @@ export type AddTorrentPayload = {
 export type AddMetalinkPayload = {
   metalinkPath: string
   options?: Options
-  position?: number
 }
 
 export type GidPayload = {
