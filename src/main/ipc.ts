@@ -123,15 +123,9 @@ export function registerIpcHandlers() {
     return await callAria2<Ok>("aria2.unpauseAll")
   })
 
-  ipcMain.handle(
-    "aria2.tellStatus",
-    async (_event, payload: TellStatusPayload) => {
-      return await callAria2<Aria2Status>(
-        "aria2.tellStatus",
-        [payload.gid, payload.keys].filter((param) => param !== undefined)
-      )
-    }
-  )
+  ipcMain.handle("aria2.tellStatus", async (_event, payload: GidPayload) => {
+    return await callAria2<Aria2Status>("aria2.tellStatus", [payload.gid])
+  })
 
   ipcMain.handle("aria2.getUris", async (_event, payload: GidPayload) => {
     return await callAria2<Aria2Uri[]>("aria2.getUris", [payload.gid])

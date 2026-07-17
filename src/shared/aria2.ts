@@ -29,10 +29,6 @@ export type PositionPayload = {
   how: "POS_SET" | "POS_CUR" | "POS_END"
 }
 
-export type TellStatusPayload = GidPayload & {
-  keys?: Keys
-}
-
 export type TellRangePayload = {
   offset: number
   num: number
