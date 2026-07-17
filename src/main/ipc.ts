@@ -15,10 +15,6 @@ export function registerIpcHandlers() {
   //   (_event, status: "active" | "waiting" | "stopped") => fetchTasks(status)
   // )
 
-  // ipcMain.handle("tasks:get-servers", (_event, gid: string) =>
-  //   callAria2("aria2.getServers", [gid])
-  // )
-
   ipcMain.handle("aria2.addUri", async (_event, payload: AddUriPayload) => {
     return await callAria2<string>("aria2.addUri", [
       payload.uris,
@@ -94,12 +90,24 @@ export function registerIpcHandlers() {
     return await callAria2("aria2.remove", [payload.gid])
   })
 
+  ipcMain.handle("aria2.forceRemove", async (_event, payload: GidPayload) => {
+    return await callAria2("aria2.forceRemove", [payload.gid])
+  })
+
   ipcMain.handle("aria2:pause", async (_event, payload: GidPayload) => {
     return await callAria2("aria2.pause", [payload.gid])
   })
 
-  ipcMain.handle("aria2:pause-all", async () => {
+  ipcMain.handle("aria2:pauseAll", async () => {
     return await callAria2("aria2.pauseAll")
+  })
+
+  ipcMain.handle("aria2:forcePause", async (_event, payload: GidPayload) => {
+    return await callAria2("aria2.forcePause", [payload.gid])
+  })
+
+  ipcMain.handle("aria2:forcePauseAll", async () => {
+    return await callAria2("aria2.forcePauseAll")
   })
 
   ipcMain.handle("aria2:unpause", async (_event, payload: GidPayload) => {
@@ -114,8 +122,20 @@ export function registerIpcHandlers() {
     return await callAria2("aria2.tellStatus", [payload.gid])
   })
 
+  ipcMain.handle("aria2:getUris", async (_event, payload: GidPayload) => {
+    return await callAria2("aria2.getUris", [payload.gid])
+  })
+
+  ipcMain.handle("aria2:getFiles", async (_event, payload: GidPayload) => {
+    return await callAria2("aria2.getFiles", [payload.gid])
+  })
+  
   ipcMain.handle("aria2.getPeers", async (_event, payload: GidPayload) => {
     return await callAria2("aria2.getPeers", [payload.gid])
+  })
+
+  ipcMain.handle("aria2:getServers", async (_event, payload: GidPayload) => {
+    return await callAria2("aria2.getServers", [payload.gid])
   })
   // ipcMain.handle(
   //   "tasks:remove-result",

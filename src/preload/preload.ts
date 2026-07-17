@@ -187,6 +187,11 @@ contextBridge.exposeInMainWorld("aria2", {
     ipcRenderer.invoke("aria2.remove", payload)
   },
 
+  // This method removes the download denoted by gid
+  forceRemove: (payload: GidPayload) => {
+    ipcRenderer.invoke("aria2.forceRemove", payload)
+  },
+
   // This method pauses the download denoted by gid (string)
   pause: (payload: GidPayload) => {
     ipcRenderer.invoke("aria2.pause", payload)
@@ -195,6 +200,16 @@ contextBridge.exposeInMainWorld("aria2", {
   // This method is equal to calling aria2.pause() for every active/waiting download
   pauseAll: () => {
     ipcRenderer.invoke("aria2.pauseAll")
+  },
+
+  // This method pauses the download denoted by gid
+  forcePause: (payload: GidPayload) => {
+    ipcRenderer.invoke("aria2.forcePause", payload)
+  },
+
+  // This method is equal to calling aria2.forcePause() for every active/waiting download
+  forcePauseAll: () => {
+    ipcRenderer.invoke("aria2.forcePauseAll")
   },
 
   // This method changes the status of the download denoted by gid (string) from paused to waiting, making the download eligible to be restarted
@@ -212,9 +227,24 @@ contextBridge.exposeInMainWorld("aria2", {
     ipcRenderer.invoke("aria2.tellStatus", payload)
   },
 
+  // This method returns the URIs used in the download denoted by gid (string)
+  getUris: (payload: GidPayload) => {
+    ipcRenderer.invoke("aria2.getUris", payload)
+  },
+
+  // This method returns the file list of the download denoted by gid (string)
+  getFiles: (payload: GidPayload) => {
+    ipcRenderer.invoke("aria2.getFiles", payload)
+  },
+
   // This method returns a list peers of the download denoted by gid (string)
   getPeers: (payload: GidPayload) => {
     ipcRenderer.invoke("aria2.getPeers", payload)
+  },
+
+  // This method returns currently connected HTTP(S)/FTP/SFTP servers of the download denoted by gid (string)
+  getServers: (payload: GidPayload) => {
+    ipcRenderer.invoke("aria2.getServers", payload)
   },
   
 })
