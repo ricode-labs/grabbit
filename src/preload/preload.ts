@@ -267,6 +267,26 @@ contextBridge.exposeInMainWorld("aria2", {
     ipcRenderer.invoke("aria2.changePosition", payload)
   },
 
+  // This method removes the URIs in delUris from and appends the URIs in addUris to download denoted by gid
+  changeUri: (payload: PositionPayload) => {
+    ipcRenderer.invoke("aria2.changeUri", payload)
+  },
+
+  // This method returns options of the download denoted by gid
+  getOption: (payload: GidPayload) => {
+    ipcRenderer.invoke("aria2.getOption", payload)
+  },
+
+  // This method returns options of the download denoted by gid
+  changeOption: (payload: GidPayload) => {
+    ipcRenderer.invoke("aria2.changeOption", payload)
+  },
+
+  // This method returns the global options
+  getGlobalOption: () => {
+    ipcRenderer.invoke("aria2.getGlobalOption")
+  },
+  
   // This method changes global options dynamically
   changeGlobalOption: (payload: Options) => {
     ipcRenderer.invoke("aria2.changeGlobalOption", payload)
@@ -275,6 +295,11 @@ contextBridge.exposeInMainWorld("aria2", {
   // This method returns global statistics such as the overall download and upload speeds
   getGlobalStat: () => {
     ipcRenderer.invoke("aria2.getGlobalStat")
+  },
+
+  // This method purges completed/error/removed downloads to free memory
+  purgeDownloadResult: () => {
+    ipcRenderer.invoke("aria2.purgeDownloadResult")
   },
   
 })

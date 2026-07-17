@@ -74,10 +74,6 @@ export function registerIpcHandlers() {
   //   }
   // )
 
-  // ipcMain.handle("tasks:purge-results", () =>
-  //   callAria2("aria2.purgeDownloadResult")
-  // )
-
   // ipcMain.handle("app:select-torrent", async () => {
   //   const window = BrowserWindow.getFocusedWindow() ?? getMainWindow()
   //   const result = await dialog.showOpenDialog(window!, {
@@ -131,7 +127,7 @@ export function registerIpcHandlers() {
   ipcMain.handle("aria2:getFiles", async (_event, payload: GidPayload) => {
     return await callAria2("aria2.getFiles", [payload.gid])
   })
-  
+
   ipcMain.handle("aria2.getPeers", async (_event, payload: GidPayload) => {
     return await callAria2("aria2.getPeers", [payload.gid])
   })
@@ -152,29 +148,57 @@ export function registerIpcHandlers() {
     return await callAria2("aria2.tellStopped")
   })
 
-  ipcMain.handle("aria2:changePosition", async (_event, payload: PositionPayload) => {
-    return await callAria2("aria2.changePosition", [payload])
+  ipcMain.handle(
+    "aria2:changePosition",
+    async (_event, payload: PositionPayload) => {
+      return await callAria2("aria2.changePosition", [payload])
+    }
+  )
+
+  ipcMain.handle(
+    "aria2:changeUri",
+    async (_event, payload: PositionPayload) => {
+      return await callAria2("aria2.changeUri", [payload])
+    }
+  )
+
+  ipcMain.handle("aria2:getOption", async (_event, payload: GidPayload) => {
+    return await callAria2("aria2.getOption", [payload])
   })
 
-  
+  ipcMain.handle("aria2:changeOption", async (_event, payload: GidPayload) => {
+    return await callAria2("aria2.changeOption", [payload])
+  })
+
+  ipcMain.handle("aria2:getGlobalOption", async () => {
+    return await callAria2("aria2.getGlobalOption")
+  })
+
   ipcMain.handle(
     "aria2.changeGlobalOption",
     async (_event, payload: Options) => {
       // const savedPreferences = await writePreferences(preferences)
-    //   if (isAria2Running()) {
-    //     await fs.mkdir(savedPreferences.downloadDir, { recursive: true })
-    //     await callAria2("aria2.changeGlobalOption", [
-    //       buildGlobalAria2Options(savedPreferences),
-    //     ])
-    //   }
-    //   return savedPreferences
-    return await callAria2("aria2.changeGlobalOption", [payload])
+      //   if (isAria2Running()) {
+      //     await fs.mkdir(savedPreferences.downloadDir, { recursive: true })
+      //     await callAria2("aria2.changeGlobalOption", [
+      //       buildGlobalAria2Options(savedPreferences),
+      //     ])
+      //   }
+      //   return savedPreferences
+      return await callAria2("aria2.changeGlobalOption", [payload])
     }
   )
 
   ipcMain.handle("aria2:getGlobalStat", async () => {
     return await callAria2("aria2.getGlobalStat")
   })
+
+  ipcMain.handle("aria2.purgeDownloadResult", async () => {
+    return await callAria2("aria2.purgeDownloadResult")
+  })
+  //
+  //
+  //
   // ipcMain.handle(
   //   "tasks:remove-result",
   //   (_event, taskOrGid: Aria2Task | string, deleteFiles = false) => {
@@ -216,7 +240,7 @@ export function registerIpcHandlers() {
 
   // ipcMain.handle("app:get-engine-paths", () => getEnginePaths())
   // ipcMain.handle("app:get-preferences", () => readPreferences())
- 
+
   // ipcMain.handle("app:get-scheduler", () => readSchedulerRule())
   // ipcMain.handle(
   //   "app:set-scheduler",
