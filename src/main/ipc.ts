@@ -143,22 +143,17 @@ export function registerIpcHandlers() {
     return await callAria2<Aria2Server[]>("aria2.getServers", [payload.gid])
   })
 
-  ipcMain.handle("aria2.tellActive", async (_event, keys?: string[]) => {
-    return await callAria2<Aria2Status[]>(
-      "aria2.tellActive",
-      keys === undefined ? [] : [keys]
-    )
+  ipcMain.handle("aria2.tellActive", async () => {
+    return await callAria2<Aria2Status[]>("aria2.tellActive")
   })
 
   ipcMain.handle(
     "aria2.tellWaiting",
     async (_event, payload: TellRangePayload) => {
-      return await callAria2<Aria2Status[]>(
-        "aria2.tellWaiting",
-        [payload.offset, payload.num, payload.keys].filter(
-          (param) => param !== undefined
-        )
-      )
+      return await callAria2<Aria2Status[]>("aria2.tellWaiting", [
+        payload.offset,
+        payload.num,
+      ])
     }
   )
 

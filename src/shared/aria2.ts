@@ -32,7 +32,6 @@ export type PositionPayload = {
 export type TellRangePayload = {
   offset: number
   num: number
-  keys?: Keys
 }
 
 export type ChangeUriPayload = {
