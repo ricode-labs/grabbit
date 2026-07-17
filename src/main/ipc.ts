@@ -160,12 +160,10 @@ export function registerIpcHandlers() {
   ipcMain.handle(
     "aria2.tellStopped",
     async (_event, payload: TellRangePayload) => {
-      return await callAria2<Aria2Status[]>(
-        "aria2.tellStopped",
-        [payload.offset, payload.num, payload.keys].filter(
-          (param) => param !== undefined
-        )
-      )
+      return await callAria2<Aria2Status[]>("aria2.tellStopped", [
+        payload.offset,
+        payload.num,
+      ])
     }
   )
 
