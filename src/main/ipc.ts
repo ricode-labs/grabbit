@@ -17,9 +17,8 @@ import type {
   GidPayload,
   Ok,
   Options,
-  PositionPayload,
+  ChangePositionPayload,
   TellRangePayload,
-  TellStatusPayload,
 } from "../shared/aria2"
 import { readFile } from "node:fs/promises"
 
@@ -169,7 +168,7 @@ export function registerIpcHandlers() {
 
   ipcMain.handle(
     "aria2.changePosition",
-    async (_event, payload: PositionPayload) => {
+    async (_event, payload: ChangePositionPayload) => {
       return await callAria2<number>("aria2.changePosition", [
         payload.gid,
         payload.pos,
@@ -181,16 +180,12 @@ export function registerIpcHandlers() {
   ipcMain.handle(
     "aria2.changeUri",
     async (_event, payload: ChangeUriPayload) => {
-      return await callAria2<[number, number]>(
-        "aria2.changeUri",
-        [
-          payload.gid,
-          payload.fileIndex,
-          payload.delUris,
-          payload.addUris,
-          payload.position,
-        ].filter((param) => param !== undefined)
-      )
+      return await callAria2<[number, number]>("aria2.changeUri", [
+        payload.gid,
+        payload.fileIndex,
+        payload.delUris,
+        payload.addUris,
+      ])
     }
   )
 

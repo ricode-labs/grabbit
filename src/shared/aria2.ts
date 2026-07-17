@@ -23,7 +23,7 @@ export type GidPayload = {
   gid: string
 }
 
-export type PositionPayload = {
+export type ChangePositionPayload = {
   gid: string
   pos: number
   how: "POS_SET" | "POS_CUR" | "POS_END"
@@ -39,7 +39,6 @@ export type ChangeUriPayload = {
   fileIndex: number
   delUris: string[]
   addUris: string[]
-  position?: number
 }
 
 export type ChangeOptionPayload = GidPayload & {
