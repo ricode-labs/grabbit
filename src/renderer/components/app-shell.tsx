@@ -14,9 +14,13 @@ import {
 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
-import { formatBytes, statusLabels, statusMeta } from "../lib/task-display"
+import {
+  formatBytes,
+  statusLabels,
+  statusMeta,
+  type TaskListStatus,
+} from "../lib/task-display"
 import type { Notice, Page } from "../lib/app-types"
-import type { TaskListStatus } from "../../preload/preload"
 
 export function MetricChip({
   label,

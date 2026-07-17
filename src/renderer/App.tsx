@@ -1,18 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import {
-  Folder,
   Loader2,
   Pause,
   Play,
   Plus,
   RotateCw,
   Search,
-  Settings,
   Sparkles,
   Trash2,
 } from "lucide-react"
 
-import { useTheme } from "@/components/theme-provider"
 import {
   EmptyTasks,
   MetricChip,
@@ -22,12 +19,8 @@ import {
   TaskSubnav,
 } from "@/components/app-shell"
 import { AboutPage } from "@/components/about-page"
-import { PreferencesPage } from "@/components/preferences-page"
-import { LabeledTextarea } from "@/components/form-fields"
-import { DirectoryHistory } from "@/components/tasks/directory-history"
 import { TaskCard } from "@/components/tasks/task-card"
 import { TaskDetails } from "@/components/tasks/task-details"
-import { TorrentSelector } from "@/components/tasks/torrent-selector"
 import type { Notice, Page } from "./lib/app-types"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -45,29 +38,22 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  buildAddTaskOptions,
-  buildInitialAddTaskForm,
-  buildTorrentSelectFileOption,
   defaultGrabbitPreferences,
   parseCurlCommand,
   splitTaskLinks,
   type AddTaskForm,
-  type EnginePathInfo,
-  type ExternalTaskIntent,
-  type GrabbitPreferences,
-  type ParsedTorrentInfo,
-  type TaskSchedulerRule,
+  buildInitialAddTaskForm,
 } from "../shared/grabbit"
-import type { Aria2Task, TaskListStatus } from "../preload/preload"
+import type { Options } from "../shared/aria2"
 
 import {
-  describeDeleteFilesResult,
+  type Aria2Task,
   formatBytes,
   getTaskName,
   getTaskUris,
-  mergeDeleteResults,
   statusLabels,
   statusMeta,
+  type TaskListStatus,
   toNumber,
 } from "./lib/task-display"
 
@@ -75,39 +61,39 @@ const fallbackInitialForm = buildInitialAddTaskForm(
   defaultGrabbitPreferences("")
 )
 
+function buildAria2AddTaskOptions(form: AddTaskForm): Options {
+  return Object.fromEntries(
+    Object.entries({
+      dir: form.dir,
+      "select-file": form.selectedTorrentFiles,
+    }).filter(([, value]) => value !== "")
+  )
+}
+
 export function App() {
   const [page, setPage] = useState<Page>("tasks")
   const [status, setStatus] = useState<TaskListStatus>("active")
   const [tasks, setTasks] = useState<Aria2Task[]>([])
   const [loading, setLoading] = useState(true)
   const [addOpen, setAddOpen] = useState(false)
-  const [advancedOpen, setAdvancedOpen] = useState(false)
   const [form, setForm] = useState<AddTaskForm>(fallbackInitialForm)
-  const [preferences, setPreferences] = useState<GrabbitPreferences | null>(
-    null
-  )
-  const [schedulerRule, setSchedulerRule] = useState<TaskSchedulerRule | null>(
-    null
-  )
-  const [enginePaths, setEnginePaths] = useState<EnginePathInfo[]>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [searchQuery, setSearchQuery] = useState("")
   const [notice, setNotice] = useState<Notice | null>(null)
   const [addTaskError, setAddTaskError] = useState<string | null>(null)
-  const [torrentInfo, setTorrentInfo] = useState<ParsedTorrentInfo | null>(null)
-  const [selectedTorrentIndexes, setSelectedTorrentIndexes] = useState<
-    Set<number>
-  >(new Set())
-  const [torrentLoading, setTorrentLoading] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Aria2Task | null>(null)
   const [deleteBatchTargets, setDeleteBatchTargets] = useState<Aria2Task[]>([])
-  const [deleteFiles, setDeleteFiles] = useState(false)
   const [detailTask, setDetailTask] = useState<Aria2Task | null>(null)
 
   const loadTasks = useCallback(async () => {
     setLoading(true)
     try {
-      const nextTasks = await window.grabbit.listTasks(status)
+      const nextTasks =
+        status === "active"
+          ? await window.aria2.tellActive()
+          : status === "waiting"
+            ? await window.aria2.tellWaiting({ offset: 0, num: 100 })
+            : await window.aria2.tellStopped({ offset: 0, num: 100 })
       setTasks(nextTasks)
     } catch (error) {
       setNotice({
@@ -118,18 +104,6 @@ export function App() {
       setLoading(false)
     }
   }, [status])
-
-  const { setTheme } = useTheme()
-
-  useEffect(() => {
-    void window.grabbit.getPreferences().then((nextPreferences) => {
-      setPreferences(nextPreferences)
-      setTheme(nextPreferences.theme)
-      setForm(buildInitialAddTaskForm(nextPreferences))
-    })
-    void window.grabbit.getScheduler().then(setSchedulerRule)
-    void window.grabbit.getEnginePaths().then(setEnginePaths)
-  }, [setTheme])
 
   useEffect(() => {
     const load = () => {
@@ -169,16 +143,7 @@ export function App() {
 
   const submitTask = async () => {
     const uris = splitTaskLinks(form.uris)
-    const torrentSelectFile = torrentInfo
-      ? buildTorrentSelectFileOption(
-          [...selectedTorrentIndexes],
-          torrentInfo.files.length
-        )
-      : ""
-    const taskOptions = buildAddTaskOptions({
-      ...form,
-      selectedTorrentFiles: torrentSelectFile,
-    })
+    const taskOptions = buildAria2AddTaskOptions(form)
 
     if (uris.length === 0 && !form.torrentPath) {
       setAddTaskError("请输入至少一个下载链接，或选择一个 .torrent 文件")
@@ -187,27 +152,21 @@ export function App() {
 
     try {
       if (form.torrentPath) {
-        if (torrentInfo && selectedTorrentIndexes.size === 0) {
-          setAddTaskError("请至少选择一个种子文件")
-          return
-        }
-        await window.grabbit.addTorrent({
+        await window.aria2.addTorrent({
           torrentPath: form.torrentPath,
           options: taskOptions,
         })
       }
       if (uris.length > 0) {
-        await window.grabbit.addUri({ uris, options: taskOptions })
+        await window.aria2.addUri({ uris, options: taskOptions })
       }
       setAddTaskError(null)
       setNotice({ tone: "success", message: "任务已添加" })
       setAddOpen(false)
       const nextForm = buildInitialAddTaskForm(
-        preferences ?? defaultGrabbitPreferences(form.dir)
+        defaultGrabbitPreferences(form.dir)
       )
       setForm({ ...nextForm, dir: form.dir })
-      setTorrentInfo(null)
-      setSelectedTorrentIndexes(new Set())
       if (form.showDownloading) {
         setStatus("active")
       }
@@ -242,17 +201,7 @@ export function App() {
       return
     }
 
-    try {
-      const errorMessage = await window.grabbit.openPath(targetPath)
-      if (errorMessage) {
-        setNotice({ tone: "error", message: errorMessage })
-      }
-    } catch (error) {
-      setNotice({
-        tone: "error",
-        message: error instanceof Error ? error.message : "打开路径失败",
-      })
-    }
+    setNotice({ tone: "error", message: "打开本地路径功能暂不可用" })
   }
 
   const runTaskAction = async (
@@ -261,11 +210,15 @@ export function App() {
   ) => {
     try {
       if (action === "pause") {
-        await window.grabbit.pauseTask(task.gid)
+        await window.aria2.pause({ gid: task.gid })
       } else if (action === "resume") {
-        await window.grabbit.resumeTask(task.gid)
+        await window.aria2.unpause({ gid: task.gid })
       } else if (action === "restart") {
-        await window.grabbit.restartTask(task, { dir: task.dir })
+        const uris = getTaskUris(task)
+        if (uris.length === 0) {
+          throw new Error("这个任务没有可用于重新下载的原始链接")
+        }
+        await window.aria2.addUri({ uris, options: { dir: task.dir } })
         setNotice({ tone: "success", message: "已重新添加任务" })
       } else {
         await confirmRemoveTasks([task])
@@ -283,24 +236,24 @@ export function App() {
 
   const confirmRemoveTasks = async (targets: Aria2Task[]) => {
     try {
-      const results = []
       for (const task of targets) {
-        const result =
+        if (
           task.status === "complete" ||
           task.status === "error" ||
           task.status === "removed"
-            ? await window.grabbit.removeTaskResult(task, deleteFiles)
-            : await window.grabbit.removeTask(task, deleteFiles)
-        results.push(result)
+        ) {
+          await window.aria2.removeDownloadResult({ gid: task.gid })
+        } else {
+          await window.aria2.remove({ gid: task.gid })
+        }
       }
 
       setNotice({
         tone: "success",
-        message: `已移除 ${targets.length} 个任务${describeDeleteFilesResult(mergeDeleteResults(results))}`,
+        message: `已移除 ${targets.length} 个任务`,
       })
       setDeleteTarget(null)
       setDeleteBatchTargets([])
-      setDeleteFiles(false)
       setSelected(new Set())
       await loadTasks()
     } catch (error) {
@@ -314,12 +267,7 @@ export function App() {
   const runBatchAction = async (action: "pause" | "resume" | "remove") => {
     const selectedTasks = tasks.filter((task) => selected.has(task.gid))
     if (action === "remove") {
-      if (preferences?.noConfirmBeforeDeleteTask) {
-        await confirmRemoveTasks(selectedTasks)
-      } else {
-        setDeleteBatchTargets(selectedTasks)
-        setDeleteFiles(false)
-      }
+      setDeleteBatchTargets(selectedTasks)
       return
     }
 
@@ -329,121 +277,13 @@ export function App() {
     setSelected(new Set())
   }
 
-  const loadTorrentInfo = useCallback(async (torrentPath: string) => {
-    setTorrentLoading(true)
-    try {
-      const parsed = await window.grabbit.parseTorrent(torrentPath)
-      setTorrentInfo(parsed)
-      setSelectedTorrentIndexes(new Set(parsed.files.map((file) => file.index)))
-      setForm((current) => ({
-        ...current,
-        torrentPath,
-        selectedTorrentFiles: "",
-      }))
-      setAddTaskError(null)
-    } catch (error) {
-      setTorrentInfo(null)
-      setSelectedTorrentIndexes(new Set())
-      setAddTaskError(
-        error instanceof Error ? error.message : "解析种子文件失败"
-      )
-    } finally {
-      setTorrentLoading(false)
-    }
-  }, [])
-
-  const chooseTorrent = async () => {
-    const torrentPath = await window.grabbit.selectTorrent()
-    if (torrentPath) {
-      await loadTorrentInfo(torrentPath)
-    }
-  }
-
   const clearTorrent = () => {
-    setTorrentInfo(null)
-    setSelectedTorrentIndexes(new Set())
     setForm((current) => ({
       ...current,
       torrentPath: "",
       selectedTorrentFiles: "",
     }))
   }
-
-  const chooseDirectory = async () => {
-    const directory = await window.grabbit.selectDirectory()
-    if (directory) {
-      setForm((current) => ({ ...current, dir: directory }))
-    }
-  }
-
-  const savePreferences = async (nextPreferences: GrabbitPreferences) => {
-    try {
-      const savedPreferences =
-        await window.grabbit.setPreferences(nextPreferences)
-      setPreferences(savedPreferences)
-      setTheme(savedPreferences.theme)
-      setForm(buildInitialAddTaskForm(savedPreferences))
-      setNotice({
-        tone: "success",
-        message: "偏好设置已保存，新任务会使用新的默认目录",
-      })
-    } catch (error) {
-      setNotice({
-        tone: "error",
-        message: error instanceof Error ? error.message : "保存偏好设置失败",
-      })
-    }
-  }
-
-  const saveScheduler = async (rule: TaskSchedulerRule) => {
-    try {
-      const savedRule = await window.grabbit.setScheduler(rule)
-      setSchedulerRule(savedRule)
-      setNotice({
-        tone: "success",
-        message: "速度计划已保存，并已应用到 aria2 引擎",
-      })
-    } catch (error) {
-      setNotice({
-        tone: "error",
-        message: error instanceof Error ? error.message : "保存速度计划失败",
-      })
-    }
-  }
-
-  const chooseDefaultDirectory = async () => {
-    const directory = await window.grabbit.selectDirectory()
-    if (directory) {
-      const nextPreferences =
-        preferences ?? defaultGrabbitPreferences(directory)
-      await savePreferences({ ...nextPreferences, downloadDir: directory })
-    }
-  }
-
-  const openAddTaskDialogWithIntents = useCallback(
-    async (intents: ExternalTaskIntent[] = []) => {
-      setAddOpen(true)
-      setAddTaskError(null)
-      const torrentIntent = intents.find((intent) => intent.kind === "torrent")
-      const uriIntents = intents
-        .filter((intent) => intent.kind === "uri")
-        .map((intent) => intent.value)
-
-      if (torrentIntent) {
-        await loadTorrentInfo(torrentIntent.value)
-      }
-
-      if (uriIntents.length > 0) {
-        setForm((current) => ({
-          ...current,
-          uris: Array.from(
-            new Set([current.uris, ...uriIntents].filter(Boolean))
-          ).join("\n"),
-        }))
-      }
-    },
-    [loadTorrentInfo]
-  )
 
   const openAddTaskDialog = async () => {
     setAddOpen(true)
@@ -455,11 +295,6 @@ export function App() {
       setForm((current) => ({
         ...current,
         uris: parsedCurl.uris.join("\n"),
-        out: parsedCurl.out || current.out,
-        userAgent: parsedCurl.userAgent || current.userAgent,
-        authorization: parsedCurl.authorization || current.authorization,
-        referer: parsedCurl.referer || current.referer,
-        cookie: parsedCurl.cookie || current.cookie,
       }))
       return
     }
@@ -471,20 +306,6 @@ export function App() {
       }))
     }
   }
-
-  useEffect(() => {
-    return window.grabbit.onExternalTaskIntents((intents) => {
-      const shouldOpen = intents.some(
-        (intent) =>
-          intent.kind === "uri" ||
-          intent.kind === "torrent" ||
-          intent.command === "new-task"
-      )
-      if (shouldOpen) {
-        void openAddTaskDialogWithIntents(intents)
-      }
-    })
-  }, [openAddTaskDialogWithIntents])
 
   return (
     <div className="app-shell-bg relative flex h-screen overflow-hidden bg-background text-foreground">
@@ -547,7 +368,7 @@ export function App() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => void window.grabbit.pauseAll().then(loadTasks)}
+                  onClick={() => void window.aria2.pauseAll().then(loadTasks)}
                 >
                   <Pause />
                   全部暂停
@@ -555,9 +376,7 @@ export function App() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    void window.grabbit.resumeAll().then(loadTasks)
-                  }
+                  onClick={() => void window.aria2.unpauseAll().then(loadTasks)}
                 >
                   <Play />
                   全部开始
@@ -567,7 +386,7 @@ export function App() {
                     variant="outline"
                     size="sm"
                     onClick={() =>
-                      void window.grabbit.purgeResults().then(loadTasks)
+                      void window.aria2.purgeDownloadResult().then(loadTasks)
                     }
                   >
                     <Trash2 />
@@ -665,11 +484,7 @@ export function App() {
                       onOpenPath={openLocalPath}
                       onAction={(task, action) => {
                         if (action === "remove") {
-                          if (preferences?.noConfirmBeforeDeleteTask) {
-                            return runTaskAction(task, action)
-                          }
                           setDeleteTarget(task)
-                          setDeleteFiles(false)
                           return Promise.resolve()
                         }
                         return runTaskAction(task, action)
@@ -686,17 +501,12 @@ export function App() {
       ) : null}
 
       {page === "preferences" ? (
-        <PreferencesPage
-          preferences={preferences}
-          schedulerRule={schedulerRule}
-          enginePaths={enginePaths}
-          onChange={setPreferences}
-          onSchedulerChange={setSchedulerRule}
-          onSave={savePreferences}
-          onSaveScheduler={saveScheduler}
-          onChooseDirectory={chooseDefaultDirectory}
-          onOpenPath={openLocalPath}
-        />
+        <main className="relative z-10 flex min-w-0 flex-1 flex-col bg-background p-6">
+          <NoticeBanner
+            notice={{ tone: "error", message: "偏好设置功能暂不可用" }}
+            onClose={() => setPage("tasks")}
+          />
+        </main>
       ) : null}
       {page === "about" ? <AboutPage /> : null}
 
@@ -740,55 +550,13 @@ export function App() {
                     }
                   />
                 </div>
-                <div className="grid gap-4 md:grid-cols-[1fr_160px]">
-                  <div className="space-y-2">
-                    <Label htmlFor="out">文件名</Label>
-                    <Input
-                      id="out"
-                      placeholder="留空使用远程文件名"
-                      value={form.out}
-                      onChange={(event) =>
-                        setForm({ ...form, out: event.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="split">连接数</Label>
-                    <Input
-                      id="split"
-                      type="number"
-                      min={1}
-                      max={64}
-                      value={form.split}
-                      onChange={(event) =>
-                        setForm({ ...form, split: Number(event.target.value) })
-                      }
-                    />
-                  </div>
-                </div>
                 <div className="space-y-2">
                   <Label htmlFor="dir">保存目录</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="dir"
-                      value={form.dir}
-                      onChange={(event) =>
-                        setForm({ ...form, dir: event.target.value })
-                      }
-                    />
-                    <Button
-                      variant="outline"
-                      onClick={() => void chooseDirectory()}
-                    >
-                      <Folder />
-                      选择
-                    </Button>
-                  </div>
-                  <DirectoryHistory
-                    directories={preferences?.downloadDirectoryHistory ?? []}
-                    currentDirectory={form.dir}
-                    onChoose={(directory) =>
-                      setForm({ ...form, dir: directory })
+                  <Input
+                    id="dir"
+                    value={form.dir}
+                    onChange={(event) =>
+                      setForm({ ...form, dir: event.target.value })
                     }
                   />
                 </div>
@@ -802,118 +570,31 @@ export function App() {
                   />
                   <Label htmlFor="show-downloading">添加后跳转到正在下载</Label>
                 </div>
-                <Button
-                  variant="ghost"
-                  className="px-0"
-                  onClick={() => setAdvancedOpen(!advancedOpen)}
-                >
-                  <Settings />
-                  {advancedOpen ? "隐藏高级选项" : "显示高级选项"}
-                </Button>
-                {advancedOpen ? (
-                  <div className="grid gap-4 rounded-lg border bg-muted/30 p-4 md:grid-cols-2">
-                    <LabeledTextarea
-                      id="user-agent"
-                      label="User-Agent"
-                      value={form.userAgent}
-                      onChange={(value) =>
-                        setForm({ ...form, userAgent: value })
-                      }
-                    />
-                    <LabeledTextarea
-                      id="authorization"
-                      label="Authorization"
-                      value={form.authorization}
-                      onChange={(value) =>
-                        setForm({ ...form, authorization: value })
-                      }
-                    />
-                    <LabeledTextarea
-                      id="referer"
-                      label="Referer"
-                      value={form.referer}
-                      onChange={(value) => setForm({ ...form, referer: value })}
-                    />
-                    <LabeledTextarea
-                      id="cookie"
-                      label="Cookie"
-                      value={form.cookie}
-                      onChange={(value) => setForm({ ...form, cookie: value })}
-                    />
-                    <div className="space-y-2 md:col-span-2">
-                      <Label>代理</Label>
-                      <Input
-                        placeholder="[http://][USER:PASSWORD@]HOST[:PORT]"
-                        value={form.allProxy}
-                        onChange={(event) =>
-                          setForm({ ...form, allProxy: event.target.value })
-                        }
-                      />
-                    </div>
-                  </div>
-                ) : null}
               </TabsContent>
               <TabsContent value="torrent" className="space-y-4 pt-4">
-                <TorrentSelector
-                  torrentPath={form.torrentPath}
-                  torrentInfo={torrentInfo}
-                  selectedIndexes={selectedTorrentIndexes}
-                  loading={torrentLoading}
-                  onChoose={() => void chooseTorrent()}
-                  onClear={clearTorrent}
-                  onSelectionChange={(indexes) =>
-                    setSelectedTorrentIndexes(indexes)
-                  }
-                />
-                <div className="grid gap-4 md:grid-cols-[1fr_160px]">
-                  <div className="space-y-2">
-                    <Label htmlFor="torrent-out">另存为</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="torrent-path">种子文件路径</Label>
+                  <div className="flex gap-2">
                     <Input
-                      id="torrent-out"
-                      placeholder="留空使用种子内名称"
-                      value={form.out}
+                      id="torrent-path"
+                      placeholder="/path/to/file.torrent"
+                      value={form.torrentPath}
                       onChange={(event) =>
-                        setForm({ ...form, out: event.target.value })
+                        setForm({ ...form, torrentPath: event.target.value })
                       }
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="torrent-split">连接数</Label>
-                    <Input
-                      id="torrent-split"
-                      type="number"
-                      min={1}
-                      max={64}
-                      value={form.split}
-                      onChange={(event) =>
-                        setForm({ ...form, split: Number(event.target.value) })
-                      }
-                    />
+                    <Button variant="outline" onClick={clearTorrent}>
+                      清除
+                    </Button>
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="torrent-dir">保存目录</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="torrent-dir"
-                      value={form.dir}
-                      onChange={(event) =>
-                        setForm({ ...form, dir: event.target.value })
-                      }
-                    />
-                    <Button
-                      variant="outline"
-                      onClick={() => void chooseDirectory()}
-                    >
-                      <Folder />
-                      选择
-                    </Button>
-                  </div>
-                  <DirectoryHistory
-                    directories={preferences?.downloadDirectoryHistory ?? []}
-                    currentDirectory={form.dir}
-                    onChoose={(directory) =>
-                      setForm({ ...form, dir: directory })
+                  <Input
+                    id="torrent-dir"
+                    value={form.dir}
+                    onChange={(event) =>
+                      setForm({ ...form, dir: event.target.value })
                     }
                   />
                 </div>
@@ -986,7 +667,6 @@ export function App() {
           if (!open) {
             setDeleteTarget(null)
             setDeleteBatchTargets([])
-            setDeleteFiles(false)
           }
         }}
       >
@@ -1001,29 +681,12 @@ export function App() {
                   : "将从列表中移除该任务。"}
             </DialogDescription>
           </DialogHeader>
-          <div className="flex items-start space-x-2 rounded-lg border p-3">
-            <Checkbox
-              id="delete-files"
-              checked={deleteFiles}
-              onCheckedChange={(checked) => setDeleteFiles(checked === true)}
-            />
-            <div className="space-y-1">
-              <Label htmlFor="delete-files" className="text-sm">
-                同时删除本地文件
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                文件会被移动到系统回收站。为避免误删，仅处理 aria2
-                返回且位于任务保存目录内的文件，目录会跳过。
-              </p>
-            </div>
-          </div>
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => {
                 setDeleteTarget(null)
                 setDeleteBatchTargets([])
-                setDeleteFiles(false)
               }}
             >
               取消

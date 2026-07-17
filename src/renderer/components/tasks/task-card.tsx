@@ -20,13 +20,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Progress } from "@/components/ui/progress"
-import type { Aria2Task } from "../../../preload/preload"
 import {
+  type Aria2Task,
   formatBytes,
   getProgress,
   getTaskName,
   statusText,
   statusVariant,
+  type TaskStatus,
 } from "../../lib/task-display"
 
 export function TaskCard({
@@ -51,6 +52,7 @@ export function TaskCard({
 }) {
   const progress = getProgress(task)
   const taskPath = task.files?.[0]?.path || task.dir
+  const taskStatus = task.status as TaskStatus
 
   return (
     <Card
@@ -70,8 +72,8 @@ export function TaskCard({
                   {getTaskName(task)}
                 </h2>
                 <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                  <Badge variant={statusVariant[task.status] ?? "outline"}>
-                    {statusText[task.status] ?? task.status}
+                  <Badge variant={statusVariant[taskStatus] ?? "outline"}>
+                    {statusText[taskStatus] ?? task.status}
                   </Badge>
                   <span>
                     {formatBytes(task.completedLength)} /{" "}

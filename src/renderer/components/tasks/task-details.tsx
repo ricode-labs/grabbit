@@ -12,17 +12,15 @@ import {
   summarizePeers,
   toFiniteNumber,
 } from "../../../shared/grabbit"
-import type {
-  Aria2Peer,
-  Aria2Server,
-  Aria2Task,
-} from "../../../preload/preload"
+import type { Aria2Peer, Aria2Server } from "../../../shared/aria2"
 import {
+  type Aria2Task,
   formatBytes,
   getProgress,
   getTaskName,
   getTaskUris,
   statusText,
+  type TaskStatus,
 } from "../../lib/task-display"
 
 export function TaskDetails({
@@ -41,12 +39,13 @@ export function TaskDetails({
   const taskUris = getTaskUris(task)
   const progress = getProgress(task)
   const taskPath = task.files?.[0]?.path || task.dir
+  const taskStatus = task.status as TaskStatus
   const fileSummary = summarizeFiles(task.files ?? [])
   const trackers = flattenAnnounceList(task.bittorrent?.announceList)
   const peerSummary = summarizePeers(peers)
   const activityRows = [
     { label: "任务 GID", value: task.gid },
-    { label: "当前状态", value: statusText[task.status] ?? task.status },
+    { label: "当前状态", value: statusText[taskStatus] ?? task.status },
     { label: "下载速度", value: `${formatBytes(task.downloadSpeed)}/s` },
     { label: "上传速度", value: `${formatBytes(task.uploadSpeed)}/s` },
     { label: "连接数", value: task.connections || "0" },
@@ -66,8 +65,8 @@ export function TaskDetails({
       setNetworkError(null)
       try {
         const [nextPeers, nextServers] = await Promise.all([
-          window.grabbit.getTaskPeers(task.gid),
-          window.grabbit.getTaskServers(task.gid),
+          window.aria2.getPeers({ gid: task.gid }),
+          window.aria2.getServers({ gid: task.gid }),
         ])
         if (!cancelled) {
           setPeers(nextPeers)

@@ -1,10 +1,23 @@
 import { calculateProgress } from "../../shared/grabbit"
-import type {
-  Aria2Task,
-  DeleteTaskFilesResult,
-  TaskListStatus,
-  TaskStatus,
-} from "../../preload/preload"
+import type { Aria2Status } from "../../shared/aria2"
+
+export type Aria2Task = Aria2Status
+
+export type TaskListStatus = "active" | "waiting" | "stopped"
+
+export type TaskStatus =
+  | "active"
+  | "waiting"
+  | "paused"
+  | "complete"
+  | "error"
+  | "removed"
+
+export type DeleteTaskFilesResult = {
+  deleted: string[]
+  skipped: Array<{ path: string; reason: string }>
+  failed: Array<{ path: string; error: string }>
+}
 
 export const statusLabels: Record<TaskListStatus, string> = {
   active: "正在下载",
