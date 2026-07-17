@@ -1,5 +1,7 @@
 export type Options = {}
 
+export type Keys = {}
+
 export type AddUriPayload = {
   uris: string[]
   options?: Options
@@ -17,4 +19,6 @@ export type AddMetalinkPayload = {
 
 export type GidPayload = {
   gid: string
+  keys?: Keys
 }
+
