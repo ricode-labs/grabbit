@@ -34,6 +34,7 @@ export function registerIpcHandlers() {
     }
   )
 
+  
   ipcMain.handle(
     "aria2.addMetalink",
     async (_event, payload: AddMetalinkPayload) => {
