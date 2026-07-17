@@ -4,9 +4,18 @@ import type {
   AddMetalinkPayload,
   AddTorrentPayload,
   AddUriPayload,
+  Aria2File,
+  Aria2GlobalStat,
+  Aria2Peer,
+  Aria2Server,
+  Aria2SessionInfo,
+  Aria2Status,
+  Aria2Uri,
+  Aria2Version,
   ChangeOptionPayload,
   ChangeUriPayload,
   GidPayload,
+  Ok,
   Options,
   PositionPayload,
   TellRangePayload,
@@ -91,33 +100,33 @@ export function registerIpcHandlers() {
   })
 
   ipcMain.handle("aria2.pause", async (_event, payload: GidPayload) => {
-    return await callAria2("aria2.pause", [payload.gid])
+    return await callAria2<string>("aria2.pause", [payload.gid])
   })
 
   ipcMain.handle("aria2.pauseAll", async () => {
-    return await callAria2("aria2.pauseAll")
+    return await callAria2<Ok>("aria2.pauseAll")
   })
 
   ipcMain.handle("aria2.forcePause", async (_event, payload: GidPayload) => {
-    return await callAria2("aria2.forcePause", [payload.gid])
+    return await callAria2<string>("aria2.forcePause", [payload.gid])
   })
 
   ipcMain.handle("aria2.forcePauseAll", async () => {
-    return await callAria2("aria2.forcePauseAll")
+    return await callAria2<Ok>("aria2.forcePauseAll")
   })
 
   ipcMain.handle("aria2.unpause", async (_event, payload: GidPayload) => {
-    return await callAria2("aria2.unpause", [payload.gid])
+    return await callAria2<string>("aria2.unpause", [payload.gid])
   })
 
   ipcMain.handle("aria2.unpauseAll", async () => {
-    return await callAria2("aria2.unpauseAll")
+    return await callAria2<Ok>("aria2.unpauseAll")
   })
 
   ipcMain.handle(
     "aria2.tellStatus",
     async (_event, payload: TellStatusPayload) => {
-      return await callAria2(
+      return await callAria2<Aria2Status>(
         "aria2.tellStatus",
         [payload.gid, payload.keys].filter((param) => param !== undefined)
       )
@@ -125,29 +134,32 @@ export function registerIpcHandlers() {
   )
 
   ipcMain.handle("aria2.getUris", async (_event, payload: GidPayload) => {
-    return await callAria2("aria2.getUris", [payload.gid])
+    return await callAria2<Aria2Uri[]>("aria2.getUris", [payload.gid])
   })
 
   ipcMain.handle("aria2.getFiles", async (_event, payload: GidPayload) => {
-    return await callAria2("aria2.getFiles", [payload.gid])
+    return await callAria2<Aria2File[]>("aria2.getFiles", [payload.gid])
   })
 
   ipcMain.handle("aria2.getPeers", async (_event, payload: GidPayload) => {
-    return await callAria2("aria2.getPeers", [payload.gid])
+    return await callAria2<Aria2Peer[]>("aria2.getPeers", [payload.gid])
   })
 
   ipcMain.handle("aria2.getServers", async (_event, payload: GidPayload) => {
-    return await callAria2("aria2.getServers", [payload.gid])
+    return await callAria2<Aria2Server[]>("aria2.getServers", [payload.gid])
   })
 
   ipcMain.handle("aria2.tellActive", async (_event, keys?: string[]) => {
-    return await callAria2("aria2.tellActive", keys === undefined ? [] : [keys])
+    return await callAria2<Aria2Status[]>(
+      "aria2.tellActive",
+      keys === undefined ? [] : [keys]
+    )
   })
 
   ipcMain.handle(
     "aria2.tellWaiting",
     async (_event, payload: TellRangePayload) => {
-      return await callAria2(
+      return await callAria2<Aria2Status[]>(
         "aria2.tellWaiting",
         [payload.offset, payload.num, payload.keys].filter(
           (param) => param !== undefined
@@ -159,7 +171,7 @@ export function registerIpcHandlers() {
   ipcMain.handle(
     "aria2.tellStopped",
     async (_event, payload: TellRangePayload) => {
-      return await callAria2(
+      return await callAria2<Aria2Status[]>(
         "aria2.tellStopped",
         [payload.offset, payload.num, payload.keys].filter(
           (param) => param !== undefined
@@ -171,7 +183,7 @@ export function registerIpcHandlers() {
   ipcMain.handle(
     "aria2.changePosition",
     async (_event, payload: PositionPayload) => {
-      return await callAria2("aria2.changePosition", [
+      return await callAria2<number>("aria2.changePosition", [
         payload.gid,
         payload.pos,
         payload.how,
@@ -182,7 +194,7 @@ export function registerIpcHandlers() {
   ipcMain.handle(
     "aria2.changeUri",
     async (_event, payload: ChangeUriPayload) => {
-      return await callAria2(
+      return await callAria2<[number, number]>(
         "aria2.changeUri",
         [
           payload.gid,
@@ -196,13 +208,13 @@ export function registerIpcHandlers() {
   )
 
   ipcMain.handle("aria2.getOption", async (_event, payload: GidPayload) => {
-    return await callAria2("aria2.getOption", [payload.gid])
+    return await callAria2<Options>("aria2.getOption", [payload.gid])
   })
 
   ipcMain.handle(
     "aria2.changeOption",
     async (_event, payload: ChangeOptionPayload) => {
-      return await callAria2("aria2.changeOption", [
+      return await callAria2<Ok>("aria2.changeOption", [
         payload.gid,
         payload.options,
       ])
@@ -210,7 +222,7 @@ export function registerIpcHandlers() {
   )
 
   ipcMain.handle("aria2.getGlobalOption", async () => {
-    return await callAria2("aria2.getGlobalOption")
+    return await callAria2<Options>("aria2.getGlobalOption")
   })
 
   ipcMain.handle(
@@ -224,43 +236,43 @@ export function registerIpcHandlers() {
       //     ])
       //   }
       //   return savedPreferences
-      return await callAria2("aria2.changeGlobalOption", [payload])
+      return await callAria2<Ok>("aria2.changeGlobalOption", [payload])
     }
   )
 
   ipcMain.handle("aria2.getGlobalStat", async () => {
-    return await callAria2("aria2.getGlobalStat")
+    return await callAria2<Aria2GlobalStat>("aria2.getGlobalStat")
   })
 
   ipcMain.handle("aria2.purgeDownloadResult", async () => {
-    return await callAria2("aria2.purgeDownloadResult")
+    return await callAria2<Ok>("aria2.purgeDownloadResult")
   })
 
   ipcMain.handle(
     "aria2.removeDownloadResult",
     async (_event, payload: GidPayload) => {
-      return await callAria2("aria2.removeDownloadResult", [payload.gid])
+      return await callAria2<Ok>("aria2.removeDownloadResult", [payload.gid])
     }
   )
 
   ipcMain.handle("aria2.getVersion", async () => {
-    return await callAria2("aria2.getVersion")
+    return await callAria2<Aria2Version>("aria2.getVersion")
   })
 
   ipcMain.handle("aria2.getSessionInfo", async () => {
-    return await callAria2("aria2.getSessionInfo")
+    return await callAria2<Aria2SessionInfo>("aria2.getSessionInfo")
   })
 
   ipcMain.handle("aria2.shutdown", async () => {
-    return await callAria2("aria2.shutdown")
+    return await callAria2<Ok>("aria2.shutdown")
   })
 
   ipcMain.handle("aria2.forceShutdown", async () => {
-    return await callAria2("aria2.forceShutdown")
+    return await callAria2<Ok>("aria2.forceShutdown")
   })
 
   ipcMain.handle("aria2.saveSession", async () => {
-    return await callAria2("aria2.saveSession")
+    return await callAria2<Ok>("aria2.saveSession")
   })
 
   // ipcMain.handle("tasks:delete-files", (_event, task: Aria2Task) =>
