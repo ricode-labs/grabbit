@@ -7,9 +7,7 @@ import type {
   ChangeUriPayload,
   GidPayload,
   Options,
-  PositionPayload,
   TellRangePayload,
-  TellStatusPayload,
 } from "../shared/aria2"
 // import type {
 //   EnginePathInfo,
@@ -220,7 +218,7 @@ contextBridge.exposeInMainWorld("aria2", {
   unpauseAll: () => ipcRenderer.invoke("aria2.unpauseAll"),
 
   // This method returns the progress of the download denoted by gid (string)
-  tellStatus: (payload: TellStatusPayload) =>
+  tellStatus: (payload: GidPayload) =>
     ipcRenderer.invoke("aria2.tellStatus", payload),
 
   // This method returns the URIs used in the download denoted by gid (string)
@@ -251,7 +249,7 @@ contextBridge.exposeInMainWorld("aria2", {
     ipcRenderer.invoke("aria2.tellStopped", payload),
 
   // This method changes the position of the download denoted by gid in the queue
-  changePosition: (payload: PositionPayload) =>
+  changePosition: (payload: ChangeOptionPayload) =>
     ipcRenderer.invoke("aria2.changePosition", payload),
 
   // This method removes the URIs in delUris from and appends the URIs in addUris to download denoted by gid
