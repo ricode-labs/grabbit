@@ -1,4 +1,6 @@
-export type Options = {}
+export type Options = {
+  f: string
+}
 
 export type Keys = {}
 
@@ -21,3 +23,8 @@ export type GidPayload = {
   gid: string
 }
 
+export type PositionPayload = {
+  gid: string
+  pos: number
+  how: "POS_SET" | "POS_CUR" | "POS_END"
+}

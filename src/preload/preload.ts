@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron"
-import type { AddMetalinkPayload, AddTorrentPayload, AddUriPayload, GidPayload } from "../shared/aria2"
+import type { AddMetalinkPayload, AddTorrentPayload, AddUriPayload, GidPayload, Options, PositionPayload } from "../shared/aria2"
 // import type {
 //   EnginePathInfo,
 //   ExternalTaskIntent,
@@ -187,10 +187,10 @@ contextBridge.exposeInMainWorld("aria2", {
     ipcRenderer.invoke("aria2.remove", payload)
   },
 
-  // // This method removes the download denoted by gid
-  // forceRemove: (payload: GidPayload) => {
-  //   ipcRenderer.invoke("aria2.forceRemove", payload)
-  // },
+  // This method removes the download denoted by gid
+  forceRemove: (payload: GidPayload) => {
+    ipcRenderer.invoke("aria2.forceRemove", payload)
+  },
 
   // This method pauses the download denoted by gid (string)
   pause: (payload: GidPayload) => {
@@ -202,15 +202,15 @@ contextBridge.exposeInMainWorld("aria2", {
     ipcRenderer.invoke("aria2.pauseAll")
   },
 
-  // // This method pauses the download denoted by gid
-  // forcePause: (payload: GidPayload) => {
-  //   ipcRenderer.invoke("aria2.forcePause", payload)
-  // },
+  // This method pauses the download denoted by gid
+  forcePause: (payload: GidPayload) => {
+    ipcRenderer.invoke("aria2.forcePause", payload)
+  },
 
-  // // This method is equal to calling aria2.forcePause() for every active/waiting download
-  // forcePauseAll: () => {
-  //   ipcRenderer.invoke("aria2.forcePauseAll")
-  // },
+  // This method is equal to calling aria2.forcePause() for every active/waiting download
+  forcePauseAll: () => {
+    ipcRenderer.invoke("aria2.forcePauseAll")
+  },
 
   // This method changes the status of the download denoted by gid (string) from paused to waiting, making the download eligible to be restarted
   unpause: (payload: GidPayload) => {
@@ -260,6 +260,21 @@ contextBridge.exposeInMainWorld("aria2", {
   // This method returns a list of stopped downloads
   tellStopped: () => {
     ipcRenderer.invoke("aria2.tellStopped")
+  },
+
+  // This method changes the position of the download denoted by gid in the queue
+  changePosition: (payload: PositionPayload) => {
+    ipcRenderer.invoke("aria2.changePosition", payload)
+  },
+
+  // This method changes global options dynamically
+  changeGlobalOption: (payload: Options) => {
+    ipcRenderer.invoke("aria2.changeGlobalOption", payload)
+  },
+
+  // This method returns global statistics such as the overall download and upload speeds
+  getGlobalStat: () => {
+    ipcRenderer.invoke("aria2.getGlobalStat")
   },
   
 })

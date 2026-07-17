@@ -5,6 +5,8 @@ import type {
   AddTorrentPayload,
   AddUriPayload,
   GidPayload,
+  Options,
+  PositionPayload,
   RemovePayload,
 } from "../shared/aria2"
 import { readFile } from "node:fs/promises"
@@ -90,9 +92,9 @@ export function registerIpcHandlers() {
     return await callAria2("aria2.remove", [payload.gid])
   })
 
-  // ipcMain.handle("aria2.forceRemove", async (_event, payload: GidPayload) => {
-  //   return await callAria2("aria2.forceRemove", [payload.gid])
-  // })
+  ipcMain.handle("aria2.forceRemove", async (_event, payload: GidPayload) => {
+    return await callAria2("aria2.forceRemove", [payload.gid])
+  })
 
   ipcMain.handle("aria2:pause", async (_event, payload: GidPayload) => {
     return await callAria2("aria2.pause", [payload.gid])
@@ -102,13 +104,13 @@ export function registerIpcHandlers() {
     return await callAria2("aria2.pauseAll")
   })
 
-  // ipcMain.handle("aria2:forcePause", async (_event, payload: GidPayload) => {
-  //   return await callAria2("aria2.forcePause", [payload.gid])
-  // })
+  ipcMain.handle("aria2:forcePause", async (_event, payload: GidPayload) => {
+    return await callAria2("aria2.forcePause", [payload.gid])
+  })
 
-  // ipcMain.handle("aria2:forcePauseAll", async () => {
-  //   return await callAria2("aria2.forcePauseAll")
-  // })
+  ipcMain.handle("aria2:forcePauseAll", async () => {
+    return await callAria2("aria2.forcePauseAll")
+  })
 
   ipcMain.handle("aria2:unpause", async (_event, payload: GidPayload) => {
     return await callAria2("aria2.unpause", [payload.gid])
@@ -146,7 +148,33 @@ export function registerIpcHandlers() {
     return await callAria2("aria2.tellWaiting")
   })
 
+  ipcMain.handle("aria2:tellStopped", async () => {
+    return await callAria2("aria2.tellStopped")
+  })
+
+  ipcMain.handle("aria2:changePosition", async (_event, payload: PositionPayload) => {
+    return await callAria2("aria2.changePosition", [payload])
+  })
+
   
+  ipcMain.handle(
+    "aria2.changeGlobalOption",
+    async (_event, payload: Options) => {
+      // const savedPreferences = await writePreferences(preferences)
+    //   if (isAria2Running()) {
+    //     await fs.mkdir(savedPreferences.downloadDir, { recursive: true })
+    //     await callAria2("aria2.changeGlobalOption", [
+    //       buildGlobalAria2Options(savedPreferences),
+    //     ])
+    //   }
+    //   return savedPreferences
+    return await callAria2("aria2.changeGlobalOption", [payload])
+    }
+  )
+
+  ipcMain.handle("aria2:getGlobalStat", async () => {
+    return await callAria2("aria2.getGlobalStat")
+  })
   // ipcMain.handle(
   //   "tasks:remove-result",
   //   (_event, taskOrGid: Aria2Task | string, deleteFiles = false) => {
@@ -188,19 +216,7 @@ export function registerIpcHandlers() {
 
   // ipcMain.handle("app:get-engine-paths", () => getEnginePaths())
   // ipcMain.handle("app:get-preferences", () => readPreferences())
-  // ipcMain.handle(
-  //   "app:set-preferences",
-  //   async (_event, preferences: GrabbitPreferences) => {
-  //     const savedPreferences = await writePreferences(preferences)
-  //     if (isAria2Running()) {
-  //       await fs.mkdir(savedPreferences.downloadDir, { recursive: true })
-  //       await callAria2("aria2.changeGlobalOption", [
-  //         buildGlobalAria2Options(savedPreferences),
-  //       ])
-  //     }
-  //     return savedPreferences
-  //   }
-  // )
+ 
   // ipcMain.handle("app:get-scheduler", () => readSchedulerRule())
   // ipcMain.handle(
   //   "app:set-scheduler",
