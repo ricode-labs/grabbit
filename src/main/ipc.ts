@@ -90,9 +90,9 @@ export function registerIpcHandlers() {
     return await callAria2("aria2.remove", [payload.gid])
   })
 
-  ipcMain.handle("aria2.forceRemove", async (_event, payload: GidPayload) => {
-    return await callAria2("aria2.forceRemove", [payload.gid])
-  })
+  // ipcMain.handle("aria2.forceRemove", async (_event, payload: GidPayload) => {
+  //   return await callAria2("aria2.forceRemove", [payload.gid])
+  // })
 
   ipcMain.handle("aria2:pause", async (_event, payload: GidPayload) => {
     return await callAria2("aria2.pause", [payload.gid])
@@ -102,13 +102,13 @@ export function registerIpcHandlers() {
     return await callAria2("aria2.pauseAll")
   })
 
-  ipcMain.handle("aria2:forcePause", async (_event, payload: GidPayload) => {
-    return await callAria2("aria2.forcePause", [payload.gid])
-  })
+  // ipcMain.handle("aria2:forcePause", async (_event, payload: GidPayload) => {
+  //   return await callAria2("aria2.forcePause", [payload.gid])
+  // })
 
-  ipcMain.handle("aria2:forcePauseAll", async () => {
-    return await callAria2("aria2.forcePauseAll")
-  })
+  // ipcMain.handle("aria2:forcePauseAll", async () => {
+  //   return await callAria2("aria2.forcePauseAll")
+  // })
 
   ipcMain.handle("aria2:unpause", async (_event, payload: GidPayload) => {
     return await callAria2("aria2.unpause", [payload.gid])
@@ -137,6 +137,16 @@ export function registerIpcHandlers() {
   ipcMain.handle("aria2:getServers", async (_event, payload: GidPayload) => {
     return await callAria2("aria2.getServers", [payload.gid])
   })
+
+  ipcMain.handle("aria2:tellActive", async () => {
+    return await callAria2("aria2.tellActive")
+  })
+
+  ipcMain.handle("aria2:tellWaiting", async () => {
+    return await callAria2("aria2.tellWaiting")
+  })
+
+  
   // ipcMain.handle(
   //   "tasks:remove-result",
   //   (_event, taskOrGid: Aria2Task | string, deleteFiles = false) => {

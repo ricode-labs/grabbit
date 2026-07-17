@@ -19,6 +19,5 @@ export type AddMetalinkPayload = {
 
 export type GidPayload = {
   gid: string
-  keys?: Keys
 }
 
