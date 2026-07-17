@@ -87,7 +87,7 @@ export function registerIpcHandlers() {
   })
 
   ipcMain.handle("aria2.forceRemove", async (_event, payload: GidPayload) => {
-    return await callAria2("aria2.forceRemove", [payload.gid])
+    return await callAria2<string>("aria2.forceRemove", [payload.gid])
   })
 
   ipcMain.handle("aria2.pause", async (_event, payload: GidPayload) => {
