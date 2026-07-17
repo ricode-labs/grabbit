@@ -196,19 +196,33 @@ export function registerIpcHandlers() {
   ipcMain.handle("aria2.purgeDownloadResult", async () => {
     return await callAria2("aria2.purgeDownloadResult")
   })
-  //
-  //
-  //
-  // ipcMain.handle(
-  //   "tasks:remove-result",
-  //   (_event, taskOrGid: Aria2Task | string, deleteFiles = false) => {
-  //     if (typeof taskOrGid === "string") {
-  //       return callAria2("aria2.removeDownloadResult", [taskOrGid])
-  //     }
 
-  //     return removeTask(taskOrGid, deleteFiles)
-  //   }
-  // )
+  ipcMain.handle(
+    "aria2.removeDownloadResult",
+    async (_event, payload: GidPayload) => {
+      return await callAria2("aria2.removeDownloadResult", [payload])
+    }
+  )
+
+  ipcMain.handle("aria2.getVersion", async () => {
+    return await callAria2("aria2.getVersion")
+  })
+
+  ipcMain.handle("aria2.getSessionInfo", async () => {
+    return await callAria2("aria2.getSessionInfo")
+  })
+
+  ipcMain.handle("aria2.shutdown", async () => {
+    return await callAria2("aria2.shutdown")
+  })
+
+  ipcMain.handle("aria2.forceShutdown", async () => {
+    return await callAria2("aria2.forceShutdown")
+  })
+
+  ipcMain.handle("aria2.saveSession", async () => {
+    return await callAria2("aria2.saveSession")
+  })
 
   // ipcMain.handle("tasks:delete-files", (_event, task: Aria2Task) =>
   //   deleteTaskFiles(task)

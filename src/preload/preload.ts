@@ -301,5 +301,35 @@ contextBridge.exposeInMainWorld("aria2", {
   purgeDownloadResult: () => {
     ipcRenderer.invoke("aria2.purgeDownloadResult")
   },
+
+  // This method removes a completed/error/removed download denoted by gid from memory
+  removeDownloadResult: () => {
+    ipcRenderer.invoke("aria2.removeDownloadResult")
+  },
+
+  // This method returns the version of aria2 and the list of enabled features
+  getVersion: () => {
+    ipcRenderer.invoke("aria2.getVersion")
+  },
+
+  // This method returns session information
+  getSessionInfo: () => {
+    ipcRenderer.invoke("aria2.getSessionInfo")
+  },
+
+  // This method shuts down aria2
+  shutdown: () => {
+    ipcRenderer.invoke("aria2.shutdown")
+  },
+
+  // This method shuts down aria2()
+  forceShutdown: () => {
+    ipcRenderer.invoke("aria2.forceShutdown")
+  },
+
+  // This method saves the current session to a file specified by the --save-session option
+  saveSession: () => {
+    ipcRenderer.invoke("aria2.saveSession")
+  },
   
 })
