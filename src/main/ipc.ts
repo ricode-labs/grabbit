@@ -20,7 +20,7 @@ import type {
   ChangePositionPayload,
   TellRangePayload,
 } from "../shared/aria2"
-import { readFile } from "node:fs/promises"
+import { readFile } from "fs-extra"
 
 export function registerIpcHandlers() {
   ipcMain.handle("aria2.addUri", async (_event, payload: AddUriPayload) => {

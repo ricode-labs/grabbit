@@ -1,14 +1,12 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process"
-import { app, Notification } from "electron"
 import ky from "ky"
 
 // import { buildSchedulerGlobalOptions } from "../shared/grabbit"
 // import { getMainWindow } from "./app-state"
-import { downloadDirectoryPath, getAria2Executable } from "./paths"
+import { getAria2Executable } from "./paths"
 // import { readPreferences, readSchedulerRule } from "./stores"
-import type { Aria2Task, JsonRpcFailure, JsonRpcSuccess } from "./types"
+import type { JsonRpcFailure, JsonRpcSuccess } from "./types"
 import { aria2StartupArgs } from "./aria2.conf"
-import { mkdir } from "node:fs/promises"
 import { createServer } from "node:net"
 let aria2Process: ChildProcessWithoutNullStreams | null = null
 let rpcPort: number | null = null
@@ -68,8 +66,6 @@ export async function startAria2() {
   // const preferences = await readPreferences()
   // const schedulerRule = await readSchedulerRule()
   // const downloadDir = preferences.downloadDir
-  await mkdir(downloadDirectoryPath, { recursive: true })
-  await mkdir(app.getPath("userData"), { recursive: true })
 
   aria2Process = spawn(aria2Path, await aria2StartupArgs(rpcPort, rpcSecret), {
     stdio: "pipe",

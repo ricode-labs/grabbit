@@ -15,7 +15,7 @@ import {
   serverStatPath,
   sessionPath,
 } from "./paths"
-import { readFile, stat, writeFile } from "node:fs/promises"
+import { outputFile, readFile, stat } from "fs-extra"
 
 // update trackers
 export async function updateTrackers() {
@@ -25,7 +25,7 @@ export async function updateTrackers() {
     )
     .text()
   const trackers = text.split("\n").join(",")
-  await writeFile(btTrackerPath, trackers, "utf8")
+  await outputFile(btTrackerPath, trackers, "utf8")
 }
 
 // read trackers
