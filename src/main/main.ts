@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron/main"
+import { app } from "electron/main"
 import started from "electron-squirrel-startup"
 import { startAria2, stopAria2 } from "./aria2"
 // import { setIsQuitting } from "./app-state"
@@ -18,45 +18,15 @@ import { registerIpcHandlers } from "./ipc"
 //   showMainWindow,
 // } from "./window"
 import { updateTrackers } from "./aria2.conf"
-import { join } from "node:path"
 import { createTray } from "./tray"
+import { closeWindow, showWindow } from "./window"
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit()
 }
 
-let mainWindow: BrowserWindow
-let isQuitting = false
 
-function createWindow() {
-  // Create the browser window.
-  mainWindow = new BrowserWindow({
-    width: 800,
-    height: 600,
-    webPreferences: {
-      preload: join(__dirname, "preload.js"),
-    },
-  })
-
-  mainWindow.on("close", (event) => {
-    if (isQuitting) {
-      return
-    }
-
-    event.preventDefault()
-    mainWindow.hide()
-  })
-
-  // and load the index.html of the app.
-  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL)
-  } else {
-    mainWindow.loadFile(
-      join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
-    )
-  }
-}
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
@@ -73,13 +43,12 @@ app.whenReady().then(async () => {
   }
   updateTrackers()
   registerIpcHandlers()
-  createWindow()
+  showWindow()
   createTray()
   // void readPreferences().then(applyLoginItemPreference)
 
   app.on("activate", () => {
-    mainWindow.show()
-    mainWindow.focus()
+    showWindow()
   })
 })
 
@@ -87,7 +56,7 @@ app.whenReady().then(async () => {
 // app.on("window-all-closed", () => {})
 
 app.on("before-quit", () => {
-  isQuitting = true
+  closeWindow()
   stopAria2()
 })
 
