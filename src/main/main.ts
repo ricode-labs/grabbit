@@ -19,20 +19,33 @@ import { registerIpcHandlers } from "./ipc"
 // } from "./window"
 import { updateTrackers } from "./aria2.conf"
 import { join } from "node:path"
+import { createTray } from "./tray"
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit()
 }
 
+let mainWindow: BrowserWindow
+let isQuitting = false
+
 function createWindow() {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
       preload: join(__dirname, "preload.js"),
     },
+  })
+
+  mainWindow.on("close", (event) => {
+    if (isQuitting) {
+      return
+    }
+
+    event.preventDefault()
+    mainWindow.hide()
   })
 
   // and load the index.html of the app.
@@ -43,9 +56,6 @@ function createWindow() {
       join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
     )
   }
-
-  // Open the DevTools.
-  // mainWindow.webContents.openDevTools();
 }
 
 // This method will be called when Electron has finished
@@ -54,7 +64,7 @@ function createWindow() {
 app.whenReady().then(async () => {
   // registerProtocolClients()
   // createNativeMenu()
-  // createTray()
+
   // sendExternalIntents(collectExternalIntents(process.argv))
   try {
     await startAria2()
@@ -64,24 +74,21 @@ app.whenReady().then(async () => {
   updateTrackers()
   registerIpcHandlers()
   createWindow()
+  createTray()
   // void readPreferences().then(applyLoginItemPreference)
 
   app.on("activate", () => {
-    // On OS X it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow()
-    }
+    mainWindow.show()
+    mainWindow.focus()
   })
 })
 
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit()
-  }
+// // stay active until the user quits explicitly with Cmd + Q.
+// app.on("window-all-closed", () => {})
+
+app.on("before-quit", () => {
+  isQuitting = true
+  stopAria2()
 })
 
 // setWindowDidFinishLoadHandler(flushExternalIntents)
@@ -109,7 +116,3 @@ app.on("window-all-closed", () => {
 //   }
 // })
 
-// app.on("before-quit", () => {
-//   setIsQuitting(true)
-//   void stopAria2()
-// })
