@@ -21,7 +21,7 @@ import type {
 
 declare global {
   interface Window {
-    grabbit: Record<string, any>
+    grabbit: Record<string, never>
     aria2: {
       addUri: (payload: AddUriPayload) => Promise<string>
       addTorrent: (payload: AddTorrentPayload) => Promise<string>

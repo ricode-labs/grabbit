@@ -81,6 +81,7 @@ export function App() {
   const [searchQuery, setSearchQuery] = useState("")
   const [notice, setNotice] = useState<Notice | null>(null)
   const [addTaskError, setAddTaskError] = useState<string | null>(null)
+  const [addTaskTab, setAddTaskTab] = useState<"uri" | "torrent">("uri")
   const [deleteTarget, setDeleteTarget] = useState<Aria2Task | null>(null)
   const [deleteBatchTargets, setDeleteBatchTargets] = useState<Aria2Task[]>([])
   const [detailTask, setDetailTask] = useState<Aria2Task | null>(null)
@@ -285,8 +286,11 @@ export function App() {
     }))
   }
 
-  const openAddTaskDialog = async () => {
+  const openAddTaskDialog = useCallback(async () => {
+    setAddTaskError(null)
+    setAddTaskTab("uri")
     setAddOpen(true)
+
     const clipboardText = await navigator.clipboard.readText().catch(() => "")
     const parsedCurl = parseCurlCommand(clipboardText)
     const detectedUris = parsedCurl?.uris ?? splitTaskLinks(clipboardText)
@@ -305,7 +309,7 @@ export function App() {
         uris: current.uris || detectedUris.join("\n"),
       }))
     }
-  }
+  }, [])
 
   return (
     <div className="app-shell-bg relative flex h-screen overflow-hidden bg-background text-foreground">
@@ -532,7 +536,13 @@ export function App() {
             </DialogDescription>
           </DialogHeader>
           <ScrollArea className="min-h-0 flex-1 overflow-hidden px-4">
-            <Tabs defaultValue="uri" className="min-h-0 pb-4">
+            <Tabs
+              value={addTaskTab}
+              onValueChange={(value) =>
+                setAddTaskTab(value as "uri" | "torrent")
+              }
+              className="min-h-0 pb-4"
+            >
               <TabsList>
                 <TabsTrigger value="uri">链接任务</TabsTrigger>
                 <TabsTrigger value="torrent">种子任务</TabsTrigger>

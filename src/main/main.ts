@@ -20,7 +20,7 @@ import { registerIpcHandlers } from "./ipc"
 import { updateTrackers } from "./aria2.conf"
 import { createTray } from "./tray"
 import { closeWindow, showWindow } from "./window"
-import { getProtocolUrls, registerProtocolClient } from "./protocol"
+import { addLaunchLinks, registerProtocolClient } from "./protocol"
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -32,19 +32,26 @@ if (!gotTheLock) {
   app.quit()
 } else {
   registerProtocolClient()
-  
+
   app.on("second-instance", (_event, argv) => {
-    const protocolUrls = getProtocolUrls(argv)
-    if (protocolUrls.length > 0) {
-      console.log("Received protocol URLs", protocolUrls)
-    }
+    addLaunchLinks(argv)
     showWindow()
   })
-  
+
   app.on("open-url", (event, url) => {
     event.preventDefault()
-    console.log("Received protocol URL", url)
-    showWindow()
+    addLaunchLinks([url])
+    if (app.isReady()) {
+      showWindow()
+    }
+  })
+
+  app.on("open-file", (event, filePath) => {
+    event.preventDefault()
+    addLaunchLinks([filePath])
+    if (app.isReady()) {
+      showWindow()
+    }
   })
 
   app.on("before-quit", async () => {
@@ -66,6 +73,7 @@ if (!gotTheLock) {
     registerIpcHandlers()
     showWindow()
     createTray()
+    addLaunchLinks(process.argv)
 
     app.on("activate", () => {
       showWindow()
@@ -75,8 +83,6 @@ if (!gotTheLock) {
 
 // // stay active until the user quits explicitly with Cmd + Q.
 // app.on("window-all-closed", () => {})
-
-
 
 // setWindowDidFinishLoadHandler(flushExternalIntents)
 
@@ -90,8 +96,6 @@ if (!gotTheLock) {
 //     sendExternalIntents(collectExternalIntents(argv))
 //   })
 // }
-
-
 
 // app.on("open-file", (event, filePath) => {
 //   if (/\.torrent$/i.test(filePath)) {

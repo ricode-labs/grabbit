@@ -1,7 +1,14 @@
 import { app } from "electron/main"
 import { resolve } from "node:path"
+import { callAria2 } from "./aria2"
+import { readFile } from "fs-extra"
 
 const appProtocol = "grabbit"
+
+export type LaunchLink = {
+  kind: "url" | "torrent" | "metalink"
+  value: string
+}
 
 export function registerProtocolClient() {
   if (process.defaultApp) {
@@ -15,7 +22,51 @@ export function registerProtocolClient() {
   }
 }
 
-export function getProtocolUrls(argv: string[]) {
-  const prefix = `${appProtocol}://`
-  return argv.filter((value) => value.startsWith(prefix))
+function getLaunchLinks(argv: string[]): LaunchLink[] {
+  const launchLinks: LaunchLink[] = []
+  const appPrefix = `${appProtocol}://`
+  const filePrefix = "file://"
+  for (const value of argv) {
+    if (value.startsWith(appPrefix)) {
+      launchLinks.push({ kind: "url", value: value.slice(appPrefix.length) })
+    } else if (value.startsWith(filePrefix)) {
+      if (value.endsWith(".torrent")) {
+        launchLinks.push({
+          kind: "torrent",
+          value: value.slice(filePrefix.length),
+        })
+      } else if (value.endsWith(".metalink") || value.endsWith(".meta4")) {
+        launchLinks.push({
+          kind: "metalink",
+          value: value.slice(filePrefix.length),
+        })
+      }
+    }
+  }
+  return launchLinks
+}
+
+export async function addLaunchLinks(argv: string[]) {
+  const launchLinks = getLaunchLinks(argv)
+  return await Promise.allSettled(
+     launchLinks.map(async (launchLink) => {
+       if (launchLink.kind === "url") {
+         return await callAria2<string>("aria2.addUri", [
+           [launchLink.value],
+         ])
+       }
+       if (launchLink.kind === "torrent") {
+         const file = await readFile(launchLink.value)
+         return await callAria2<string>("aria2.addTorrent", [
+           file.toString("base64"),
+         ])
+       }
+       if (launchLink.kind === "metalink") {
+         const file = await readFile(launchLink.value)
+         return await callAria2<string>("aria2.addMetalink", [
+           file.toString("base64"),
+         ])
+       }
+     })
+   )
 }

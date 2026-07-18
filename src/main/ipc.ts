@@ -33,9 +33,9 @@ export function registerIpcHandlers() {
   ipcMain.handle(
     "aria2.addTorrent",
     async (_event, payload: AddTorrentPayload) => {
-      const torrent = await readFile(payload.torrentPath)
+      const file = await readFile(payload.torrentPath)
       return callAria2<string>("aria2.addTorrent", [
-        torrent.toString("base64"),
+        file.toString("base64"),
         [],
         payload.options,
       ])
@@ -45,9 +45,9 @@ export function registerIpcHandlers() {
   ipcMain.handle(
     "aria2.addMetalink",
     async (_event, payload: AddMetalinkPayload) => {
-      const metalink = await readFile(payload.metalinkPath)
+      const file = await readFile(payload.metalinkPath)
       return callAria2<string[]>("aria2.addMetalink", [
-        metalink.toString("base64"),
+        file.toString("base64"),
         payload.options,
       ])
     }

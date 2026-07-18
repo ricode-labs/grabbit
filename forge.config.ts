@@ -11,13 +11,45 @@ const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
     extraResource: ["resources/aria2"],
+    extendInfo: {
+      CFBundleDocumentTypes: [
+        {
+          CFBundleTypeName: "BitTorrent File",
+          CFBundleTypeRole: "Viewer",
+          CFBundleTypeExtensions: ["torrent"],
+          LSHandlerRank: "Alternate",
+        },
+        {
+          CFBundleTypeName: "Metalink File",
+          CFBundleTypeRole: "Viewer",
+          CFBundleTypeExtensions: ["metalink", "meta4"],
+          LSHandlerRank: "Alternate",
+        },
+      ],
+    },
   },
   rebuildConfig: {},
   makers: [
     new MakerSquirrel({}),
     new MakerZIP({}, ["darwin"]),
-    new MakerRpm({}),
-    new MakerDeb({}),
+    new MakerRpm({
+      options: {
+        mimeType: [
+          "application/x-bittorrent",
+          "application/metalink+xml",
+          "application/metalink4+xml",
+        ],
+      },
+    }),
+    new MakerDeb({
+      options: {
+        mimeType: [
+          "application/x-bittorrent",
+          "application/metalink+xml",
+          "application/metalink4+xml",
+        ],
+      },
+    }),
   ],
   plugins: [
     new VitePlugin({
