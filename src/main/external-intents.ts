@@ -6,8 +6,6 @@ import {
   supportedExternalProtocols,
   type ExternalTaskIntent,
 } from "../shared/grabbit"
-import { getMainWindow } from "./app-state"
-import { showMainWindow } from "./window"
 
 let pendingExternalIntents: ExternalTaskIntent[] = []
 
