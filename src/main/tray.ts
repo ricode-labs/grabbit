@@ -1,6 +1,6 @@
 import { Menu, nativeImage, Tray } from "electron"
 
-import { BrowserWindow } from "electron/main"
+import { showWindow } from "./window"
 
 // save a reference to the Tray object globally to avoid garbage collection
 let tray = null
@@ -16,18 +16,6 @@ export function createTray() {
   tray = new Tray(image)
   tray.setToolTip("Grabbit")
   const contextMenu = Menu.buildFromTemplate([
-    {
-      label: "Open App",
-      click: () => {
-        const wins = BrowserWindow.getAllWindows()
-        if (wins.length === 0) {
-          // createWindow()
-        } else {
-          wins[0].show()
-          wins[0].focus()
-        }
-      },
-    },
     { role: "toggleDevTools" },
     { role: "quit" },
   ])
@@ -65,5 +53,7 @@ export function createTray() {
   //   ])
   // )
 
-  // tray.on("click", showMainWindow)
+  tray.on("click", () => {
+    showWindow()
+  })
 }
