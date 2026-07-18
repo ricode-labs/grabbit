@@ -29,6 +29,10 @@ export function showWindow() {
     mainWindow?.hide()
   })
 
+  mainWindow.on("closed", () => {
+    mainWindow = null
+  })
+
   // and load the index.html of the app.
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL)
@@ -41,4 +45,9 @@ export function showWindow() {
 
 export function closeWindow() {
   isQuitting = true
+}
+
+export function toggleDevTools() {
+  showWindow()
+  mainWindow?.webContents.toggleDevTools()
 }

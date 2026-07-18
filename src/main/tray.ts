@@ -1,6 +1,7 @@
 import { Menu, nativeImage, Tray } from "electron"
 
-import { showWindow } from "./window"
+import { showWindow, toggleDevTools } from "./window"
+import { app, type MenuItemConstructorOptions } from "electron/main"
 
 // save a reference to the Tray object globally to avoid garbage collection
 let tray = null
@@ -15,11 +16,18 @@ export function createTray() {
   // image.setTemplateImage(process.platform === "darwin")
   tray = new Tray(image)
   tray.setToolTip("Grabbit")
-  const contextMenu = Menu.buildFromTemplate([
-    { role: "toggleDevTools" },
-    { role: "quit" },
-  ])
+  const menuItems: MenuItemConstructorOptions[] = [
+    // {
+    //   label: "Open App",
+    //   click: showMainWindow,
+    // },
+  ]
 
+  if (!app.isPackaged) {
+    menuItems.push({ label: "Toggle DevTools", click: toggleDevTools })
+  }
+  menuItems.push({ role: "quit" })
+  const contextMenu = Menu.buildFromTemplate(menuItems)
   tray.setContextMenu(contextMenu)
   // tray.setContextMenu(
   //   Menu.buildFromTemplate([
