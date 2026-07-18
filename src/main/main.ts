@@ -20,6 +20,7 @@ import { registerIpcHandlers } from "./ipc"
 import { updateTrackers } from "./aria2.conf"
 import { createTray } from "./tray"
 import { closeWindow, showWindow } from "./window"
+import { getProtocolUrls, registerProtocolClient } from "./protocol"
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -27,46 +28,55 @@ if (started) {
 }
 
 const gotTheLock = app.requestSingleInstanceLock()
-
 if (!gotTheLock) {
   app.quit()
 } else {
-  app.on("second-instance", () => {
+  registerProtocolClient()
+  
+  app.on("second-instance", (_event, argv) => {
+    const protocolUrls = getProtocolUrls(argv)
+    if (protocolUrls.length > 0) {
+      console.log("Received protocol URLs", protocolUrls)
+    }
     showWindow()
+  })
+  
+  app.on("open-url", (event, url) => {
+    event.preventDefault()
+    console.log("Received protocol URL", url)
+    showWindow()
+  })
+
+  app.on("before-quit", async () => {
+    closeWindow()
+    await stopAria2()
+  })
+
+  // This method will be called when Electron has finished
+  // initialization and is ready to create browser windows.
+  // Some APIs can only be used after this event occurs.
+  app.whenReady().then(async () => {
+    Menu.setApplicationMenu(null)
+    try {
+      await startAria2()
+    } catch (error) {
+      console.error("Failed to start aria2", error)
+    }
+    updateTrackers()
+    registerIpcHandlers()
+    showWindow()
+    createTray()
+
+    app.on("activate", () => {
+      showWindow()
+    })
   })
 }
-
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.whenReady().then(async () => {
-  // registerProtocolClients()
-  Menu.setApplicationMenu(null)
-
-  // sendExternalIntents(collectExternalIntents(process.argv))
-  try {
-    await startAria2()
-  } catch (error) {
-    console.error("Failed to start aria2", error)
-  }
-  updateTrackers()
-  registerIpcHandlers()
-  showWindow()
-  createTray()
-  // void readPreferences().then(applyLoginItemPreference)
-
-  app.on("activate", () => {
-    showWindow()
-  })
-})
 
 // // stay active until the user quits explicitly with Cmd + Q.
 // app.on("window-all-closed", () => {})
 
-app.on("before-quit", async () => {
-  closeWindow()
-  await stopAria2()
-})
+
 
 // setWindowDidFinishLoadHandler(flushExternalIntents)
 
@@ -81,10 +91,7 @@ app.on("before-quit", async () => {
 //   })
 // }
 
-// app.on("open-url", (event, url) => {
-//   event.preventDefault()
-//   sendExternalIntents(collectExternalIntents([url]))
-// })
+
 
 // app.on("open-file", (event, filePath) => {
 //   if (/\.torrent$/i.test(filePath)) {
