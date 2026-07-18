@@ -1,4 +1,4 @@
-import { app } from "electron/main"
+import { app, Menu } from "electron/main"
 import started from "electron-squirrel-startup"
 import { startAria2, stopAria2 } from "./aria2"
 // import { setIsQuitting } from "./app-state"
@@ -31,7 +31,7 @@ if (started) {
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(async () => {
   // registerProtocolClients()
-  // createNativeMenu()
+  Menu.setApplicationMenu(null)
 
   // sendExternalIntents(collectExternalIntents(process.argv))
   try {
