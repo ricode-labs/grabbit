@@ -2,13 +2,23 @@ import { app } from "electron/main"
 import { resolve } from "node:path"
 import { callAria2 } from "./aria2"
 import { readFile } from "fs-extra"
+import {
+  buildProtocolAddUriOptions,
+  parseGrabbitProtocolPayload,
+  type GrabbitProtocolPayload,
+} from "../shared/grabbit"
 
 const appProtocol = "grabbit"
 
-export type LaunchLink = {
-  kind: "url" | "torrent" | "metalink"
-  value: string
-}
+export type LaunchLink =
+  | {
+      kind: "url"
+      payload: GrabbitProtocolPayload
+    }
+  | {
+      kind: "torrent" | "metalink"
+      value: string
+    }
 
 export function registerProtocolClient() {
   if (process.defaultApp) {
@@ -28,7 +38,10 @@ function getLaunchLinks(argv: string[]): LaunchLink[] {
   const filePrefix = "file://"
   for (const value of argv) {
     if (value.startsWith(appPrefix)) {
-      launchLinks.push({ kind: "url", value: value.slice(appPrefix.length) })
+      const payload = parseGrabbitProtocolPayload(value)
+      if (payload) {
+        launchLinks.push({ kind: "url", value: payload })
+      }
     } else if (value.startsWith(filePrefix)) {
       if (value.endsWith(".torrent")) {
         launchLinks.push({
@@ -49,24 +62,25 @@ function getLaunchLinks(argv: string[]): LaunchLink[] {
 export async function addLaunchLinks(argv: string[]) {
   const launchLinks = getLaunchLinks(argv)
   return await Promise.allSettled(
-     launchLinks.map(async (launchLink) => {
-       if (launchLink.kind === "url") {
-         return await callAria2<string>("aria2.addUri", [
-           [launchLink.value],
-         ])
-       }
-       if (launchLink.kind === "torrent") {
-         const file = await readFile(launchLink.value)
-         return await callAria2<string>("aria2.addTorrent", [
-           file.toString("base64"),
-         ])
-       }
-       if (launchLink.kind === "metalink") {
-         const file = await readFile(launchLink.value)
-         return await callAria2<string>("aria2.addMetalink", [
-           file.toString("base64"),
-         ])
-       }
-     })
-   )
+    launchLinks.map(async (launchLink) => {
+      if (launchLink.kind === "url") {
+        return await callAria2<string>("aria2.addUri", [
+          [launchLink.payload.url],
+          buildProtocolAddUriOptions(launchLink.payload),
+        ])
+      }
+      if (launchLink.kind === "torrent") {
+        const file = await readFile(launchLink.value)
+        return await callAria2<string>("aria2.addTorrent", [
+          file.toString("base64"),
+        ])
+      }
+      if (launchLink.kind === "metalink") {
+        const file = await readFile(launchLink.value)
+        return await callAria2<string>("aria2.addMetalink", [
+          file.toString("base64"),
+        ])
+      }
+    })
+  )
 }
