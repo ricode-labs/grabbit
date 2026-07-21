@@ -40,7 +40,7 @@ function getLaunchLinks(argv: string[]): LaunchLink[] {
     if (value.startsWith(appPrefix)) {
       const payload = parseGrabbitProtocolPayload(value)
       if (payload) {
-        launchLinks.push({ kind: "url", value: payload })
+        launchLinks.push({ kind: "url", payload: payload })
       }
     } else if (value.startsWith(filePrefix)) {
       if (value.endsWith(".torrent")) {
