@@ -8,7 +8,6 @@ export function showWindow() {
   // Show the browser window.
   if (mainWindow) {
     mainWindow.show()
-    mainWindow.focus()
     return
   }
   // Create the browser window.
