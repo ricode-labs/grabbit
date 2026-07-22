@@ -216,15 +216,6 @@ export type ParsedCurlCommand = {
   cookie: string
 }
 
-export type GrabbitProtocolPayload = {
-  url: string
-  filename?: string
-  userAgent?: string
-  authorization?: string
-  referer?: string
-  cookie?: string
-}
-
 export function defaultGrabbitPreferences(
   downloadDir: string
 ): GrabbitPreferences {
@@ -370,25 +361,7 @@ export function buildSchedulerGlobalOptions(
   })
 }
 
-export function normalizeAria2Options(
-  options: Record<string, string | number | boolean | undefined> = {}
-): Record<string, string> {
-  const result: Record<string, string> = {}
 
-  for (const [key, value] of Object.entries(options)) {
-    if (value === undefined || value === "") {
-      continue
-    }
-
-    const kebabKey = key.replace(
-      /[A-Z]/g,
-      (letter) => `-${letter.toLowerCase()}`
-    )
-    result[kebabKey] = String(value)
-  }
-
-  return result
-}
 
 export function buildInitialAddTaskForm(
   preferences: GrabbitPreferences
@@ -429,72 +402,11 @@ export function buildAddTaskOptions(form: AddTaskForm) {
   }
 }
 
-function stringFromUnknown(value: unknown) {
-  return typeof value === "string" ? value.replace(/[\r\n]+/g, " ").trim() : ""
-}
 
-export function buildProtocolAddUriOptions(payload: GrabbitProtocolPayload) {
-  return normalizeAria2Options({
-    out: stringFromUnknown(payload.filename),
-    userAgent: stringFromUnknown(payload.userAgent),
-    header: [
-      payload.authorization
-        ? `Authorization: ${stringFromUnknown(payload.authorization)}`
-        : "",
-      payload.referer ? `Referer: ${stringFromUnknown(payload.referer)}` : "",
-      payload.cookie ? `Cookie: ${stringFromUnknown(payload.cookie)}` : "",
-    ]
-      .filter(Boolean)
-      .join("\n"),
-  })
-}
 
-function decodeBase64UrlJson(value: string) {
-  return JSON.parse(Buffer.from(value, "base64url").toString("utf8")) as unknown
-}
 
-export function parseGrabbitProtocolPayload(value: string) {
-  let parsedUrl: URL
 
-  try {
-    parsedUrl = new URL(value)
-  } catch {
-    return null
-  }
 
-  if (parsedUrl.protocol !== "grabbit:" || parsedUrl.hostname !== "add") {
-    return null
-  }
-
-  const encodedPayload = parsedUrl.searchParams.get("payload")
-  if (!encodedPayload) {
-    return null
-  }
-
-  try {
-    const payload = decodeBase64UrlJson(encodedPayload)
-    if (!payload || typeof payload !== "object") {
-      return null
-    }
-
-    const record = payload as Record<string, unknown>
-    const url = normalizeTaskLink(stringFromUnknown(record.url))
-    if (!url) {
-      return null
-    }
-
-    return {
-      url,
-      filename: stringFromUnknown(record.filename),
-      userAgent: stringFromUnknown(record.userAgent),
-      authorization: stringFromUnknown(record.authorization),
-      referer: stringFromUnknown(record.referer),
-      cookie: stringFromUnknown(record.cookie),
-    } satisfies GrabbitProtocolPayload
-  } catch {
-    return null
-  }
-}
 
 export function buildGlobalAria2Options(preferences: GrabbitPreferences) {
   const trackerList = preferences.btTracker

@@ -2,11 +2,6 @@ import { app } from "electron/main"
 import { resolve } from "node:path"
 import { callAria2 } from "./aria2"
 import { readFile } from "fs-extra"
-import {
-  buildProtocolAddUriOptions,
-  parseGrabbitProtocolPayload,
-  type GrabbitProtocolPayload,
-} from "../shared/grabbit"
 
 const appProtocol = "grabbit"
 
@@ -19,6 +14,11 @@ export type LaunchLink =
       kind: "torrent" | "metalink"
       value: string
     }
+
+type GrabbitProtocolPayload = {
+  url: string
+  header: string[]
+}
 
 export function registerProtocolClient() {
   if (process.defaultApp) {
@@ -38,9 +38,9 @@ function getLaunchLinks(argv: string[]): LaunchLink[] {
   const filePrefix = "file://"
   for (const value of argv) {
     if (value.startsWith(appPrefix)) {
-      const payload = parseGrabbitProtocolPayload(value)
+      const payload = new URL(value).searchParams.get("payload")
       if (payload) {
-        launchLinks.push({ kind: "url", payload: payload })
+        launchLinks.push({ kind: "url", payload: JSON.parse(payload) })
       }
     } else if (value.startsWith(filePrefix)) {
       if (value.endsWith(".torrent")) {
@@ -64,10 +64,8 @@ export async function addLaunchLinks(argv: string[]) {
   return await Promise.allSettled(
     launchLinks.map(async (launchLink) => {
       if (launchLink.kind === "url") {
-        return await callAria2<string>("aria2.addUri", [
-          [launchLink.payload.url],
-          buildProtocolAddUriOptions(launchLink.payload),
-        ])
+        const { url, header } = launchLink.payload
+        return await callAria2<string>("aria2.addUri", [[url], { header }])
       }
       if (launchLink.kind === "torrent") {
         const file = await readFile(launchLink.value)
