@@ -1,727 +1,397 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import React, { useState, useEffect, useRef } from 'react';
+import { Sidebar } from './components/Sidebar';
+import { TitleBar } from './components/TitleBar';
+import { StatusBar } from './components/StatusBar';
+import { DownloadPage, SettingsPage } from './pages';
+import { CategoryType } from './components/DownloadList';
+import { NoticeModal } from './components';
+import { useUI } from './context/UIContext';
 import {
-  Loader2,
-  Pause,
-  Play,
-  Plus,
-  RotateCw,
-  Search,
-  Sparkles,
-  Trash2,
-} from "lucide-react"
+  useDownloads,
+  useAria2Status,
+  useSettings,
+  useHistory,
+  useGlobalStat
+} from './hooks';
 
-import {
-  EmptyTasks,
-  MetricChip,
-  NoticeBanner,
-  PrimaryAside,
-  Speedometer,
-  TaskSubnav,
-} from "@/components/app-shell"
-import { AboutPage } from "@/components/about-page"
-import { TaskCard } from "@/components/tasks/task-card"
-import { TaskDetails } from "@/components/tasks/task-details"
-import type { Notice, Page } from "./lib/app-types"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
-import {
-  defaultGrabbitPreferences,
-  parseCurlCommand,
-  splitTaskLinks,
-  type AddTaskForm,
-  buildInitialAddTaskForm,
-} from "../shared/grabbit"
-import type { Options } from "../shared/aria2"
-
-import {
-  type Aria2Task,
-  formatBytes,
-  getTaskName,
-  getTaskUris,
-  statusLabels,
-  statusMeta,
-  type TaskListStatus,
-  toNumber,
-} from "./lib/task-display"
-
-const fallbackInitialForm = buildInitialAddTaskForm(
-  defaultGrabbitPreferences("")
-)
-
-function buildAria2AddTaskOptions(form: AddTaskForm): Options {
-  return Object.fromEntries(
-    Object.entries({
-      dir: form.dir,
-      "select-file": form.selectedTorrentFiles,
-    }).filter(([, value]) => value !== "")
-  )
+interface ElectronAPI {
+  getAria2Status: () => Promise<{ connected: boolean; message: string }>;
+  reconnectAria2: () => Promise<{ success: boolean; message: string }>;
+  addDownload: (url: string, options: any) => Promise<string>;
+  pauseDownload: (gid: string) => Promise<string>;
+  resumeDownload: (gid: string) => Promise<string>;
+  removeDownload: (gid: string) => Promise<string>;
+  getDownloads: () => Promise<any>;
+  getGlobalStat: () => Promise<any>;
+  setGlobalSpeedLimit: (downloadLimit: number, uploadLimit: number) => Promise<void>;
+  getHistory: () => Promise<any[]>;
+  removeFromHistory: (gid: string) => Promise<void>;
+  deleteDownloadFile: (filePath: string) => Promise<any>;
+  getSettings: () => Promise<any>;
+  updateSettings: (settings: any) => Promise<any>;
+  getUISettings: () => Promise<{ theme: 'light' | 'dark'; language: 'zh' | 'ja' | 'en' }>;
+  updateUISettings: (settings: any) => Promise<any>;
+  selectFolder: () => Promise<string | null>;
+  selectTorrentFile: () => Promise<string | null>;
+  getClipboardText: () => Promise<string>;
+  getTorrentInfo: (torrentPath: string) => Promise<any>;
+  getDownloadMetadata: (url: string) => Promise<any>;
+  getDiskSpace: (dir: string) => Promise<any>;
+  minimizeWindow: () => Promise<void>;
+  maximizeWindow: () => Promise<void>;
+  closeWindow: () => Promise<void>;
+  isMaximized: () => Promise<boolean>;
 }
 
-export function App() {
-  const [page, setPage] = useState<Page>("tasks")
-  const [status, setStatus] = useState<TaskListStatus>("active")
-  const [tasks, setTasks] = useState<Aria2Task[]>([])
-  const [loading, setLoading] = useState(true)
-  const [addOpen, setAddOpen] = useState(false)
-  const [form, setForm] = useState<AddTaskForm>(fallbackInitialForm)
-  const [selected, setSelected] = useState<Set<string>>(new Set())
-  const [searchQuery, setSearchQuery] = useState("")
-  const [notice, setNotice] = useState<Notice | null>(null)
-  const [addTaskError, setAddTaskError] = useState<string | null>(null)
-  const [addTaskTab, setAddTaskTab] = useState<"uri" | "torrent">("uri")
-  const [deleteTarget, setDeleteTarget] = useState<Aria2Task | null>(null)
-  const [deleteBatchTargets, setDeleteBatchTargets] = useState<Aria2Task[]>([])
-  const [detailTask, setDetailTask] = useState<Aria2Task | null>(null)
+declare global {
+  interface Window {
+    electronAPI: ElectronAPI;
+  }
+}
 
-  const loadTasks = useCallback(async () => {
-    setLoading(true)
-    try {
-      const nextTasks =
-        status === "active"
-          ? await window.aria2.tellActive()
-          : status === "waiting"
-            ? await window.aria2.tellWaiting({ offset: 0, num: 100 })
-            : await window.aria2.tellStopped({ offset: 0, num: 100 })
-      setTasks(nextTasks)
-    } catch (error) {
-      setNotice({
-        tone: "error",
-        message: error instanceof Error ? error.message : "读取任务列表失败",
-      })
-    } finally {
-      setLoading(false)
-    }
-  }, [status])
+type ViewType = 'list' | 'detail' | 'settings';
+type CategoryUpdates = Record<CategoryType, number>;
+type NoticeState = {
+  message: string;
+  variant?: 'info' | 'success' | 'error';
+  title?: string;
+  onConfirm?: () => void;
+};
+
+const App: React.FC = () => {
+  const { t } = useUI();
+
+  // 业务逻辑 Hooks
+  const { downloads, refreshDownloads } = useDownloads();
+  const { globalStat, refreshGlobalStat } = useGlobalStat();
+  const { aria2Status, checkAria2Status } = useAria2Status();
+  const { settings, loadSettings } = useSettings();
+  const { historyTasks, refreshHistory, isLoaded: isHistoryLoaded } = useHistory();
+
+  // UI 状态
+  const [currentCategory, setCurrentCategory] = useState<CategoryType>('downloading');
+  const [currentView, setCurrentView] = useState<ViewType>('list');
+  const [selectedTaskGid, setSelectedTaskGid] = useState<string | null>(null);
+  const [deleteConfirmTask, setDeleteConfirmTask] = useState<any | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [clipboardUrl, setClipboardUrl] = useState('');
+  const [notice, setNotice] = useState<NoticeState | null>(null);
+  const [categoryUpdates, setCategoryUpdates] = useState<CategoryUpdates>({
+    downloading: 0,
+    completed: 0,
+    paused: 0,
+    all: 0,
+    deleted: 0
+  });
+  const previousCompletedIds = useRef<Set<string> | null>(null);
 
   useEffect(() => {
-    const load = () => {
-      void loadTasks()
-    }
-    load()
-    const timer = window.setInterval(load, 2000)
-    return () => window.clearInterval(timer)
-  }, [loadTasks])
+    if (!isHistoryLoaded) return;
 
-  const totalSpeed = useMemo(
-    () => tasks.reduce((sum, task) => sum + toNumber(task.downloadSpeed), 0),
-    [tasks]
-  )
+    const completedIds = new Set(
+      historyTasks
+        .filter(task => task.status === 'complete' && task.gid)
+        .map(task => task.gid)
+    );
 
-  const visibleTasks = useMemo(() => {
-    const query = searchQuery.trim().toLowerCase()
-    if (!query) {
-      return tasks
+    if (previousCompletedIds.current === null) {
+      previousCompletedIds.current = completedIds;
+      return;
     }
 
-    return tasks.filter((task) => {
-      const haystack = [
-        task.gid,
-        getTaskName(task),
-        task.dir,
-        ...(task.files?.flatMap((file) => [
-          file.path,
-          ...(file.uris?.map((uri) => uri.uri) ?? []),
-        ]) ?? []),
-      ]
-        .join("\n")
-        .toLowerCase()
-      return haystack.includes(query)
-    })
-  }, [searchQuery, tasks])
-
-  const submitTask = async () => {
-    const uris = splitTaskLinks(form.uris)
-    const taskOptions = buildAria2AddTaskOptions(form)
-
-    if (uris.length === 0 && !form.torrentPath) {
-      setAddTaskError("请输入至少一个下载链接，或选择一个 .torrent 文件")
-      return
-    }
-
-    try {
-      if (form.torrentPath) {
-        await window.aria2.addTorrent({
-          torrentPath: form.torrentPath,
-          options: taskOptions,
-        })
+    let newlyCompletedCount = 0;
+    completedIds.forEach(gid => {
+      if (!previousCompletedIds.current?.has(gid)) {
+        newlyCompletedCount += 1;
       }
-      if (uris.length > 0) {
-        await window.aria2.addUri({ uris, options: taskOptions })
-      }
-      setAddTaskError(null)
-      setNotice({ tone: "success", message: "任务已添加" })
-      setAddOpen(false)
-      const nextForm = buildInitialAddTaskForm(
-        defaultGrabbitPreferences(form.dir)
-      )
-      setForm({ ...nextForm, dir: form.dir })
-      if (form.showDownloading) {
-        setStatus("active")
-      }
-      await loadTasks()
-    } catch (error) {
-      setAddTaskError(error instanceof Error ? error.message : "添加任务失败")
-    }
-  }
+    });
 
-  const copyText = async (text: string, successMessage: string) => {
-    if (!text) {
-      setNotice({ tone: "error", message: "没有可复制的内容" })
-      return
+    if (newlyCompletedCount > 0) {
+      setCategoryUpdates(previous => ({
+        ...previous,
+        completed: previous.completed + newlyCompletedCount
+      }));
     }
 
-    try {
-      await navigator.clipboard.writeText(text)
-      setNotice({ tone: "success", message: successMessage })
-    } catch {
-      setNotice({ tone: "error", message: "复制失败，请检查剪贴板权限" })
-    }
-  }
+    previousCompletedIds.current = completedIds;
+  }, [historyTasks, isHistoryLoaded]);
 
-  const copyTaskLinks = async (task: Aria2Task) => {
-    const links = getTaskUris(task)
-    await copyText(links.join("\n"), "任务链接已复制")
-  }
-
-  const openLocalPath = async (targetPath: string) => {
-    if (!targetPath) {
-      setNotice({ tone: "error", message: "没有可打开的路径" })
-      return
-    }
-
-    setNotice({ tone: "error", message: "打开本地路径功能暂不可用" })
-  }
-
-  const runTaskAction = async (
-    task: Aria2Task,
-    action: "pause" | "resume" | "remove" | "restart"
-  ) => {
-    try {
-      if (action === "pause") {
-        await window.aria2.pause({ gid: task.gid })
-      } else if (action === "resume") {
-        await window.aria2.unpause({ gid: task.gid })
-      } else if (action === "restart") {
-        const uris = getTaskUris(task)
-        if (uris.length === 0) {
-          throw new Error("这个任务没有可用于重新下载的原始链接")
+  // 检测剪切板中的可下载链接
+  useEffect(() => {
+    const checkClipboard = async () => {
+      try {
+        const text = await window.electronAPI.getClipboardText();
+        if (text && isDownloadableLink(text) && text !== clipboardUrl) {
+          setClipboardUrl(text);
+          setShowAddModal(true);
         }
-        await window.aria2.addUri({ uris, options: { dir: task.dir } })
-        setNotice({ tone: "success", message: "已重新添加任务" })
-      } else {
-        await confirmRemoveTasks([task])
-        return
+      } catch (error) {
+        console.error('Failed to check clipboard:', error);
+      }
+    };
+
+    // 每 3 秒检查一次剪切板
+    const clipboardInterval = setInterval(checkClipboard, 3000);
+
+    return () => clearInterval(clipboardInterval);
+  }, [clipboardUrl]);
+
+  const isDownloadableLink = (text: string): boolean => {
+    const text_trimmed = text.trim();
+    return /^(https?:\/\/|magnet:|ftp:\/\/)/.test(text_trimmed) && text_trimmed.length > 10;
+  };
+
+  useEffect(() => {
+    let mounted = true;
+    let retryCount = 0;
+    const maxRetries = 30;
+
+    const initializeApp = async () => {
+      // 加载设置
+      await loadSettings();
+
+      // 等待 aria2 连接
+      while (mounted && retryCount < maxRetries) {
+        const connected = await checkAria2Status();
+        if (connected) {
+          break;
+        }
+        retryCount++;
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
 
-      await loadTasks()
-    } catch (error) {
-      setNotice({
-        tone: "error",
-        message: error instanceof Error ? error.message : "操作失败",
-      })
-    }
-  }
+      if (mounted) {
+        refreshDownloads();
+        refreshGlobalStat();
+        refreshHistory();
 
-  const confirmRemoveTasks = async (targets: Aria2Task[]) => {
+        const interval = setInterval(() => {
+          if (mounted) {
+            checkAria2Status();
+            refreshDownloads();
+            refreshGlobalStat();
+            refreshHistory();
+          }
+        }, 1000);
+
+        return () => {
+          clearInterval(interval);
+        };
+      }
+    };
+
+    const cleanupPromise = initializeApp();
+
+    return () => {
+      mounted = false;
+      cleanupPromise.then(cleanup => cleanup?.());
+    };
+  }, [loadSettings, checkAria2Status, refreshDownloads, refreshGlobalStat, refreshHistory]);
+
+  const handleAddDownload = async (url: string, options: any) => {
     try {
-      for (const task of targets) {
-        if (
-          task.status === "complete" ||
-          task.status === "error" ||
-          task.status === "removed"
-        ) {
-          await window.aria2.removeDownloadResult({ gid: task.gid })
-        } else {
-          await window.aria2.remove({ gid: task.gid })
+      await window.electronAPI.addDownload(url, options);
+      await refreshDownloads();
+      await refreshHistory();
+      setShowAddModal(false);
+    } catch (error) {
+      console.error('Failed to add download:', error);
+      setNotice({
+        title: t('noticeTitle'),
+        message: `${t('failedToAddDownload')}: ${error}`,
+        variant: 'error'
+      });
+    }
+  };
+
+  const handlePause = async (gid: string) => {
+    try {
+      await window.electronAPI.pauseDownload(gid);
+      await refreshDownloads();
+    } catch (error) {
+      console.error('Failed to pause download:', error);
+    }
+  };
+
+  const handleResume = async (gid: string) => {
+    try {
+      await window.electronAPI.resumeDownload(gid);
+      await refreshDownloads();
+    } catch (error) {
+      console.error('Failed to resume download:', error);
+    }
+  };
+
+  const handleRemove = async (gid: string) => {
+    try {
+      // 查找任务
+      const allTasks = [...downloads.active, ...downloads.waiting, ...downloads.stopped];
+      const task = allTasks.find(t => t.gid === gid) || historyTasks.find(t => t.gid === gid);
+
+      if (!task) return;
+
+      const fileName = task.files?.[0]?.path?.split('/').pop() || task.fileName || t('unknown');
+      const filePath = task.files?.[0]?.path || (
+        task.dir && task.fileName ? `${task.dir}/${task.fileName}` : ''
+      );
+
+      setDeleteConfirmTask({
+        gid: task.gid,
+        fileName,
+        filePath,
+        status: task.status,
+        isLiveTask: allTasks.some(item => item.gid === task.gid)
+      });
+    } catch (error) {
+      console.error('Failed to prepare task deletion:', error);
+    }
+  };
+
+  const handleDeleteConfirm = async (deleteFile: boolean) => {
+    if (!deleteConfirmTask) return;
+
+    try {
+      // 删除本地文件
+      if (deleteFile && deleteConfirmTask.filePath) {
+        const result = await window.electronAPI.deleteDownloadFile(deleteConfirmTask.filePath);
+        if (!result.success) {
+          if (result.error === 'File not found') {
+            setNotice({
+              title: t('noticeTitle'),
+              message: t('fileNotFound'),
+              variant: 'error'
+            });
+          } else {
+            console.error('Failed to delete file:', result.error);
+            setNotice({
+              title: t('noticeTitle'),
+              message: `${t('deleteFileFailed')}: ${result.error}`,
+              variant: 'error'
+            });
+          }
         }
       }
 
-      setNotice({
-        tone: "success",
-        message: `已移除 ${targets.length} 个任务`,
-      })
-      setDeleteTarget(null)
-      setDeleteBatchTargets([])
-      setSelected(new Set())
-      await loadTasks()
+      // 只对仍在 aria2 中的任务调用移除接口，已结束或历史任务只清理历史记录
+      if (deleteConfirmTask.isLiveTask && ['active', 'waiting', 'paused'].includes(deleteConfirmTask.status)) {
+        await window.electronAPI.removeDownload(deleteConfirmTask.gid);
+      }
+
+      // 删除任务记录
+      await window.electronAPI.removeFromHistory(deleteConfirmTask.gid);
+      await refreshDownloads();
+      await refreshHistory();
+
+      // 如果删除的是当前选中的任务，返回列表
+      if (selectedTaskGid === deleteConfirmTask.gid) {
+        setCurrentView('list');
+        setSelectedTaskGid(null);
+      }
+
+      setDeleteConfirmTask(null);
     } catch (error) {
+      console.error('Failed to delete task:', error);
       setNotice({
-        tone: "error",
-        message: error instanceof Error ? error.message : "移除任务失败",
-      })
+        title: t('noticeTitle'),
+        message: `${t('deleteTaskFailed')}: ${error}`,
+        variant: 'error'
+      });
     }
-  }
+  };
 
-  const runBatchAction = async (action: "pause" | "resume" | "remove") => {
-    const selectedTasks = tasks.filter((task) => selected.has(task.gid))
-    if (action === "remove") {
-      setDeleteBatchTargets(selectedTasks)
-      return
-    }
+  const handleSelectTask = (gid: string) => {
+    setSelectedTaskGid(gid);
+  };
 
-    for (const task of selectedTasks) {
-      await runTaskAction(task, action)
-    }
-    setSelected(new Set())
-  }
+  const handleBackToList = () => {
+    setCurrentView('list');
+    setSelectedTaskGid(null);
+  };
 
-  const clearTorrent = () => {
-    setForm((current) => ({
-      ...current,
-      torrentPath: "",
-      selectedTorrentFiles: "",
-    }))
-  }
+  const handleShowSettings = () => {
+    setSelectedTaskGid(null);
+    setCurrentView('settings');
+  };
 
-  const openAddTaskDialog = useCallback(async () => {
-    setAddTaskError(null)
-    setAddTaskTab("uri")
-    setAddOpen(true)
-
-    const clipboardText = await navigator.clipboard.readText().catch(() => "")
-    const parsedCurl = parseCurlCommand(clipboardText)
-    const detectedUris = parsedCurl?.uris ?? splitTaskLinks(clipboardText)
-
-    if (parsedCurl) {
-      setForm((current) => ({
-        ...current,
-        uris: parsedCurl.uris.join("\n"),
-      }))
-      return
-    }
-
-    if (detectedUris.length > 0) {
-      setForm((current) => ({
-        ...current,
-        uris: current.uris || detectedUris.join("\n"),
-      }))
-    }
-  }, [])
+  const handleBackFromSettings = () => {
+    setCurrentView('list');
+    loadSettings(); // 重新加载设置
+  };
 
   return (
-    <div className="app-shell-bg relative flex h-screen overflow-hidden bg-background text-foreground">
-      <div className="noise-overlay pointer-events-none absolute inset-0 opacity-20" />
-      <PrimaryAside
-        page={page}
-        onNavigate={setPage}
-        onAddTask={() => void openAddTaskDialog()}
-      />
+    <div className="app-window flex h-screen flex-col overflow-hidden bg-[#FFF8F7] text-[#2D2522]">
+      <TitleBar />
 
-      {page === "tasks" ? (
-        <main className="relative z-10 flex min-w-0 flex-1 gap-0">
-          <TaskSubnav
-            status={status}
-            onStatusChange={(nextStatus) => {
-              setSelected(new Set())
-              setStatus(nextStatus)
-            }}
-          />
-          <section className="flex min-w-0 flex-1 flex-col overflow-hidden bg-background">
-            <header className="border-b bg-background px-5 py-4">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <div className="mb-1 flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase">
-                    <Sparkles className="size-3.5 text-primary" /> Grabbit
-                  </div>
-                  <h1 className="text-lg font-semibold">
-                    {statusLabels[status]}
-                  </h1>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {statusMeta[status].caption}
-                  </p>
-                </div>
-                <div className="hidden items-center gap-3 xl:flex">
-                  <MetricChip
-                    label="可见任务"
-                    value={`${visibleTasks.length}/${tasks.length}`}
-                  />
-                  <MetricChip
-                    label="实时速度"
-                    value={`${formatBytes(totalSpeed)}/s`}
-                    accent
-                  />
-                </div>
-              </div>
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => void loadTasks()}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <Loader2 className="animate-spin" />
-                  ) : (
-                    <RotateCw />
-                  )}
-                  刷新
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => void window.aria2.pauseAll().then(loadTasks)}
-                >
-                  <Pause />
-                  全部暂停
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => void window.aria2.unpauseAll().then(loadTasks)}
-                >
-                  <Play />
-                  全部开始
-                </Button>
-                {status === "stopped" ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      void window.aria2.purgeDownloadResult().then(loadTasks)
-                    }
-                  >
-                    <Trash2 />
-                    清空记录
-                  </Button>
-                ) : null}
-                <Button size="sm" onClick={() => void openAddTaskDialog()}>
-                  <Plus />
-                  新建任务
-                </Button>
-              </div>
-            </header>
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar
+          currentCategory={currentCategory}
+          currentView={currentView}
+          onCategoryChange={(c) => {
+            setCurrentView('list')
+            setSelectedTaskGid(null)
+            setCurrentCategory(c)
+            setCategoryUpdates(previous => ({
+              ...previous,
+              [c]: 0
+            }))
+          }}
+          onSettingsClick={handleShowSettings}
+          categoryUpdates={categoryUpdates}
+        />
 
-            {selected.size > 0 ? (
-              <div className="mx-4 mt-4 flex items-center justify-between rounded-md border bg-primary/10 px-4 py-3 text-sm text-primary shadow-sm">
-                <span>已选择 {selected.size} 个任务</span>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => void runBatchAction("pause")}
-                  >
-                    暂停
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => void runBatchAction("resume")}
-                  >
-                    开始
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => void runBatchAction("remove")}
-                  >
-                    移除
-                  </Button>
-                </div>
-              </div>
-            ) : null}
-
-            <div className="mx-4 mt-4 flex items-center gap-2 rounded-md border bg-background px-4 py-2 shadow-sm">
-              <Search className="size-4 text-muted-foreground" />
-              <Input
-                className="border-0 bg-transparent shadow-none focus-visible:ring-0"
-                aria-label="搜索任务"
-                placeholder="搜索任务名、GID、保存目录或原始链接"
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[#FFF8F7] pt-[67px]">
+          <main className="flex flex-1 flex-col overflow-hidden px-5">
+            {currentView === 'settings' ? (
+              <SettingsPage onBack={handleBackFromSettings} />
+            ) : (
+              <DownloadPage
+                downloads={downloads}
+                historyTasks={historyTasks}
+                globalStat={globalStat}
+                aria2Status={aria2Status}
+                settings={settings}
+                currentCategory={currentCategory}
+                selectedTaskGid={selectedTaskGid}
+                deleteConfirmTask={deleteConfirmTask}
+                initialModalOpen={showAddModal}
+                initialModalUrl={clipboardUrl}
+                onCategoryChange={setCurrentCategory}
+                onSelectTask={handleSelectTask}
+                onBackToList={handleBackToList}
+                onPause={handlePause}
+                onResume={handleResume}
+                onRemove={handleRemove}
+                onAddDownload={handleAddDownload}
+                onDeleteConfirm={handleDeleteConfirm}
+                onDeleteCancel={() => setDeleteConfirmTask(null)}
+                onModalClose={() => {
+                  setShowAddModal(false);
+                  setClipboardUrl('');
+                }}
               />
-              {searchQuery ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSearchQuery("")}
-                >
-                  清除
-                </Button>
-              ) : null}
+            )}
+          </main>
+
+          {currentView === 'list' && (
+            <div className="px-5 pb-4 pt-4">
+              <StatusBar globalStat={globalStat} />
             </div>
+          )}
+        </div>
+      </div>
 
-            <ScrollArea className="min-h-0 flex-1">
-              <div className="space-y-3 p-4 pb-16">
-                {notice ? (
-                  <NoticeBanner
-                    notice={notice}
-                    onClose={() => setNotice(null)}
-                  />
-                ) : null}
-                {loading && tasks.length === 0 ? (
-                  <div className="flex h-72 items-center justify-center text-muted-foreground">
-                    <Loader2 className="mr-2 animate-spin" /> 正在读取 aria2
-                    任务...
-                  </div>
-                ) : visibleTasks.length > 0 ? (
-                  visibleTasks.map((task) => (
-                    <TaskCard
-                      key={task.gid}
-                      task={task}
-                      selected={selected.has(task.gid)}
-                      onSelectedChange={(checked) => {
-                        setSelected((current) => {
-                          const next = new Set(current)
-                          if (checked) {
-                            next.add(task.gid)
-                          } else {
-                            next.delete(task.gid)
-                          }
-                          return next
-                        })
-                      }}
-                      onShowDetails={setDetailTask}
-                      onCopyLinks={copyTaskLinks}
-                      onOpenPath={openLocalPath}
-                      onAction={(task, action) => {
-                        if (action === "remove") {
-                          setDeleteTarget(task)
-                          return Promise.resolve()
-                        }
-                        return runTaskAction(task, action)
-                      }}
-                    />
-                  ))
-                ) : (
-                  <EmptyTasks onAddTask={() => void openAddTaskDialog()} />
-                )}
-              </div>
-            </ScrollArea>
-          </section>
-        </main>
-      ) : null}
-
-      {page === "preferences" ? (
-        <main className="relative z-10 flex min-w-0 flex-1 flex-col bg-background p-6">
-          <NoticeBanner
-            notice={{ tone: "error", message: "偏好设置功能暂不可用" }}
-            onClose={() => setPage("tasks")}
-          />
-        </main>
-      ) : null}
-      {page === "about" ? <AboutPage /> : null}
-
-      <Speedometer
-        speed={totalSpeed}
-        activeCount={tasks.filter((task) => task.status === "active").length}
-      />
-
-      <Dialog
-        open={addOpen}
-        onOpenChange={(open) => {
-          setAddOpen(open)
-          if (!open) {
-            setAddTaskError(null)
-          }
-        }}
-      >
-        <DialogContent className="flex h-[88vh] w-[min(720px,calc(100vw-2rem))] max-w-none grid-rows-none flex-col overflow-hidden p-0">
-          <DialogHeader className="shrink-0 p-4 pb-0">
-            <DialogTitle>新建下载任务</DialogTitle>
-            <DialogDescription>
-              支持 HTTP、HTTPS、FTP、磁力链接。每行一个链接。
-            </DialogDescription>
-          </DialogHeader>
-          <ScrollArea className="min-h-0 flex-1 overflow-hidden px-4">
-            <Tabs
-              value={addTaskTab}
-              onValueChange={(value) =>
-                setAddTaskTab(value as "uri" | "torrent")
-              }
-              className="min-h-0 pb-4"
-            >
-              <TabsList>
-                <TabsTrigger value="uri">链接任务</TabsTrigger>
-                <TabsTrigger value="torrent">种子任务</TabsTrigger>
-              </TabsList>
-              <TabsContent value="uri" className="space-y-4 pt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="uris">任务链接</Label>
-                  <Textarea
-                    id="uris"
-                    className="min-h-28"
-                    placeholder="https://example.com/file.zip\nmagnet:?xt=urn:btih:...\n或粘贴 curl 命令自动解析"
-                    value={form.uris}
-                    onChange={(event) =>
-                      setForm({ ...form, uris: event.target.value })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="dir">保存目录</Label>
-                  <Input
-                    id="dir"
-                    value={form.dir}
-                    onChange={(event) =>
-                      setForm({ ...form, dir: event.target.value })
-                    }
-                  />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="show-downloading"
-                    checked={form.showDownloading}
-                    onCheckedChange={(checked) =>
-                      setForm({ ...form, showDownloading: checked === true })
-                    }
-                  />
-                  <Label htmlFor="show-downloading">添加后跳转到正在下载</Label>
-                </div>
-              </TabsContent>
-              <TabsContent value="torrent" className="space-y-4 pt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="torrent-path">种子文件路径</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="torrent-path"
-                      placeholder="/path/to/file.torrent"
-                      value={form.torrentPath}
-                      onChange={(event) =>
-                        setForm({ ...form, torrentPath: event.target.value })
-                      }
-                    />
-                    <Button variant="outline" onClick={clearTorrent}>
-                      清除
-                    </Button>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="torrent-dir">保存目录</Label>
-                  <Input
-                    id="torrent-dir"
-                    value={form.dir}
-                    onChange={(event) =>
-                      setForm({ ...form, dir: event.target.value })
-                    }
-                  />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="torrent-show-downloading"
-                    checked={form.showDownloading}
-                    onCheckedChange={(checked) =>
-                      setForm({ ...form, showDownloading: checked === true })
-                    }
-                  />
-                  <Label htmlFor="torrent-show-downloading">
-                    添加后跳转到正在下载
-                  </Label>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </ScrollArea>
-          {addTaskError ? (
-            <div className="mx-4 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {addTaskError}
-            </div>
-          ) : null}
-          <DialogFooter className="mx-0 mb-0 shrink-0 border-t bg-background p-4">
-            <Button variant="outline" onClick={() => setAddOpen(false)}>
-              取消
-            </Button>
-            <Button onClick={() => void submitTask()}>提交</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={detailTask !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            setDetailTask(null)
-          }
-        }}
-      >
-        <DialogContent className="flex h-[86vh] w-[min(760px,calc(100vw-2rem))] max-w-none grid-rows-none flex-col overflow-hidden p-0">
-          <DialogHeader className="shrink-0 p-4 pb-0">
-            <DialogTitle>任务详情</DialogTitle>
-            <DialogDescription>
-              {detailTask
-                ? getTaskName(detailTask)
-                : "查看任务的下载信息、原始链接和文件列表。"}
-            </DialogDescription>
-          </DialogHeader>
-          {detailTask ? (
-            <TaskDetails
-              task={detailTask}
-              onCopy={(text, message) => void copyText(text, message)}
-              onOpenPath={(targetPath) => {
-                void openLocalPath(targetPath)
-              }}
-            />
-          ) : null}
-          <DialogFooter className="mx-0 mb-0 shrink-0 border-t bg-background p-4">
-            <Button variant="outline" onClick={() => setDetailTask(null)}>
-              关闭
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={deleteTarget !== null || deleteBatchTargets.length > 0}
-        onOpenChange={(open) => {
-          if (!open) {
-            setDeleteTarget(null)
-            setDeleteBatchTargets([])
-          }
-        }}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>确认移除任务？</DialogTitle>
-            <DialogDescription>
-              {deleteBatchTargets.length > 0
-                ? `将从列表中移除选中的 ${deleteBatchTargets.length} 个任务。`
-                : deleteTarget
-                  ? `将从列表中移除“${getTaskName(deleteTarget)}”。`
-                  : "将从列表中移除该任务。"}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDeleteTarget(null)
-                setDeleteBatchTargets([])
-              }}
-            >
-              取消
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                const targets =
-                  deleteBatchTargets.length > 0
-                    ? deleteBatchTargets
-                    : deleteTarget
-                      ? [deleteTarget]
-                      : []
-                if (targets.length > 0) {
-                  void confirmRemoveTasks(targets)
-                }
-              }}
-            >
-              移除
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {notice && (
+        <NoticeModal
+          isOpen={true}
+          title={notice.title}
+          message={notice.message}
+          variant={notice.variant}
+          onClose={() => setNotice(null)}
+          onConfirm={() => notice.onConfirm?.()}
+        />
+      )}
     </div>
-  )
-}
+  );
+};
 
-export default App
+export default App;
