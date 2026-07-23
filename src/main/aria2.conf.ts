@@ -86,7 +86,7 @@ async function basicOptions() {
 
 const httpFtpSftpOptions = [
   // The maximum number of connections to one server for each download
-  "--max-connection-per-server=8",
+  "--max-connection-per-server=5",
   // aria2 does not split less than 2*SIZE byte range
   "--min-split-size=1M",
   // Specify the path to the netrc file
@@ -96,7 +96,7 @@ const httpFtpSftpOptions = [
   // Specify the file name to load performance profile of the servers
   `--server-stat-if=${serverStatPath}`,
   // Download a file using N connections
-  "--split=8",
+  "--split=5",
   // Specify piece selection algorithm used in HTTP/FTP download
   "--stream-piece-selector=geom",
 ]
