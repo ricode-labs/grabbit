@@ -5,7 +5,7 @@ export function useGlobalStat() {
 
   const refreshGlobalStat = useCallback(async () => {
     try {
-      const stat = await window.electronAPI.getGlobalStat();
+      const stat = await window.aria2.getGlobalStat();
       setGlobalStat(stat);
     } catch (error) {
       console.error('Failed to fetch global stat:', error);

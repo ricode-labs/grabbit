@@ -6,7 +6,7 @@ export function useHistory() {
 
   const refreshHistory = useCallback(async () => {
     try {
-      const history = await window.electronAPI.getHistory();
+      const history = await window.aria2.tellStopped({ offset: 0, num: 100 });
       setHistoryTasks(history);
       setIsLoaded(true);
     } catch (error) {

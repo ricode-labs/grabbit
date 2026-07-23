@@ -13,24 +13,13 @@ export function useAria2Status() {
 
   const checkAria2Status = useCallback(async () => {
     try {
-      const status = await window.electronAPI.getAria2Status();
+      await window.aria2.getVersion();
+      const status = { connected: true, message: 'Connected to aria2' };
       setAria2Status(status);
-      return status.connected;
+      return true;
     } catch (error) {
       console.error('Failed to check aria2 status:', error);
       setAria2Status({ connected: false, message: 'Failed to check aria2 status' });
-
-      // Try to reconnect if connection check fails
-      try {
-        const reconnectResult = await window.electronAPI.reconnectAria2();
-        if (reconnectResult.success) {
-          setAria2Status({ connected: true, message: 'Reconnected to aria2' });
-          return true;
-        }
-      } catch (reconnectError) {
-        console.error('Reconnection attempt failed:', reconnectError);
-      }
-
       return false;
     }
   }, []);

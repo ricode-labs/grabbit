@@ -13,6 +13,15 @@ import {
   useHistory,
   useGlobalStat
 } from './hooks';
+import type {
+  AddTorrentPayload,
+  AddUriPayload,
+  Aria2GlobalStat,
+  Aria2Status,
+  GidPayload,
+  Options,
+  TellRangePayload
+} from '../shared/aria2';
 
 interface ElectronAPI {
   getAria2Status: () => Promise<{ connected: boolean; message: string }>;
@@ -43,9 +52,25 @@ interface ElectronAPI {
   isMaximized: () => Promise<boolean>;
 }
 
+interface Aria2API {
+  addUri: (payload: AddUriPayload) => Promise<string>;
+  addTorrent: (payload: AddTorrentPayload) => Promise<string>;
+  remove: (payload: GidPayload) => Promise<string>;
+  removeDownloadResult: (payload: GidPayload) => Promise<'OK'>;
+  pause: (payload: GidPayload) => Promise<string>;
+  unpause: (payload: GidPayload) => Promise<string>;
+  tellStatus: (payload: GidPayload) => Promise<Aria2Status>;
+  tellActive: (keys?: string[]) => Promise<Aria2Status[]>;
+  tellWaiting: (payload: TellRangePayload) => Promise<Aria2Status[]>;
+  tellStopped: (payload: TellRangePayload) => Promise<Aria2Status[]>;
+  getGlobalStat: () => Promise<Aria2GlobalStat>;
+  changeGlobalOption: (payload: Options) => Promise<'OK'>;
+}
+
 declare global {
   interface Window {
     electronAPI: ElectronAPI;
+    aria2: Aria2API;
   }
 }
 
@@ -190,7 +215,14 @@ const App: React.FC = () => {
 
   const handleAddDownload = async (url: string, options: any) => {
     try {
-      await window.electronAPI.addDownload(url, options);
+      if (/\.torrent(?:$|[?#])/i.test(url)) {
+        await window.aria2.addTorrent({ torrentPath: url, options });
+      } else {
+        await window.aria2.addUri({
+          uris: url.trim().split(/\s+/),
+          options
+        });
+      }
       await refreshDownloads();
       await refreshHistory();
       setShowAddModal(false);
@@ -206,7 +238,7 @@ const App: React.FC = () => {
 
   const handlePause = async (gid: string) => {
     try {
-      await window.electronAPI.pauseDownload(gid);
+      await window.aria2.pause({ gid });
       await refreshDownloads();
     } catch (error) {
       console.error('Failed to pause download:', error);
@@ -215,7 +247,7 @@ const App: React.FC = () => {
 
   const handleResume = async (gid: string) => {
     try {
-      await window.electronAPI.resumeDownload(gid);
+      await window.aria2.unpause({ gid });
       await refreshDownloads();
     } catch (error) {
       console.error('Failed to resume download:', error);
@@ -274,11 +306,13 @@ const App: React.FC = () => {
 
       // 只对仍在 aria2 中的任务调用移除接口，已结束或历史任务只清理历史记录
       if (deleteConfirmTask.isLiveTask && ['active', 'waiting', 'paused'].includes(deleteConfirmTask.status)) {
-        await window.electronAPI.removeDownload(deleteConfirmTask.gid);
+        await window.aria2.remove({ gid: deleteConfirmTask.gid });
       }
 
       // 删除任务记录
-      await window.electronAPI.removeFromHistory(deleteConfirmTask.gid);
+      if (!['active', 'waiting', 'paused'].includes(deleteConfirmTask.status)) {
+        await window.aria2.removeDownloadResult({ gid: deleteConfirmTask.gid });
+      }
       await refreshDownloads();
       await refreshHistory();
 
