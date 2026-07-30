@@ -1,6 +1,8 @@
 import { clipboard, shell } from "electron"
 import { app, BrowserWindow, dialog, ipcMain } from "electron/main"
 import { callAria2 } from "./aria2"
+import parseTorrent from "parse-torrent"
+
 import type {
   AddMetalinkPayload,
   AddTorrentPayload,
@@ -24,7 +26,6 @@ import type {
 } from "../shared/aria2"
 import { outputJSON, readFile } from "fs-extra"
 import fs from "node:fs/promises"
-import { createRequire } from "node:module"
 import path from "node:path"
 import { preferencesPath } from "./paths"
 import { getMainWindow } from "./window"
@@ -290,26 +291,16 @@ export function registerIpcHandlers() {
   ipcMain.handle("grabbit.getClipboardText", () => clipboard.readText())
 
   ipcMain.handle(
-    "electronAPI.getTorrentInfo",
+    "grabbit.getTorrentInfo",
     async (_event, torrentPath: string) => {
       try {
         const torrent = await readFile(torrentPath)
-        const parseTorrent = createRequire(import.meta.url)(
-          "parse-torrent"
-        ) as (torrent: Buffer) => {
-          name?: string
-          length?: number
-          files?: Array<{ path?: string; name?: string; length?: number }>
+        const parsed = parseTorrent(torrent)
+        if (!("files" in parsed) || !parsed.files?.length) {
+          throw new Error("Torrent file does not contain file metadata")
         }
-        const parsed = parseTorrent(torrent) as {
-          name?: string
-          length?: number
-          files?: Array<{ path?: string; name?: string; length?: number }>
-        }
-        const fileEntries = parsed.files?.length
-          ? parsed.files
-          : [{ path: parsed.name, name: parsed.name, length: parsed.length }]
-        const files = fileEntries.map((file, index) => ({
+
+        const files = parsed.files.map((file, index) => ({
           name:
             file.path ||
             file.name ||
@@ -318,7 +309,7 @@ export function registerIpcHandlers() {
           isExpanded: false,
           index: String(index + 1),
           isFile: true,
-          length: file.length || 0,
+          length: file.length,
         }))
 
         return {
@@ -329,7 +320,9 @@ export function registerIpcHandlers() {
               path.basename(torrentPath, path.extname(torrentPath)),
             files,
             isMultiFile: files.length > 1,
-            totalSize: files.reduce((sum, file) => sum + file.length, 0),
+            totalSize:
+              parsed.length ??
+              files.reduce((sum, file) => sum + file.length, 0),
           },
         }
       } catch (error) {

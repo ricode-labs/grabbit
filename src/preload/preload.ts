@@ -190,11 +190,13 @@ contextBridge.exposeInMainWorld("grabbit", {
   selectTorrentFile: () => ipcRenderer.invoke("grabbit.selectTorrentFile"),
 
   getClipboardText: () => ipcRenderer.invoke("grabbit.getClipboardText"),
+
+  getTorrentInfo: (torrentPath: string) =>
+    ipcRenderer.invoke("grabbit.getTorrentInfo", torrentPath),
 })
 
 contextBridge.exposeInMainWorld("electronAPI", {
-  getTorrentInfo: (torrentPath: string) =>
-    ipcRenderer.invoke("electronAPI.getTorrentInfo", torrentPath),
+  
   getDownloadMetadata: (url: string) =>
     ipcRenderer.invoke("electronAPI.getDownloadMetadata", url),
   getDiskSpace: (dir: string) =>
