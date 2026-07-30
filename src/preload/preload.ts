@@ -184,11 +184,13 @@ type UISettingsPayload = Partial<{
 contextBridge.exposeInMainWorld("grabbit", {
   saveSettings: (payload: GrabbitSettings) =>
     ipcRenderer.invoke("grabbit.saveSettings", payload),
+
+  selectFolder: () => ipcRenderer.invoke("grabbit.selectFolder"),
 })
 
 contextBridge.exposeInMainWorld("electronAPI", {
  
-  selectFolder: () => ipcRenderer.invoke("electronAPI.selectFolder"),
+  
   selectTorrentFile: () => ipcRenderer.invoke("electronAPI.selectTorrentFile"),
   getClipboardText: () => ipcRenderer.invoke("electronAPI.getClipboardText"),
   getTorrentInfo: (torrentPath: string) =>
