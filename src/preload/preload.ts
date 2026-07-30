@@ -193,6 +193,9 @@ contextBridge.exposeInMainWorld("grabbit", {
 
   getTorrentInfo: (torrentPath: string) =>
     ipcRenderer.invoke("grabbit.getTorrentInfo", torrentPath),
+
+  deleteDownloadFile: (filePath: string) =>
+    ipcRenderer.invoke("grabbit.deleteDownloadFile", filePath),
 })
 
 contextBridge.exposeInMainWorld("electronAPI", {
@@ -201,8 +204,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("electronAPI.getDownloadMetadata", url),
   getDiskSpace: (dir: string) =>
     ipcRenderer.invoke("electronAPI.getDiskSpace", dir),
-  deleteDownloadFile: (filePath: string) =>
-    ipcRenderer.invoke("electronAPI.deleteDownloadFile", filePath),
+  
   getUISettings: () => ipcRenderer.invoke("electronAPI.getUISettings"),
   updateUISettings: (payload: UISettingsPayload) =>
     ipcRenderer.invoke("electronAPI.updateUISettings", payload),

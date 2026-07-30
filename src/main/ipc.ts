@@ -393,23 +393,10 @@ export function registerIpcHandlers() {
   })
 
   ipcMain.handle(
-    "electronAPI.deleteDownloadFile",
+    "grabbit.deleteDownloadFile",
     async (_event, filePath: string) => {
-      try {
-        await shell.trashItem(filePath)
-        return { success: true }
-      } catch (error) {
-        const nodeError = error as NodeJS.ErrnoException
-        return {
-          success: false,
-          error:
-            nodeError.code === "ENOENT"
-              ? "File not found"
-              : error instanceof Error
-                ? error.message
-                : "Failed to delete file",
-        }
-      }
+      await shell.trashItem(filePath)
+      return true
     }
   )
 
