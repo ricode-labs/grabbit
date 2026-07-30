@@ -186,12 +186,14 @@ contextBridge.exposeInMainWorld("grabbit", {
     ipcRenderer.invoke("grabbit.saveSettings", payload),
 
   selectFolder: () => ipcRenderer.invoke("grabbit.selectFolder"),
+
+   selectTorrentFile: () => ipcRenderer.invoke("grabbit.selectTorrentFile"),
 })
 
 contextBridge.exposeInMainWorld("electronAPI", {
  
   
-  selectTorrentFile: () => ipcRenderer.invoke("electronAPI.selectTorrentFile"),
+ 
   getClipboardText: () => ipcRenderer.invoke("electronAPI.getClipboardText"),
   getTorrentInfo: (torrentPath: string) =>
     ipcRenderer.invoke("electronAPI.getTorrentInfo", torrentPath),

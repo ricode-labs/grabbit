@@ -279,14 +279,11 @@ export function registerIpcHandlers() {
     return result.canceled ? null : result.filePaths[0]
   })
 
-  ipcMain.handle("electronAPI.selectTorrentFile", async () => {
-    const window =
-      BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
-    const result = await dialog.showOpenDialog(window, {
+  ipcMain.handle("grabbit.selectTorrentFile", async () => {
+    const result = await dialog.showOpenDialog(getMainWindow(), {
       properties: ["openFile"],
       filters: [{ name: "Torrent", extensions: ["torrent"] }],
     })
-
     return result.canceled ? null : result.filePaths[0]
   })
 
