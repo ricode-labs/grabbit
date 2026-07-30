@@ -1,11 +1,5 @@
 import { useState, useCallback } from 'react';
-
-export interface AppSettings {
-  maxDownloadSpeed: number;
-  maxUploadSpeed: number;
-  maxConcurrent: number;
-  defaultDownloadDir: string;
-}
+import { mapGlobalOptionsToSettings, type AppSettings } from '../utils/settings';
 
 export function useSettings() {
   const [settings, setSettings] = useState<AppSettings>({
@@ -17,7 +11,7 @@ export function useSettings() {
 
   const loadSettings = useCallback(async () => {
     try {
-      const loadedSettings = await window.electronAPI.getSettings();
+      const loadedSettings = mapGlobalOptionsToSettings(await window.aria2.getGlobalOption());
       setSettings(loadedSettings);
     } catch (error) {
       console.error('Failed to load settings:', error);

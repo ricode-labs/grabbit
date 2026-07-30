@@ -36,7 +36,6 @@ interface ElectronAPI {
   getHistory: () => Promise<any[]>;
   removeFromHistory: (gid: string) => Promise<void>;
   deleteDownloadFile: (filePath: string) => Promise<any>;
-  getSettings: () => Promise<any>;
   updateSettings: (settings: any) => Promise<any>;
   getUISettings: () => Promise<{ theme: 'light' | 'dark'; language: 'zh' | 'ja' | 'en' }>;
   updateUISettings: (settings: any) => Promise<any>;
@@ -63,6 +62,7 @@ interface Aria2API {
   tellActive: (keys?: string[]) => Promise<Aria2Status[]>;
   tellWaiting: (payload: TellRangePayload) => Promise<Aria2Status[]>;
   tellStopped: (payload: TellRangePayload) => Promise<Aria2Status[]>;
+  getGlobalOption: () => Promise<Options>;
   getGlobalStat: () => Promise<Aria2GlobalStat>;
   changeGlobalOption: (payload: Options) => Promise<'OK'>;
 }

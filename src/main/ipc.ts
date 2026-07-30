@@ -257,6 +257,8 @@ export function registerIpcHandlers() {
     return await callAria2<Ok>("aria2.saveSession")
   })
 
+  ipcMain.handle("grabbit.saveSettings", async () => {})
+
   // ipcMain.handle("tasks:delete-files", (_event, task: Aria2Task) =>
   //   deleteTaskFiles(task)
   // )

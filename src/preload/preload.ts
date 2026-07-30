@@ -175,7 +175,10 @@ import type {
 //     ipcRenderer.invoke("app:get-default-dir") as Promise<string>,
 // }
 
-contextBridge.exposeInMainWorld("grabbit", {})
+contextBridge.exposeInMainWorld("grabbit", {
+  saveSettings: (payload) =>
+    ipcRenderer.invoke("grabbit.saveSettings", payload),
+})
 
 contextBridge.exposeInMainWorld("aria2", {
   // This method adds a new download
