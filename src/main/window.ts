@@ -46,3 +46,7 @@ export function toggleDevTools() {
   showWindow()
   mainWindow?.webContents.toggleDevTools()
 }
+
+export function getMainWindow() {
+  return mainWindow!
+}

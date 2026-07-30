@@ -6,9 +6,15 @@ import type {
   ChangeOptionPayload,
   ChangeUriPayload,
   GidPayload,
+  GrabbitSettings,
   Options,
   TellRangePayload,
 } from "../shared/aria2"
+
+type UISettingsPayload = Partial<{
+  theme: "light" | "dark"
+  language: "zh" | "ja" | "en"
+}>
 // import type {
 //   EnginePathInfo,
 //   ExternalTaskIntent,
@@ -176,8 +182,30 @@ import type {
 // }
 
 contextBridge.exposeInMainWorld("grabbit", {
-  saveSettings: (payload) =>
+  saveSettings: (payload: GrabbitSettings) =>
     ipcRenderer.invoke("grabbit.saveSettings", payload),
+})
+
+contextBridge.exposeInMainWorld("electronAPI", {
+ 
+  selectFolder: () => ipcRenderer.invoke("electronAPI.selectFolder"),
+  selectTorrentFile: () => ipcRenderer.invoke("electronAPI.selectTorrentFile"),
+  getClipboardText: () => ipcRenderer.invoke("electronAPI.getClipboardText"),
+  getTorrentInfo: (torrentPath: string) =>
+    ipcRenderer.invoke("electronAPI.getTorrentInfo", torrentPath),
+  getDownloadMetadata: (url: string) =>
+    ipcRenderer.invoke("electronAPI.getDownloadMetadata", url),
+  getDiskSpace: (dir: string) =>
+    ipcRenderer.invoke("electronAPI.getDiskSpace", dir),
+  deleteDownloadFile: (filePath: string) =>
+    ipcRenderer.invoke("electronAPI.deleteDownloadFile", filePath),
+  getUISettings: () => ipcRenderer.invoke("electronAPI.getUISettings"),
+  updateUISettings: (payload: UISettingsPayload) =>
+    ipcRenderer.invoke("electronAPI.updateUISettings", payload),
+  minimizeWindow: () => ipcRenderer.invoke("electronAPI.minimizeWindow"),
+  maximizeWindow: () => ipcRenderer.invoke("electronAPI.maximizeWindow"),
+  closeWindow: () => ipcRenderer.invoke("electronAPI.closeWindow"),
+  isMaximized: () => ipcRenderer.invoke("electronAPI.isMaximized"),
 })
 
 contextBridge.exposeInMainWorld("aria2", {

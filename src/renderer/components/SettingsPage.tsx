@@ -84,10 +84,10 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
         parseFloat(uploadSpeedValue) * (uploadSpeedUnit === 'MB/s' ? 1024 * 1024 : 1024);
 
       const newSettings = {
-        maxDownloadSpeed: downloadSpeed,
-        maxUploadSpeed: uploadSpeed,
-        maxConcurrent: settings.maxConcurrent,
-        defaultDownloadDir: settings.defaultDownloadDir
+        'max-overall-download-limit': String(downloadSpeed),
+        'max-overall-upload-limit': String(uploadSpeed),
+        'max-concurrent-downloads': String(settings.maxConcurrent),
+        dir: settings.defaultDownloadDir
       };
 
       await window.electronAPI.updateSettings(newSettings);

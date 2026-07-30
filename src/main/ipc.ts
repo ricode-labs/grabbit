@@ -1,4 +1,5 @@
-import { ipcMain } from "electron/main"
+import { clipboard, shell } from "electron"
+import { app, BrowserWindow, dialog, ipcMain } from "electron/main"
 import { callAria2 } from "./aria2"
 import type {
   AddMetalinkPayload,
@@ -15,12 +16,18 @@ import type {
   ChangeOptionPayload,
   ChangeUriPayload,
   GidPayload,
+  GrabbitSettings,
   Ok,
   Options,
   ChangePositionPayload,
   TellRangePayload,
 } from "../shared/aria2"
-import { readFile } from "fs-extra"
+import { outputJSON, readFile } from "fs-extra"
+import fs from "node:fs/promises"
+import { createRequire } from "node:module"
+import path from "node:path"
+import { preferencesPath } from "./paths"
+import { getMainWindow } from "./window"
 
 export function registerIpcHandlers() {
   ipcMain.handle("aria2.addUri", async (_event, payload: AddUriPayload) => {
@@ -257,7 +264,236 @@ export function registerIpcHandlers() {
     return await callAria2<Ok>("aria2.saveSession")
   })
 
-  ipcMain.handle("grabbit.saveSettings", async () => {})
+  ipcMain.handle(
+    "grabbit.saveSettings",
+    async (_event, payload: GrabbitSettings) => {
+      await outputJSON(preferencesPath, payload, "utf8")
+      return true
+    }
+  )
+
+  ipcMain.handle("grabbit.selectFolder", async () => {
+    const result = await dialog.showOpenDialog(getMainWindow(), {
+      properties: ["openDirectory", "createDirectory"],
+    })
+    return result.canceled ? null : result.filePaths[0]
+  })
+
+  ipcMain.handle("electronAPI.selectTorrentFile", async () => {
+    const window =
+      BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
+    const result = await dialog.showOpenDialog(window, {
+      properties: ["openFile"],
+      filters: [{ name: "Torrent", extensions: ["torrent"] }],
+    })
+
+    return result.canceled ? null : result.filePaths[0]
+  })
+
+  ipcMain.handle("electronAPI.getClipboardText", () => clipboard.readText())
+
+  ipcMain.handle(
+    "electronAPI.getTorrentInfo",
+    async (_event, torrentPath: string) => {
+      try {
+        const torrent = await readFile(torrentPath)
+        const parseTorrent = createRequire(import.meta.url)(
+          "parse-torrent"
+        ) as (torrent: Buffer) => {
+          name?: string
+          length?: number
+          files?: Array<{ path?: string; name?: string; length?: number }>
+        }
+        const parsed = parseTorrent(torrent) as {
+          name?: string
+          length?: number
+          files?: Array<{ path?: string; name?: string; length?: number }>
+        }
+        const fileEntries = parsed.files?.length
+          ? parsed.files
+          : [{ path: parsed.name, name: parsed.name, length: parsed.length }]
+        const files = fileEntries.map((file, index) => ({
+          name:
+            file.path ||
+            file.name ||
+            `${parsed.name || "torrent"}-${index + 1}`,
+          selected: true,
+          isExpanded: false,
+          index: String(index + 1),
+          isFile: true,
+          length: file.length || 0,
+        }))
+
+        return {
+          success: true,
+          info: {
+            name:
+              parsed.name ||
+              path.basename(torrentPath, path.extname(torrentPath)),
+            files,
+            isMultiFile: files.length > 1,
+            totalSize: files.reduce((sum, file) => sum + file.length, 0),
+          },
+        }
+      } catch (error) {
+        return {
+          success: false,
+          error:
+            error instanceof Error ? error.message : "Failed to parse torrent",
+        }
+      }
+    }
+  )
+
+  ipcMain.handle(
+    "electronAPI.getDownloadMetadata",
+    async (_event, url: string) => {
+      try {
+        const response = await fetch(url, {
+          method: "HEAD",
+          redirect: "follow",
+        })
+        const contentDisposition =
+          response.headers.get("content-disposition") || ""
+        const fileNameMatch = contentDisposition.match(
+          /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i
+        )
+        const fileName = fileNameMatch?.[1]
+          ? decodeURIComponent(fileNameMatch[1])
+          : fileNameMatch?.[2] ||
+            path.basename(new URL(response.url || url).pathname)
+
+        return {
+          success: true,
+          metadata: {
+            fileName,
+            totalLength: Number(response.headers.get("content-length")) || 0,
+            contentType: response.headers.get("content-type") || undefined,
+            acceptRanges: response.headers.get("accept-ranges") === "bytes",
+            finalUrl: response.url,
+            statusCode: response.status,
+          },
+        }
+      } catch (error) {
+        return {
+          success: false,
+          error:
+            error instanceof Error ? error.message : "Failed to fetch metadata",
+        }
+      }
+    }
+  )
+
+  ipcMain.handle("electronAPI.getDiskSpace", async (_event, dir: string) => {
+    try {
+      const stats = await fs.statfs(dir)
+      return {
+        success: true,
+        available: stats.bavail * stats.bsize,
+        total: stats.blocks * stats.bsize,
+        path: dir,
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error instanceof Error ? error.message : "Failed to get disk space",
+      }
+    }
+  })
+
+  ipcMain.handle(
+    "electronAPI.deleteDownloadFile",
+    async (_event, filePath: string) => {
+      try {
+        await shell.trashItem(filePath)
+        return { success: true }
+      } catch (error) {
+        const nodeError = error as NodeJS.ErrnoException
+        return {
+          success: false,
+          error:
+            nodeError.code === "ENOENT"
+              ? "File not found"
+              : error instanceof Error
+                ? error.message
+                : "Failed to delete file",
+        }
+      }
+    }
+  )
+
+  ipcMain.handle("electronAPI.getUISettings", async () => {
+    try {
+      const settingsPath = path.join(
+        app.getPath("userData"),
+        "ui-settings.json"
+      )
+      const rawSettings = await fs.readFile(settingsPath, "utf8")
+      return { theme: "light", language: "zh", ...JSON.parse(rawSettings) }
+    } catch {
+      return { theme: "light", language: "zh" }
+    }
+  })
+
+  ipcMain.handle(
+    "electronAPI.updateUISettings",
+    async (
+      _event,
+      payload: Partial<{
+        theme: "light" | "dark"
+        language: "zh" | "ja" | "en"
+      }>
+    ) => {
+      const settingsPath = path.join(
+        app.getPath("userData"),
+        "ui-settings.json"
+      )
+      let settings: { theme: "light" | "dark"; language: "zh" | "ja" | "en" } =
+        {
+          theme: "light",
+          language: "zh",
+        }
+      try {
+        settings = {
+          ...settings,
+          ...JSON.parse(await fs.readFile(settingsPath, "utf8")),
+        }
+      } catch {}
+      settings = { ...settings, ...payload }
+      await fs.mkdir(path.dirname(settingsPath), { recursive: true })
+      await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2))
+      return settings
+    }
+  )
+
+  ipcMain.handle("electronAPI.minimizeWindow", () => {
+    const window =
+      BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
+    window?.minimize()
+  })
+
+  ipcMain.handle("electronAPI.maximizeWindow", () => {
+    const window =
+      BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
+    if (window?.isMaximized()) {
+      window.unmaximize()
+    } else {
+      window?.maximize()
+    }
+  })
+
+  ipcMain.handle("electronAPI.closeWindow", () => {
+    const window =
+      BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
+    window?.close()
+  })
+
+  ipcMain.handle("electronAPI.isMaximized", () => {
+    const window =
+      BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
+    return window?.isMaximized() ?? false
+  })
 
   // ipcMain.handle("tasks:delete-files", (_event, task: Aria2Task) =>
   //   deleteTaskFiles(task)
