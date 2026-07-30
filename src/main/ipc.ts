@@ -287,7 +287,7 @@ export function registerIpcHandlers() {
     return result.canceled ? null : result.filePaths[0]
   })
 
-  ipcMain.handle("electronAPI.getClipboardText", () => clipboard.readText())
+  ipcMain.handle("grabbit.getClipboardText", () => clipboard.readText())
 
   ipcMain.handle(
     "electronAPI.getTorrentInfo",
