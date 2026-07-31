@@ -14,6 +14,7 @@ export function showWindow() {
   mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
+    frame: false,
     webPreferences: {
       preload: join(__dirname, "preload.js"),
     },
