@@ -418,8 +418,4 @@ export function registerIpcHandlers() {
   ipcMain.handle("grabbit.closeWindow", () => {
     closeWindow()
   })
-
-  ipcMain.handle("electronAPI.isMaximized", () => {
-    return getMainWindow().isMaximized()
-  })
 }

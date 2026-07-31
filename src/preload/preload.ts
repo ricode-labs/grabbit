@@ -200,7 +200,6 @@ contextBridge.exposeInMainWorld("grabbit", {
   minimizeWindow: () => ipcRenderer.invoke("grabbit.minimizeWindow"),
   maximizeWindow: () => ipcRenderer.invoke("grabbit.maximizeWindow"),
   closeWindow: () => ipcRenderer.invoke("grabbit.closeWindow"),
-  isMaximized: () => ipcRenderer.invoke("electronAPI.isMaximized"),
 })
 
 contextBridge.exposeInMainWorld("electronAPI", {
