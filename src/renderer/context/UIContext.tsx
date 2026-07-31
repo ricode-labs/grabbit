@@ -1,10 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { translations, Language, TranslationKey } from '../i18n/translations';
-
-interface UISettings {
-  theme: 'light' | 'dark';
-  language: Language;
-}
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import type { ReactNode } from 'react';
+import { translations } from '../i18n/translations';
+import type { Language, TranslationKey } from '../i18n/translations';
 
 interface UIContextType {
   theme: 'light' | 'dark';

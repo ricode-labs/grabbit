@@ -3,7 +3,7 @@ import { Sidebar } from './components/Sidebar';
 import { TitleBar } from './components/TitleBar';
 import { StatusBar } from './components/StatusBar';
 import { DownloadPage, SettingsPage } from './pages';
-import { CategoryType } from './components/DownloadList';
+import type { CategoryType } from './components/DownloadList';
 import { NoticeModal } from './components';
 import { useUI } from './context/UIContext';
 import {

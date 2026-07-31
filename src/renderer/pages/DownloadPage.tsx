@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { DownloadList, CategoryType } from '../components/DownloadList';
+import { DownloadList } from '../components/DownloadList';
+import type { CategoryType } from '../components/DownloadList';
 import { DownloadDetail } from '../components/DownloadDetail';
 import { AddDownloadModal } from '../components/AddDownloadModal';
 import { DeleteConfirmModal } from '../components/DeleteConfirmModal';

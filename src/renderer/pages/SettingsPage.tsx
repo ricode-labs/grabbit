@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sun, Moon } from 'lucide-react';
 import { useUI } from '../context/UIContext';
-import { Language } from '../i18n/translations';
+import type { Language } from '../i18n/translations';
 import { ListboxWrapper } from '../components/ui/ListboxWrapper';
 import { TooltipWrapper } from '../components/ui/TooltipWrapper';
 import { NoticeModal } from '../components/ui/NoticeModal';
