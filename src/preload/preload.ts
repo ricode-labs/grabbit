@@ -196,6 +196,11 @@ contextBridge.exposeInMainWorld("grabbit", {
 
   deleteDownloadFile: (filePath: string) =>
     ipcRenderer.invoke("grabbit.deleteDownloadFile", filePath),
+
+  minimizeWindow: () => ipcRenderer.invoke("grabbit.minimizeWindow"),
+  maximizeWindow: () => ipcRenderer.invoke("grabbit.maximizeWindow"),
+  closeWindow: () => ipcRenderer.invoke("grabbit.closeWindow"),
+  isMaximized: () => ipcRenderer.invoke("electronAPI.isMaximized"),
 })
 
 contextBridge.exposeInMainWorld("electronAPI", {
@@ -208,10 +213,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getUISettings: () => ipcRenderer.invoke("electronAPI.getUISettings"),
   updateUISettings: (payload: UISettingsPayload) =>
     ipcRenderer.invoke("electronAPI.updateUISettings", payload),
-  minimizeWindow: () => ipcRenderer.invoke("electronAPI.minimizeWindow"),
-  maximizeWindow: () => ipcRenderer.invoke("electronAPI.maximizeWindow"),
-  closeWindow: () => ipcRenderer.invoke("electronAPI.closeWindow"),
-  isMaximized: () => ipcRenderer.invoke("electronAPI.isMaximized"),
+  
 })
 
 contextBridge.exposeInMainWorld("aria2", {

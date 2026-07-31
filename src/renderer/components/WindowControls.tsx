@@ -15,17 +15,17 @@ export const WindowControls: React.FC = () => {
   }, []);
 
   const handleMinimize = async () => {
-    await window.electronAPI.minimizeWindow();
+    await window.grabbit.minimizeWindow();
   };
 
   const handleMaximize = async () => {
-    await window.electronAPI.maximizeWindow();
+    await window.grabbit.maximizeWindow();
     const maximized = await window.electronAPI.isMaximized();
     setIsMaximized(maximized);
   };
 
   const handleClose = async () => {
-    await window.electronAPI.closeWindow();
+    await window.grabbit.closeWindow();
   };
 
   return (

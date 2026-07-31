@@ -420,8 +420,6 @@ export function registerIpcHandlers() {
   })
 
   ipcMain.handle("electronAPI.isMaximized", () => {
-    const window =
-      BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
-    return window?.isMaximized() ?? false
+    return getMainWindow().isMaximized()
   })
 }

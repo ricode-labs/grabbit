@@ -41,7 +41,7 @@ export function showWindow() {
 
 export function closeWindow() {
   // isQuitting = true
-  mainWindow?.close()
+  mainWindow?.hide()
 }
 
 export function minimizeWindow() {
