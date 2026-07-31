@@ -19,7 +19,7 @@ import { registerIpcHandlers } from "./ipc"
 // } from "./window"
 import { updateTrackers } from "./aria2.conf"
 import { createTray } from "./tray"
-import { closeWindow, showWindow } from "./window"
+import { showWindow } from "./window"
 import { addLaunchLinks, registerProtocolClient } from "./protocol"
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -55,7 +55,7 @@ if (!gotTheLock) {
   })
 
   app.on("before-quit", async () => {
-    closeWindow()
+    // closeWindow()
     await stopAria2()
   })
 
@@ -80,26 +80,3 @@ if (!gotTheLock) {
     })
   })
 }
-
-// // stay active until the user quits explicitly with Cmd + Q.
-// app.on("window-all-closed", () => {})
-
-// setWindowDidFinishLoadHandler(flushExternalIntents)
-
-// const gotSingleInstanceLock = app.requestSingleInstanceLock()
-
-// if (!gotSingleInstanceLock) {
-//   app.quit()
-// } else {
-//   app.on("second-instance", (_event, argv) => {
-//     showMainWindow()
-//     sendExternalIntents(collectExternalIntents(argv))
-//   })
-// }
-
-// app.on("open-file", (event, filePath) => {
-//   if (/\.torrent$/i.test(filePath)) {
-//     event.preventDefault()
-//     sendExternalIntents([{ kind: "torrent", value: filePath }])
-//   }
-// })

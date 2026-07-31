@@ -2,7 +2,7 @@ import { BrowserWindow } from "electron/main"
 import { join } from "node:path"
 
 let mainWindow: BrowserWindow | null = null
-let isQuitting = false
+// let isQuitting = false
 
 export function showWindow() {
   // Show the browser window.
@@ -20,14 +20,14 @@ export function showWindow() {
     },
   })
 
-  mainWindow.on("close", (event) => {
-    if (isQuitting) {
-      return
-    }
+  // mainWindow.on("close", (event) => {
+  //   if (isQuitting) {
+  //     return
+  //   }
 
-    event.preventDefault()
-    mainWindow?.hide()
-  })
+  //   event.preventDefault()
+  //   mainWindow?.hide()
+  // })
 
   // and load the index.html of the app.
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
@@ -40,7 +40,20 @@ export function showWindow() {
 }
 
 export function closeWindow() {
-  isQuitting = true
+  // isQuitting = true
+  mainWindow?.close()
+}
+
+export function minimizeWindow() {
+  mainWindow?.minimize()
+}
+
+export function maximizeWindow() {
+  if (mainWindow?.isMaximized()) {
+    mainWindow.unmaximize()
+  } else {
+    mainWindow?.maximize()
+  }
 }
 
 export function toggleDevTools() {
