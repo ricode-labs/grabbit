@@ -24,7 +24,7 @@ import type {
   TellRangePayload,
   Preferences,
 } from "../shared/types"
-import { readFile } from "fs-extra"
+import { pathExists, readFile } from "fs-extra"
 // import path from "node:path"
 import {
   closeWindow,
@@ -354,8 +354,9 @@ export function registerIpcHandlers() {
   ipcMain.handle(
     "grabbit.deleteDownloadFile",
     async (_event, filePath: string) => {
+      const aria2ControlFilePath = `${filePath}.aria2`
       await shell.trashItem(filePath)
-      return true
+      await shell.trashItem(aria2ControlFilePath)
     }
   )
 
