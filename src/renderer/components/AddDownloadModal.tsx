@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from "react"
 import {
   Clipboard,
-  FileSearch,
   FolderOpen,
   Link as LinkIcon,
-  Loader2,
   X,
 } from "lucide-react"
-import { extractFileNameFromUrl, formatBytes } from "../utils/format"
+// import { extractFileNameFromUrl, formatBytes } from "../utils/format"
 import { useUI } from "../context/UIContext"
 import { DialogWrapper } from "./ui/DialogWrapper"
 // import { CheckboxWrapper } from "./ui/CheckboxWrapper"
@@ -31,14 +29,14 @@ interface AddDownloadModalProps {
   onDirChange?: (dir: string) => void
 }
 
-interface DownloadMetadata {
-  fileName: string
-  totalLength: number
-  contentType?: string
-  acceptRanges?: boolean
-  finalUrl?: string
-  statusCode?: number
-}
+// interface DownloadMetadata {
+//   fileName: string
+//   totalLength: number
+//   contentType?: string
+//   acceptRanges?: boolean
+//   finalUrl?: string
+//   statusCode?: number
+// }
 
 // interface DiskSpaceInfo {
 //   available: number
@@ -57,7 +55,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   const { t } = useUI()
   const [inputMode, setInputMode] = useState<"link" | "file">("link")
   const [url, setUrl] = useState(initialUrl)
-  const [fileName, setFileName] = useState("")
+  // const [fileName, setFileName] = useState("")
   const [downloadDir, setDownloadDir] = useState(
     lastUsedDir || defaultDownloadDir
   )
@@ -68,9 +66,9 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   // const [torrentName, setTorrentName] = useState("")
   // const [createFolder, setCreateFolder] = useState(true)
   // const [torrentSize, setTorrentSize] = useState(0)
-  const [metadata, setMetadata] = useState<DownloadMetadata | null>(null)
-  const [isLoadingMetadata, setIsLoadingMetadata] = useState(false)
-  const [metadataError, setMetadataError] = useState("")
+  // const [metadata, setMetadata] = useState<DownloadMetadata | null>(null)
+  // const [isLoadingMetadata, setIsLoadingMetadata] = useState(false)
+  // const [metadataError, setMetadataError] = useState("")
   // const [diskSpace, setDiskSpace] = useState<DiskSpaceInfo | null>(null)
   // const [isCheckingSpace, setIsCheckingSpace] = useState(false)
 
@@ -96,51 +94,9 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   }, [initialUrl])
 
   // 当 URL 改变时自动提取文件名
-  useEffect(() => {
-    if (url.trim()) {
-      const extracted = extractFileNameFromUrl(url.trim())
-      setFileName(extracted)
-    } else {
-      setMetadata(null)
-      setMetadataError("")
-    }
-  }, [url])
+  // useEffect(() => { ... }, [url])
 
-  useEffect(() => {
-    if (inputMode !== "link" || !isDownloadableLink(url)) return
-
-    const currentUrl = url.trim()
-    let cancelled = false
-    const timer = window.setTimeout(async () => {
-      setIsLoadingMetadata(true)
-      setMetadataError("")
-      try {
-        const result = await window.electronAPI.getDownloadMetadata(currentUrl)
-        if (cancelled) return
-        if (result.success && result.metadata) {
-          setMetadata(result.metadata)
-          if (result.metadata.fileName) {
-            setFileName(result.metadata.fileName)
-          }
-        } else {
-          setMetadata(null)
-          setMetadataError(result.error || t("metadataUnavailable"))
-        }
-      } catch (error: any) {
-        if (!cancelled) {
-          setMetadata(null)
-          setMetadataError(error?.message || t("metadataUnavailable"))
-        }
-      } finally {
-        if (!cancelled) setIsLoadingMetadata(false)
-      }
-    }, 500)
-
-    return () => {
-      cancelled = true
-      window.clearTimeout(timer)
-    }
-  }, [inputMode, url])
+  // useEffect(() => { ... }, [inputMode, url])
 
   // useEffect(() => {
   //   const expectedSize = metadata?.totalLength || 0
@@ -229,8 +185,8 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
       if (filePath) {
         setTorrentFile(filePath)
         // 从文件路径提取文件名
-        const name = filePath.split(/[\\/]/).pop() || ""
-        setFileName(name.replace(".torrent", ""))
+        // const name = filePath.split(/[\\/]/).pop() || ""
+        // setFileName(name.replace(".torrent", ""))
         // 不预解析种子文件，提交后直接交给 aria2 处理。
         // setTorrentSize(0)
       }
@@ -247,15 +203,15 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
     } else {
       setUrl("")
     }
-    setFileName("")
+    // setFileName("")
     // setFiles([])
     // setShowFileTree(false)
     // setIsMultiFile(false)
     // setTorrentName("")
     // setCreateFolder(true)
     // setTorrentSize(0)
-    setMetadata(null)
-    setMetadataError("")
+    // setMetadata(null)
+    // setMetadataError("")
     // setDiskSpace(null)
   }
 
@@ -350,7 +306,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                     className="w-full resize-none rounded-[14px] border border-[#F0DED8] bg-[#FFFCFB] px-3 py-3 text-[13px] text-[#2D2522] placeholder:text-[#B7A59C] focus:border-[#FFC3CF] focus:ring-4 focus:ring-[#FFE6EC] focus:outline-none"
                   />
 
-                  {(metadata || isLoadingMetadata || metadataError) && (
+                  {/* {(metadata || isLoadingMetadata || metadataError) && (
                     <div className="mt-3 rounded-[14px] border border-[#F4E3DE] bg-[#FFF8F7] p-3">
                       <div className="mb-2 flex items-center gap-2 text-[12px] font-medium text-[#6B5448]">
                         <FileSearch size={14} />
@@ -399,7 +355,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                         </div>
                       )}
                     </div>
-                  )}
+                  )} */}
                 </section>
               )}
 
@@ -435,48 +391,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                 </section>
               )}
 
-              {hasDownloadData && (
-                <section className="rounded-[18px] border border-[#F4E3DE] bg-white/70 p-4">
-                  <div className="mb-2 flex items-center justify-between gap-3">
-                    <label className="text-[13px] font-medium text-[#6B5448]">
-                      {t("fileName")}
-                    </label>
-                    {/* {isMultiFile && (
-                      <span className="rounded-full bg-[#FFF1F4] px-2 py-0.5 text-[11px] font-medium text-[#FF5C78]">
-                        {t("multiFile")}
-                      </span>
-                    )} */}
-                  </div>
-                  <input
-                    type="text"
-                    value={fileName}
-                    onChange={(e) => setFileName(e.target.value)}
-                    placeholder={t("autoExtract")}
-                    disabled={inputMode === "file"}
-                    className="w-full rounded-[14px] border border-[#F0DED8] bg-[#FFFCFB] px-3 py-2.5 text-[13px] text-[#2D2522] placeholder:text-[#B7A59C] focus:border-[#FFC3CF] focus:ring-4 focus:ring-[#FFE6EC] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
-                  />
-
-                  {/* {isMultiFile && (
-                    <div className="mt-3 flex items-start gap-2">
-                      <CheckboxWrapper
-                        checked={createFolder}
-                        onChange={() => setCreateFolder(!createFolder)}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <label
-                          className="cursor-pointer text-[13px] font-medium text-[#6B5448]"
-                          onClick={() => setCreateFolder(!createFolder)}
-                        >
-                          {t("createNewFolder")}
-                        </label>
-                        <p className="mt-0.5 text-[12px] text-[#A89488]">
-                          {t("createFolderHint")}
-                        </p>
-                      </div>
-                    </div>
-                  )} */}
-                </section>
-              )}
+              {/* 文件名功能已注释：不再让 renderer 传 out 给 aria2。 */}
 
               <section className="rounded-[18px] border border-[#F4E3DE] bg-white/70 p-4">
                 <div className="mb-2 flex items-center justify-between gap-3">
