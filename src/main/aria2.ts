@@ -79,7 +79,6 @@ export async function startAria2() {
     console.error(`[aria2] ${chunk}`)
   })
 
-  
   // ensureSchedulerTimer()
   // ensureTaskMonitorTimer()
 

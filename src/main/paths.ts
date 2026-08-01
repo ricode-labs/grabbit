@@ -26,10 +26,7 @@ export function getAria2Executable() {
 // export const getFallbackDownloadDir = () =>
 //   path.join(app.getPath("downloads"), "Grabbit")
 
-export const btTrackerPath = path.join(
-  userDataPath,
-  "aria2.bt-tracker.txt"
-)
+export const btTrackerPath = path.join(userDataPath, "aria2.bt-tracker.txt")
 export const downloadDirectoryPath = path.join(
   app.getPath("downloads"),
   "Grabbit"
@@ -37,13 +34,7 @@ export const downloadDirectoryPath = path.join(
 export const sessionPath = path.join(userDataPath, "aria2.session")
 export const logPath = path.join(userDataPath, "aria2.log")
 export const netrcPath = path.join(userDataPath, "aria2.netrc")
-export const serverStatPath = path.join(
-  userDataPath,
-  "aria2.server-stat"
-)
+export const serverStatPath = path.join(userDataPath, "aria2.server-stat")
 export const dhtPath = path.join(userDataPath, "aria2.dht.dat")
 export const dht6Path = path.join(userDataPath, "aria2.dht6.dat")
-export const preferencesPath = path.join(
-  userDataPath,
-  "preferences.json"
-)
+export const preferencesPath = path.join(userDataPath, "preferences.json")

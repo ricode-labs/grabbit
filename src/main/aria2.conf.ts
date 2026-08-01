@@ -157,9 +157,9 @@ function advancedOptions() {
 
 export async function aria2StartupArgs(rpcPort: number, rpcSecret: string) {
   return [
-    ...await basicOptions(),
+    ...(await basicOptions()),
     ...httpFtpSftpOptions,
-    ...await bitTorrentSpecificOptions(),
+    ...(await bitTorrentSpecificOptions()),
     ...rpcOptions(rpcPort, rpcSecret),
     ...advancedOptions(),
   ]

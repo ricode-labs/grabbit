@@ -1,59 +1,59 @@
-import React from 'react';
-import { AlertCircle, CheckCircle2, TriangleAlert } from 'lucide-react';
-import { useUI } from '../../context/UIContext';
-import { DialogWrapper } from './DialogWrapper';
+import React from "react"
+import { AlertCircle, CheckCircle2, TriangleAlert } from "lucide-react"
+import { useUI } from "../../context/UIContext"
+import { DialogWrapper } from "./DialogWrapper"
 
 interface NoticeModalProps {
-  isOpen: boolean;
-  message: string;
-  title?: string;
-  variant?: 'info' | 'success' | 'error';
-  confirmLabel?: string;
-  onConfirm: () => void;
-  onClose: () => void;
+  isOpen: boolean
+  message: string
+  title?: string
+  variant?: "info" | "success" | "error"
+  confirmLabel?: string
+  onConfirm: () => void
+  onClose: () => void
 }
 
 export const NoticeModal: React.FC<NoticeModalProps> = ({
   isOpen,
   message,
   title,
-  variant = 'info',
+  variant = "info",
   confirmLabel,
   onConfirm,
-  onClose
+  onClose,
 }) => {
-  const { t } = useUI();
+  const { t } = useUI()
 
   const iconConfig = {
     info: {
       icon: AlertCircle,
-      box: 'bg-[#EAF3FF]',
-      color: 'text-[#4C8ED6]'
+      box: "bg-[#EAF3FF]",
+      color: "text-[#4C8ED6]",
     },
     success: {
       icon: CheckCircle2,
-      box: 'bg-[#EAF8ED]',
-      color: 'text-[#67A94D]'
+      box: "bg-[#EAF8ED]",
+      color: "text-[#67A94D]",
     },
     error: {
       icon: TriangleAlert,
-      box: 'bg-[#FFE8EA]',
-      color: 'text-[#E85C61]'
-    }
-  }[variant];
+      box: "bg-[#FFE8EA]",
+      color: "text-[#E85C61]",
+    },
+  }[variant]
 
-  const Icon = iconConfig.icon;
+  const Icon = iconConfig.icon
 
   const handleConfirm = () => {
-    onClose();
-    onConfirm();
-  };
+    onClose()
+    onConfirm()
+  }
 
   return (
     <DialogWrapper
       isOpen={isOpen}
       onClose={onClose}
-      title={title || t('noticeTitle')}
+      title={title || t("noticeTitle")}
       className="max-w-sm"
       showCloseButton={false}
     >
@@ -71,9 +71,9 @@ export const NoticeModal: React.FC<NoticeModalProps> = ({
           onClick={handleConfirm}
           className="rounded-[12px] bg-[#FF7D90] px-4 py-2.5 text-[13px] font-medium text-white transition-colors hover:bg-[#FF5C78]"
         >
-          {confirmLabel || t('ok')}
+          {confirmLabel || t("ok")}
         </button>
       </div>
     </DialogWrapper>
-  );
-};
+  )
+}

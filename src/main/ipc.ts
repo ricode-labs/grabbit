@@ -27,7 +27,12 @@ import type {
 import { readFile } from "fs-extra"
 import fs from "node:fs/promises"
 import path from "node:path"
-import { closeWindow, getMainWindow, maximizeWindow, minimizeWindow } from "./window"
+import {
+  closeWindow,
+  getMainWindow,
+  maximizeWindow,
+  minimizeWindow,
+} from "./window"
 import { getPreferences, savePreferences } from "./preferences"
 
 export function registerIpcHandlers() {
@@ -361,10 +366,7 @@ export function registerIpcHandlers() {
 
   ipcMain.handle(
     "grabbit.savePreferences",
-    async (
-      _event,
-      payload: Preferences
-    ) => {
+    async (_event, payload: Preferences) => {
       savePreferences(payload)
     }
   )

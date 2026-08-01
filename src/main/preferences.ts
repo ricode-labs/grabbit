@@ -7,10 +7,11 @@ const store = new Store<Preferences>({
   defaults: {
     maxOverallDownloadLimit: 0,
     maxOverallUploadLimit: 0,
-    downloadDirectoryPath:downloadDirectoryPath,
+    downloadDirectoryPath: downloadDirectoryPath,
     theme: nativeTheme.shouldUseDarkColors ? "dark" : "light",
     language: resolveLocaleLanguage(),
-}})
+  },
+})
 
 export function getPreferences() {
   return store.store

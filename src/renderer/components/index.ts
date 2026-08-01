@@ -7,20 +7,20 @@
  */
 
 // Layout Components
-export { TitleBar } from './TitleBar';
-export { Sidebar } from './Sidebar';
-export { StatusBar } from './StatusBar';
-export { WindowControls } from './WindowControls';
+export { TitleBar } from "./TitleBar"
+export { Sidebar } from "./Sidebar"
+export { StatusBar } from "./StatusBar"
+export { WindowControls } from "./WindowControls"
 
 // Download Components
-export { DownloadList, type CategoryType } from './DownloadList';
-export { DownloadItem } from './DownloadItem';
-export { DownloadDetail } from './DownloadDetail';
+export { DownloadList, type CategoryType } from "./DownloadList"
+export { DownloadItem } from "./DownloadItem"
+export { DownloadDetail } from "./DownloadDetail"
 
 // Modal Components
-export { AddDownloadModal } from './AddDownloadModal';
-export { DeleteConfirmModal } from './DeleteConfirmModal';
-export { NoticeModal } from './ui/NoticeModal';
+export { AddDownloadModal } from "./AddDownloadModal"
+export { DeleteConfirmModal } from "./DeleteConfirmModal"
+export { NoticeModal } from "./ui/NoticeModal"
 
 // Settings Component
-export { SettingsPage } from './SettingsPage';
+export { SettingsPage } from "./SettingsPage"
