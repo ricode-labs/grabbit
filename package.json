@@ -33,6 +33,7 @@
     "@eslint/js": "^10.0.1",
     "@types/electron-squirrel-startup": "^1.0.2",
     "@types/node": "^24.12.0",
+    "@types/parse-torrent": "^5.8.8",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@typescript-eslint/eslint-plugin": "^8.59.1",
@@ -49,8 +50,7 @@
     "tsx": "^4.21.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.59.1",
-    "vite": "^8.0.10",
-    "@types/parse-torrent": "^5.8.8"
+    "vite": "^8.0.10"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",
@@ -59,6 +59,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "electron-squirrel-startup": "^1.0.1",
+    "electron-store": "^11.0.2",
     "fs-extra": "^11.3.6",
     "ky": "^2.0.2",
     "lucide-react": "^1.14.0",

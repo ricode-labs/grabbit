@@ -1,5 +1,5 @@
 import { clipboard, shell } from "electron"
-import { app, dialog, ipcMain } from "electron/main"
+import { dialog, ipcMain } from "electron/main"
 import { callAria2 } from "./aria2"
 import parseTorrent from "parse-torrent"
 
@@ -24,10 +24,9 @@ import type {
   ChangePositionPayload,
   TellRangePayload,
 } from "../shared/aria2"
-import { outputJSON, readFile } from "fs-extra"
+import { readFile } from "fs-extra"
 import fs from "node:fs/promises"
 import path from "node:path"
-import { preferencesPath } from "./paths"
 import { closeWindow, getMainWindow, maximizeWindow, minimizeWindow } from "./window"
 
 export function registerIpcHandlers() {
@@ -231,7 +230,7 @@ export function registerIpcHandlers() {
   ipcMain.handle(
     "grabbit.saveSettings",
     async (_event, payload: GrabbitSettings) => {
-      await outputJSON(preferencesPath, payload, "utf8")
+      // writeSettings(payload)
       return true
     }
   )
@@ -364,16 +363,7 @@ export function registerIpcHandlers() {
   )
 
   ipcMain.handle("electronAPI.getUISettings", async () => {
-    try {
-      const settingsPath = path.join(
-        app.getPath("userData"),
-        "ui-settings.json"
-      )
-      const rawSettings = await fs.readFile(settingsPath, "utf8")
-      return { theme: "light", language: "zh", ...JSON.parse(rawSettings) }
-    } catch {
-      return { theme: "light", language: "zh" }
-    }
+    // return readUISettings()
   })
 
   ipcMain.handle(
@@ -385,25 +375,7 @@ export function registerIpcHandlers() {
         language: "zh" | "ja" | "en"
       }>
     ) => {
-      const settingsPath = path.join(
-        app.getPath("userData"),
-        "ui-settings.json"
-      )
-      let settings: { theme: "light" | "dark"; language: "zh" | "ja" | "en" } =
-        {
-          theme: "light",
-          language: "zh",
-        }
-      try {
-        settings = {
-          ...settings,
-          ...JSON.parse(await fs.readFile(settingsPath, "utf8")),
-        }
-      } catch {}
-      settings = { ...settings, ...payload }
-      await fs.mkdir(path.dirname(settingsPath), { recursive: true })
-      await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2))
-      return settings
+      // return updateUISettings(payload)
     }
   )
 
