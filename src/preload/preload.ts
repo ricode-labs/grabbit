@@ -209,7 +209,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getDiskSpace: (dir: string) =>
     ipcRenderer.invoke("electronAPI.getDiskSpace", dir),
   
-  getUISettings: () => ipcRenderer.invoke("electronAPI.getUISettings"),
+  getPreferences: () => ipcRenderer.invoke("grabbit.getPreferences"),
   updateUISettings: (payload: UISettingsPayload) =>
     ipcRenderer.invoke("electronAPI.updateUISettings", payload),
   

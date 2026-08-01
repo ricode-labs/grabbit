@@ -28,6 +28,7 @@ import { readFile } from "fs-extra"
 import fs from "node:fs/promises"
 import path from "node:path"
 import { closeWindow, getMainWindow, maximizeWindow, minimizeWindow } from "./window"
+import { preferences } from "./preferences"
 
 export function registerIpcHandlers() {
   ipcMain.handle("aria2.addUri", async (_event, payload: AddUriPayload) => {
@@ -362,8 +363,8 @@ export function registerIpcHandlers() {
     }
   )
 
-  ipcMain.handle("electronAPI.getUISettings", async () => {
-    // return readUISettings()
+  ipcMain.handle("grabbit.getPreferences", async () => {
+    return preferences
   })
 
   ipcMain.handle(
