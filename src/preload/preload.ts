@@ -7,14 +7,16 @@ import type {
   ChangeUriPayload,
   GidPayload,
   GrabbitSettings,
+  Language,
   Options,
   Preferences,
   TellRangePayload,
+  Theme,
 } from "../shared/types"
 
 type UISettingsPayload = Partial<{
-  theme: "light" | "dark"
-  language: "zh" | "ja" | "en"
+  theme: Theme
+  language: Language
 }>
 // import type {
 //   EnginePathInfo,

@@ -19,10 +19,12 @@ import type {
   ChangeUriPayload,
   GidPayload,
   GrabbitSettings,
+  Language,
   Ok,
   Options,
   ChangePositionPayload,
   TellRangePayload,
+  Theme,
 } from "../shared/types"
 import { readFile } from "fs-extra"
 import fs from "node:fs/promises"
@@ -372,8 +374,8 @@ export function registerIpcHandlers() {
     async (
       _event,
       payload: Partial<{
-        theme: "light" | "dark"
-        language: "zh" | "ja" | "en"
+        theme: Theme
+        language: Language
       }>
     ) => {
       // return updateUISettings(payload)

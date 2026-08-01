@@ -19,9 +19,11 @@ import type {
   Aria2GlobalStat,
   Aria2Status,
   GidPayload,
+  Language,
   Options,
   Preferences,
-  TellRangePayload
+  TellRangePayload,
+  Theme
 } from '../shared/types';
 
 interface ElectronAPI {
@@ -38,7 +40,7 @@ interface ElectronAPI {
   removeFromHistory: (gid: string) => Promise<void>;
   deleteDownloadFile: (filePath: string) => Promise<any>;
   updateSettings: (settings: any) => Promise<any>;
-  getUISettings: () => Promise<{ theme: 'light' | 'dark'; language: 'zh' | 'ja' | 'en' }>;
+  getUISettings: () => Promise<{ theme: Theme; language: Language }>;
   updateUISettings: (settings: any) => Promise<any>;
   selectFolder: () => Promise<string | null>;
   selectTorrentFile: () => Promise<string | null>;
