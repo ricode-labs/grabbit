@@ -59,7 +59,7 @@ async function readTrackers() {
 async function basicOptions() {
   const options = [
     // The directory to store the downloaded file
-    `--dir=${downloadDirectoryPath}`,
+    `--dir=${preferences.downloadDirectoryPath}`,
     // The file name of the log file
     `--log=${logPath}`,
     // Set the maximum number of parallel downloads for every queue item
@@ -126,7 +126,7 @@ async function bitTorrentSpecificOptions() {
     // Enable IPv6 DHT functionality
     "--enable-dht6=true",
     // Set max overall upload speed in bytes/sec
-    `--max-overall-upload-limit=0`,
+    `--max-overall-upload-limit=${preferences.maxOverallUploadLimit}`,
     // Specify share ratio
     `--seed-ratio=0.0`,
     // pecify seeding time in (fractional) minutes

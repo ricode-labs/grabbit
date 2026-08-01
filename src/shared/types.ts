@@ -136,4 +136,5 @@ export type Aria2SessionInfo = {
 export type Preferences = {
   maxOverallDownloadLimit: number
   maxOverallUploadLimit: number
+  downloadDirectoryPath: string
 }
