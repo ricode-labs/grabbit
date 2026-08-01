@@ -9,7 +9,6 @@ import {
   btTrackerPath,
   dht6Path,
   dhtPath,
-  downloadDirectoryPath,
   logPath,
   netrcPath,
   serverStatPath,
