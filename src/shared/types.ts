@@ -132,3 +132,8 @@ export type Aria2Version = {
 export type Aria2SessionInfo = {
   sessionId: string
 }
+
+export type Preferences = {
+  maxOverallDownloadLimit: number,
+  
+}

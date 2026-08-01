@@ -21,7 +21,7 @@ import type {
   GidPayload,
   Options,
   TellRangePayload
-} from '../shared/aria2';
+} from '../shared/types';
 
 interface ElectronAPI {
   getAria2Status: () => Promise<{ connected: boolean; message: string }>;

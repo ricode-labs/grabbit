@@ -23,7 +23,7 @@ import type {
   Options,
   ChangePositionPayload,
   TellRangePayload,
-} from "../shared/aria2"
+} from "../shared/types"
 import { readFile } from "fs-extra"
 import fs from "node:fs/promises"
 import path from "node:path"

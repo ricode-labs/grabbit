@@ -9,7 +9,7 @@ import type {
   GrabbitSettings,
   Options,
   TellRangePayload,
-} from "../shared/aria2"
+} from "../shared/types"
 
 type UISettingsPayload = Partial<{
   theme: "light" | "dark"

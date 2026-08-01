@@ -15,7 +15,8 @@ import {
   serverStatPath,
   sessionPath,
 } from "./paths"
-import { outputFile, readFile, stat } from "fs-extra"
+import { outputFile, pathExists, readFile } from "fs-extra"
+import { preferences } from "./preferences"
 
 // update trackers
 export async function updateTrackers() {
@@ -35,15 +36,6 @@ async function readTrackers() {
     return trackers
   } catch {
     return ""
-  }
-}
-
-async function fileExists(filePath: string) {
-  try {
-    const stats = await stat(filePath)
-    return stats.isFile()
-  } catch {
-    return false
   }
 }
 
@@ -77,7 +69,7 @@ async function basicOptions() {
     // Continue downloading a partially downloaded file
     `--continue=true`,
   ]
-  if (await fileExists(sessionPath)) {
+  if (await pathExists(sessionPath)) {
     // Downloads the URIs listed in FILE
     options.push(`--input-file=${sessionPath}`)
   }
@@ -172,7 +164,7 @@ const advancedOptions = [
   // Set interval in seconds to output download progress summary
   "--summary-interval=0",
   // Set max overall download speed in bytes/sec
-  `--max-overall-download-limit=0`,
+  `--max-overall-download-limit=${preferences.maxOverallDownloadLimit}`,
   // Disable loading aria2.conf file
   "--no-conf=true",
   // Save error/unfinished downloads to FILE on exit
