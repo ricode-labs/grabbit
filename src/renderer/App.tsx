@@ -314,13 +314,6 @@ const App: React.FC = () => {
     if (!deleteConfirmTask) return
 
     try {
-      // 删除本地文件
-      if (deleteFile && deleteConfirmTask.filePath) {
-        await window.grabbit.deleteDownloadFile(
-          deleteConfirmTask.filePath
-        )
-      }
-
       // 只对仍在 aria2 中的任务调用移除接口，已结束或历史任务只清理历史记录
       if (
         deleteConfirmTask.isLiveTask &&
@@ -329,10 +322,15 @@ const App: React.FC = () => {
         await window.aria2.remove({ gid: deleteConfirmTask.gid })
       }
 
-      // 删除任务记录
       if (!["active", "waiting", "paused"].includes(deleteConfirmTask.status)) {
         await window.aria2.removeDownloadResult({ gid: deleteConfirmTask.gid })
       }
+
+      // aria2 不再管理任务后再删除本地文件，避免 .aria2 控制文件被重新写出。
+      if (deleteFile && deleteConfirmTask.filePath) {
+        await window.grabbit.deleteDownloadFile(deleteConfirmTask.filePath)
+      }
+
       await refreshDownloads()
       await refreshHistory()
 
