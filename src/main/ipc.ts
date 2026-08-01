@@ -18,19 +18,17 @@ import type {
   ChangeOptionPayload,
   ChangeUriPayload,
   GidPayload,
-  GrabbitSettings,
-  Language,
   Ok,
   Options,
   ChangePositionPayload,
   TellRangePayload,
-  Theme,
+  Preferences,
 } from "../shared/types"
 import { readFile } from "fs-extra"
 import fs from "node:fs/promises"
 import path from "node:path"
 import { closeWindow, getMainWindow, maximizeWindow, minimizeWindow } from "./window"
-import { preferences } from "./preferences"
+import { getPreferences, savePreferences } from "./preferences"
 
 export function registerIpcHandlers() {
   ipcMain.handle("aria2.addUri", async (_event, payload: AddUriPayload) => {
@@ -366,19 +364,16 @@ export function registerIpcHandlers() {
   )
 
   ipcMain.handle("grabbit.getPreferences", async () => {
-    return preferences
+    return getPreferences()
   })
 
   ipcMain.handle(
-    "electronAPI.updateUISettings",
+    "grabbit.savePreferences",
     async (
       _event,
-      payload: Partial<{
-        theme: Theme
-        language: Language
-      }>
+      payload: Preferences
     ) => {
-      // return updateUISettings(payload)
+      savePreferences(payload)
     }
   )
 

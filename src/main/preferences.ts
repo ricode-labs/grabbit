@@ -3,17 +3,17 @@ import Store from "electron-store"
 import { downloadDirectoryPath } from "./paths"
 import { app, nativeTheme } from "electron/main"
 
-const store = new Store<Preferences>()
+const store = new Store<Preferences>({
+  defaults: {
+    maxOverallDownloadLimit: 0,
+    maxOverallUploadLimit: 0,
+    downloadDirectoryPath:downloadDirectoryPath,
+    theme: nativeTheme.shouldUseDarkColors ? "dark" : "light",
+    language: resolveLocaleLanguage(),
+}})
 
-export const preferences: Preferences = {
-  maxOverallDownloadLimit: store.get("maxOverallDownloadLimit", 0),
-  maxOverallUploadLimit: store.get("maxOverallUploadLimit", 0),
-  downloadDirectoryPath: store.get(
-    "downloadDirectoryPath",
-    downloadDirectoryPath
-  ),
-  theme: store.get("theme", nativeTheme.shouldUseDarkColors ? "dark" : "light"),
-  language: store.get("language", resolveLocaleLanguage()),
+export function getPreferences() {
+  return store.store
 }
 
 function resolveLocaleLanguage(): Language {
@@ -25,4 +25,8 @@ function resolveLocaleLanguage(): Language {
     return "ja"
   }
   return "en"
+}
+
+export function savePreferences(preferences: Preferences) {
+  store.store = preferences
 }

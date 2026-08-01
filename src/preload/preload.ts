@@ -6,7 +6,6 @@ import type {
   ChangeOptionPayload,
   ChangeUriPayload,
   GidPayload,
-  GrabbitSettings,
   Options,
   Preferences,
   TellRangePayload,
@@ -178,9 +177,6 @@ import type {
 // }
 
 contextBridge.exposeInMainWorld("grabbit", {
-  saveSettings: (payload: GrabbitSettings) =>
-    ipcRenderer.invoke("grabbit.saveSettings", payload),
-
   selectFolder: () => ipcRenderer.invoke("grabbit.selectFolder"),
 
   selectTorrentFile: () => ipcRenderer.invoke("grabbit.selectTorrentFile"),
@@ -194,17 +190,18 @@ contextBridge.exposeInMainWorld("grabbit", {
     ipcRenderer.invoke("grabbit.deleteDownloadFile", filePath),
 
   minimizeWindow: () => ipcRenderer.invoke("grabbit.minimizeWindow"),
-  
+
   maximizeWindow: () => ipcRenderer.invoke("grabbit.maximizeWindow"),
-  
+
   closeWindow: () => ipcRenderer.invoke("grabbit.closeWindow"),
-  
-  getPreferences: () =>
-    ipcRenderer.invoke("grabbit.getPreferences") as Promise<Preferences>,
+
+  getPreferences: () => ipcRenderer.invoke("grabbit.getPreferences"),
+
+  savePreferences: (payload: Preferences) =>
+    ipcRenderer.invoke("grabbit.savePreferences", payload),
 })
 
 contextBridge.exposeInMainWorld("electronAPI", {
-  
   getDownloadMetadata: (url: string) =>
     ipcRenderer.invoke("electronAPI.getDownloadMetadata", url),
   getDiskSpace: (dir: string) =>

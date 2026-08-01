@@ -1,7 +1,5 @@
 export type Options = Record<string, string>
 
-export type GrabbitSettings = Options
-
 export type Keys = string[]
 
 export type Ok = "OK"
