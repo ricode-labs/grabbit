@@ -7,17 +7,10 @@ import type {
   ChangeUriPayload,
   GidPayload,
   GrabbitSettings,
-  Language,
   Options,
   Preferences,
   TellRangePayload,
-  Theme,
 } from "../shared/types"
-
-type UISettingsPayload = Partial<{
-  theme: Theme
-  language: Language
-}>
 // import type {
 //   EnginePathInfo,
 //   ExternalTaskIntent,
@@ -216,11 +209,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke("electronAPI.getDownloadMetadata", url),
   getDiskSpace: (dir: string) =>
     ipcRenderer.invoke("electronAPI.getDiskSpace", dir),
-  
-  
-  updateUISettings: (payload: UISettingsPayload) =>
-    ipcRenderer.invoke("electronAPI.updateUISettings", payload),
-  
 })
 
 contextBridge.exposeInMainWorld("aria2", {

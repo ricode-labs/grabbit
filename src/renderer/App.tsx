@@ -19,11 +19,10 @@ import type {
   Aria2GlobalStat,
   Aria2Status,
   GidPayload,
-  Language,
+  GrabbitSettings,
   Options,
   Preferences,
-  TellRangePayload,
-  Theme
+  TellRangePayload
 } from '../shared/types';
 
 interface ElectronAPI {
@@ -39,10 +38,6 @@ interface ElectronAPI {
   getHistory: () => Promise<any[]>;
   removeFromHistory: (gid: string) => Promise<void>;
   deleteDownloadFile: (filePath: string) => Promise<any>;
-  updateSettings: (settings: any) => Promise<any>;
-  getUISettings: () => Promise<{ theme: Theme; language: Language }>;
-  updateUISettings: (settings: any) => Promise<any>;
-  selectFolder: () => Promise<string | null>;
   selectTorrentFile: () => Promise<string | null>;
   getClipboardText: () => Promise<string>;
   getTorrentInfo: (torrentPath: string) => Promise<any>;
@@ -71,6 +66,8 @@ interface Aria2API {
 }
 
 interface GrabbitAPI {
+  saveSettings: (settings: GrabbitSettings) => Promise<boolean>;
+  selectFolder: () => Promise<string | null>;
   getPreferences: () => Promise<Preferences>;
   minimizeWindow: () => Promise<void>;
   maximizeWindow: () => Promise<void>;

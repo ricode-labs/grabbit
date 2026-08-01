@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sun, Moon } from 'lucide-react';
 import { useUI } from '../context/UIContext';
-import type { Language } from '../i18n/translations';
+import type { Language, Theme } from '../../shared/types';
 import { ListboxWrapper } from '../components/ui/ListboxWrapper';
 import { TooltipWrapper } from '../components/ui/TooltipWrapper';
 import { NoticeModal } from '../components/ui/NoticeModal';
@@ -27,7 +27,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
   });
 
   // 本地UI设置状态（未保存）
-  const [localTheme, setLocalTheme] = useState<'light' | 'dark'>(theme);
+  const [localTheme, setLocalTheme] = useState<Theme>(theme);
   const [localLanguage, setLocalLanguage] = useState<Language>(language);
 
   const [downloadSpeedValue, setDownloadSpeedValue] = useState('0');
@@ -87,7 +87,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
         dir: settings.defaultDownloadDir
       };
 
-      await window.electronAPI.updateSettings(newSettings);
+      await window.grabbit.saveSettings(newSettings);
 
       // 保存UI设置
       setTheme(localTheme);
@@ -109,7 +109,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
 
   const handleSelectFolder = async () => {
     try {
-      const folder = await window.electronAPI.selectFolder();
+      const folder = await window.grabbit.selectFolder();
       if (folder) {
         setSettings({ ...settings, defaultDownloadDir: folder });
       }

@@ -308,7 +308,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
 
   const handleSelectFolder = async () => {
     try {
-      const folder = await window.electronAPI.selectFolder();
+      const folder = await window.grabbit.selectFolder();
       if (folder) {
         setDownloadDir(folder);
         onDirChange?.(folder);

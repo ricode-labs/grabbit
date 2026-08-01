@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { translations } from '../i18n/translations';
-import type { Language, TranslationKey } from '../i18n/translations';
+import type { TranslationKey } from '../i18n/translations';
+import type { Language, Theme } from '../../shared/types';
 
 interface UIContextType {
-  theme: 'light' | 'dark';
+  theme: Theme;
   language: Language;
-  setTheme: (theme: 'light' | 'dark') => void;
+  setTheme: (theme: Theme) => void;
   setLanguage: (language: Language) => void;
   t: (key: TranslationKey) => string;
 }
@@ -14,54 +15,32 @@ interface UIContextType {
 const UIContext = createContext<UIContextType | undefined>(undefined);
 
 export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<'light' | 'dark'>('light');
+  const [theme, setThemeState] = useState<Theme>('light');
   const [language, setLanguageState] = useState<Language>('zh');
 
-  // 加载UI设置
   useEffect(() => {
-    const loadUISettings = async () => {
+    const loadPreferences = async () => {
       try {
-        const settings = await window.electronAPI.getUISettings();
-        setThemeState(settings.theme);
-        setLanguageState(settings.language);
+        const preferences = await window.grabbit.getPreferences();
+        setThemeState(preferences.theme);
+        setLanguageState(preferences.language);
 
-        // 应用主题
-        if (settings.theme === 'dark') {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
+        document.documentElement.classList.toggle('dark', preferences.theme === 'dark');
       } catch (error) {
-        console.error('Failed to load UI settings:', error);
+        console.error('Failed to load preferences:', error);
       }
     };
 
-    loadUISettings();
+    loadPreferences();
   }, []);
 
-  const setTheme = async (newTheme: 'light' | 'dark') => {
+  const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-    try {
-      await window.electronAPI.updateUISettings({ theme: newTheme });
-
-      // 应用主题
-      if (newTheme === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
-      }
-    } catch (error) {
-      console.error('Failed to update theme:', error);
-    }
+    document.documentElement.classList.toggle('dark', newTheme === 'dark');
   };
 
-  const setLanguage = async (newLanguage: Language) => {
+  const setLanguage = (newLanguage: Language) => {
     setLanguageState(newLanguage);
-    try {
-      await window.electronAPI.updateUISettings({ language: newLanguage });
-    } catch (error) {
-      console.error('Failed to update language:', error);
-    }
   };
 
   const t = (key: TranslationKey): string => {
