@@ -5,7 +5,7 @@ import type { Language } from '../i18n/translations';
 import { ListboxWrapper } from '../components/ui/ListboxWrapper';
 import { TooltipWrapper } from '../components/ui/TooltipWrapper';
 import { NoticeModal } from '../components/ui/NoticeModal';
-import { mapGlobalOptionsToSettings } from '../utils/settings';
+import { mapPreferencesToSettings } from '../utils/settings';
 
 interface Settings {
   maxDownloadSpeed: number;
@@ -45,7 +45,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
 
   const loadSettings = async () => {
     try {
-      const loadedSettings = mapGlobalOptionsToSettings(await window.aria2.getGlobalOption());
+      const loadedSettings = mapPreferencesToSettings(await window.grabbit.getPreferences());
       setSettings(loadedSettings);
 
       // 转换速度单位为可读格式

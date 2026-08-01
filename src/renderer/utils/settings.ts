@@ -1,4 +1,4 @@
-import type { Options } from "../../shared/types"
+import type { Options, Preferences } from "../../shared/types"
 
 export interface AppSettings {
   maxDownloadSpeed: number
@@ -39,4 +39,12 @@ export const mapGlobalOptionsToSettings = (options: Options): AppSettings => ({
     options["max-overall-upload-limit"] ?? options["max-upload-limit"]
   ),
   defaultDownloadDir: options.dir ?? "",
+})
+
+export const mapPreferencesToSettings = (
+  preferences: Preferences
+): AppSettings => ({
+  maxDownloadSpeed: preferences.maxOverallDownloadLimit,
+  maxUploadSpeed: preferences.maxOverallUploadLimit,
+  defaultDownloadDir: preferences.downloadDirectoryPath,
 })

@@ -8,6 +8,7 @@ import type {
   GidPayload,
   GrabbitSettings,
   Options,
+  Preferences,
   TellRangePayload,
 } from "../shared/types"
 
@@ -198,8 +199,13 @@ contextBridge.exposeInMainWorld("grabbit", {
     ipcRenderer.invoke("grabbit.deleteDownloadFile", filePath),
 
   minimizeWindow: () => ipcRenderer.invoke("grabbit.minimizeWindow"),
+  
   maximizeWindow: () => ipcRenderer.invoke("grabbit.maximizeWindow"),
+  
   closeWindow: () => ipcRenderer.invoke("grabbit.closeWindow"),
+  
+  getPreferences: () =>
+    ipcRenderer.invoke("grabbit.getPreferences") as Promise<Preferences>,
 })
 
 contextBridge.exposeInMainWorld("electronAPI", {
@@ -209,7 +215,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   getDiskSpace: (dir: string) =>
     ipcRenderer.invoke("electronAPI.getDiskSpace", dir),
   
-  getPreferences: () => ipcRenderer.invoke("grabbit.getPreferences"),
+  
   updateUISettings: (payload: UISettingsPayload) =>
     ipcRenderer.invoke("electronAPI.updateUISettings", payload),
   

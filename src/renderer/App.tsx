@@ -20,6 +20,7 @@ import type {
   Aria2Status,
   GidPayload,
   Options,
+  Preferences,
   TellRangePayload
 } from '../shared/types';
 
@@ -67,10 +68,18 @@ interface Aria2API {
   changeGlobalOption: (payload: Options) => Promise<'OK'>;
 }
 
+interface GrabbitAPI {
+  getPreferences: () => Promise<Preferences>;
+  minimizeWindow: () => Promise<void>;
+  maximizeWindow: () => Promise<void>;
+  closeWindow: () => Promise<void>;
+}
+
 declare global {
   interface Window {
     electronAPI: ElectronAPI;
     aria2: Aria2API;
+    grabbit: GrabbitAPI;
   }
 }
 
