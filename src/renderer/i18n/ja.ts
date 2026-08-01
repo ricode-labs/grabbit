@@ -13,7 +13,6 @@ export default {
   waitting: "待機中",
   downloadSpeed: "ダウンロード速度",
   uploadSpeed: "アップロード速度",
-  statusMessage: "今日も快適にダウンロード",
 
   // Download list
   noDownloading: "ダウンロード中のタスクはありません",

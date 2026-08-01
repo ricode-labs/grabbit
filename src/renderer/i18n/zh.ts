@@ -13,7 +13,6 @@ export default {
   waitting: "等待",
   downloadSpeed: "下载速度",
   uploadSpeed: "上传速度",
-  statusMessage: "今天也要加油哦",
 
   // Download list
   noDownloading: "暂无正在下载的任务",

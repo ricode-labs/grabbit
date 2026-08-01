@@ -13,7 +13,6 @@ export default {
   waitting: "waitting",
   downloadSpeed: "Download speed",
   uploadSpeed: "Upload speed",
-  statusMessage: "Keep downloads tidy",
 
   // Download list
   noDownloading: "No downloading tasks",

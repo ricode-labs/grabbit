@@ -4,6 +4,7 @@ import { downloadDirectoryPath } from "./paths"
 import { app, nativeTheme } from "electron/main"
 
 const store = new Store<Preferences>({
+  name: "preferences",
   defaults: {
     maxOverallDownloadLimit: 0,
     maxOverallUploadLimit: 0,
