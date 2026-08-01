@@ -44,7 +44,7 @@ interface ElectronAPI {
   getClipboardText: () => Promise<string>
   getTorrentInfo: (torrentPath: string) => Promise<any>
   getDownloadMetadata: (url: string) => Promise<any>
-  getDiskSpace: (dir: string) => Promise<any>
+  // getDiskSpace: (dir: string) => Promise<any>
   minimizeWindow: () => Promise<void>
   maximizeWindow: () => Promise<void>
   closeWindow: () => Promise<void>

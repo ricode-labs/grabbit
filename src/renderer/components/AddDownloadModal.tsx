@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from "react"
 import {
-  AlertTriangle,
   ChevronDown,
   ChevronRight,
   Clipboard,
   FileSearch,
   FolderOpen,
-  HardDrive,
   Link as LinkIcon,
   Loader2,
-  Radio,
   X,
 } from "lucide-react"
 import { extractFileNameFromUrl, formatBytes } from "../utils/format"
@@ -45,11 +42,11 @@ interface DownloadMetadata {
   statusCode?: number
 }
 
-interface DiskSpaceInfo {
-  available: number
-  total: number
-  path?: string
-}
+// interface DiskSpaceInfo {
+//   available: number
+//   total: number
+//   path?: string
+// }
 
 export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   defaultDownloadDir,
@@ -76,8 +73,8 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   const [metadata, setMetadata] = useState<DownloadMetadata | null>(null)
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(false)
   const [metadataError, setMetadataError] = useState("")
-  const [diskSpace, setDiskSpace] = useState<DiskSpaceInfo | null>(null)
-  const [isCheckingSpace, setIsCheckingSpace] = useState(false)
+  // const [diskSpace, setDiskSpace] = useState<DiskSpaceInfo | null>(null)
+  // const [isCheckingSpace, setIsCheckingSpace] = useState(false)
 
   const isUsingDefaultDir = downloadDir === defaultDownloadDir
   const hasDownloadData = Boolean(url.trim() || torrentFile)
@@ -147,48 +144,48 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
     }
   }, [inputMode, url])
 
-  useEffect(() => {
-    const expectedSize = metadata?.totalLength || 0
-    if (!downloadDir || expectedSize <= 0) {
-      setDiskSpace(null)
-      return
-    }
+  // useEffect(() => {
+  //   const expectedSize = metadata?.totalLength || 0
+  //   if (!downloadDir || expectedSize <= 0) {
+  //     setDiskSpace(null)
+  //     return
+  //   }
 
-    let cancelled = false
-    const checkSpace = async () => {
-      setIsCheckingSpace(true)
-      try {
-        const result = await window.electronAPI.getDiskSpace(downloadDir)
-        if (cancelled) return
-        if (result.success) {
-          setDiskSpace({
-            available: result.available || 0,
-            total: result.total || 0,
-            path: result.path,
-          })
-        } else {
-          setDiskSpace(null)
-        }
-      } catch {
-        if (!cancelled) setDiskSpace(null)
-      } finally {
-        if (!cancelled) setIsCheckingSpace(false)
-      }
-    }
+  //   let cancelled = false
+  //   const checkSpace = async () => {
+  //     setIsCheckingSpace(true)
+  //     try {
+  //       const result = await window.electronAPI.getDiskSpace(downloadDir)
+  //       if (cancelled) return
+  //       if (result.success) {
+  //         setDiskSpace({
+  //           available: result.available || 0,
+  //           total: result.total || 0,
+  //           path: result.path,
+  //         })
+  //       } else {
+  //         setDiskSpace(null)
+  //       }
+  //     } catch {
+  //       if (!cancelled) setDiskSpace(null)
+  //     } finally {
+  //       if (!cancelled) setIsCheckingSpace(false)
+  //     }
+  //   }
 
-    checkSpace()
+  //   checkSpace()
 
-    return () => {
-      cancelled = true
-    }
-  }, [downloadDir, metadata?.totalLength])
+  //   return () => {
+  //     cancelled = true
+  //   }
+  // }, [downloadDir, metadata?.totalLength])
 
-  const hasInsufficientSpace = Boolean(
-    (metadata?.totalLength || torrentSize) &&
-    diskSpace?.available !== undefined &&
-    diskSpace.available > 0 &&
-    diskSpace.available < (metadata?.totalLength || torrentSize)
-  )
+  // const hasInsufficientSpace = Boolean(
+  //   (metadata?.totalLength || torrentSize) &&
+  //   diskSpace?.available !== undefined &&
+  //   diskSpace.available > 0 &&
+  //   diskSpace.available < (metadata?.totalLength || torrentSize)
+  // )
 
   // 检查是否为可下载的链接
   const isDownloadableLink = (text: string): boolean => {
@@ -357,7 +354,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
     setTorrentSize(0)
     setMetadata(null)
     setMetadataError("")
-    setDiskSpace(null)
+    // setDiskSpace(null)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -491,7 +488,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
         </header>
 
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-          <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1.05fr)_320px] gap-4 px-6 py-5">
+          <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 px-6 py-5">
             <div className="min-h-0 space-y-4 overflow-y-auto pr-1">
               <section className="rounded-[18px] border border-[#F4E3DE] bg-white/70 p-4">
                 <label className="mb-2 block text-[13px] font-medium text-[#6B5448]">
@@ -701,7 +698,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                   <FolderOpen size={15} className="shrink-0 text-[#8B6A5D]" />
                 </button>
 
-                {(isCheckingSpace || hasInsufficientSpace) && (
+                {/* {(isCheckingSpace || hasInsufficientSpace) && (
                   <div className="mt-3 rounded-[14px] border border-[#F4E3DE] bg-[#FFF8F7] p-3">
                     <div className="flex items-center justify-between gap-3 text-[12px]">
                       <span className="text-[#6B5448]">
@@ -741,7 +738,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                       </div>
                     )}
                   </div>
-                )}
+                )} */}
               </section>
 
               {showFileTree && files.length > 0 && (
@@ -774,7 +771,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
               )}
             </div>
 
-            <aside className="flex min-h-0 flex-col gap-4 overflow-hidden">
+            {/* <aside className="flex min-h-0 flex-col gap-4 overflow-hidden">
               <section className="rounded-[18px] border border-[#F4E3DE] bg-white/70 p-4">
                 <div className="mb-3 flex items-center gap-2 text-[13px] font-medium text-[#6B5448]">
                   <Radio size={14} />
@@ -843,7 +840,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                   </div>
                 </div>
               </section>
-            </aside>
+            </aside> */}
           </div>
 
           <div className="flex items-center justify-end gap-2.5 border-t border-[#F4E3DE] px-6 py-4">
