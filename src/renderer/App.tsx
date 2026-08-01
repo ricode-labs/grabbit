@@ -40,9 +40,7 @@ interface ElectronAPI {
   getHistory: () => Promise<any[]>
   removeFromHistory: (gid: string) => Promise<void>
   deleteDownloadFile: (filePath: string) => Promise<any>
-  selectTorrentFile: () => Promise<string | null>
   getClipboardText: () => Promise<string>
-  getTorrentInfo: (torrentPath: string) => Promise<any>
   getDownloadMetadata: (url: string) => Promise<any>
   // getDiskSpace: (dir: string) => Promise<any>
   minimizeWindow: () => Promise<void>
@@ -70,6 +68,8 @@ interface Aria2API {
 interface GrabbitAPI {
   savePreferences: (preferences: Preferences) => Promise<Preferences>
   selectFolder: () => Promise<string | null>
+  selectTorrentFile: () => Promise<string | null>
+  // getTorrentInfo: (torrentPath: string) => Promise<any>
   getPreferences: () => Promise<Preferences>
   minimizeWindow: () => Promise<void>
   maximizeWindow: () => Promise<void>

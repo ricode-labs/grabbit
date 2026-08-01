@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react"
 import {
-  ChevronDown,
-  ChevronRight,
   Clipboard,
   FileSearch,
   FolderOpen,
@@ -12,17 +10,17 @@ import {
 import { extractFileNameFromUrl, formatBytes } from "../utils/format"
 import { useUI } from "../context/UIContext"
 import { DialogWrapper } from "./ui/DialogWrapper"
-import { CheckboxWrapper } from "./ui/CheckboxWrapper"
-import { TooltipWrapper } from "./ui/TooltipWrapper"
+// import { CheckboxWrapper } from "./ui/CheckboxWrapper"
+// import { TooltipWrapper } from "./ui/TooltipWrapper"
 
-interface FileNode {
-  name: string
-  selected: boolean
-  children?: FileNode[]
-  isExpanded?: boolean
-  index?: string // aria2 文件索引
-  isFile?: boolean
-}
+// interface FileNode {
+//   name: string
+//   selected: boolean
+//   children?: FileNode[]
+//   isExpanded?: boolean
+//   index?: string // aria2 文件索引
+//   isFile?: boolean
+// }
 
 interface AddDownloadModalProps {
   defaultDownloadDir: string
@@ -63,13 +61,13 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   const [downloadDir, setDownloadDir] = useState(
     lastUsedDir || defaultDownloadDir
   )
-  const [files, setFiles] = useState<FileNode[]>([])
-  const [showFileTree, setShowFileTree] = useState(false)
+  // const [files, setFiles] = useState<FileNode[]>([])
+  // const [showFileTree, setShowFileTree] = useState(false)
   const [torrentFile, setTorrentFile] = useState<string>("")
-  const [isMultiFile, setIsMultiFile] = useState(false)
-  const [torrentName, setTorrentName] = useState("")
-  const [createFolder, setCreateFolder] = useState(true)
-  const [torrentSize, setTorrentSize] = useState(0)
+  // const [isMultiFile, setIsMultiFile] = useState(false)
+  // const [torrentName, setTorrentName] = useState("")
+  // const [createFolder, setCreateFolder] = useState(true)
+  // const [torrentSize, setTorrentSize] = useState(0)
   const [metadata, setMetadata] = useState<DownloadMetadata | null>(null)
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(false)
   const [metadataError, setMetadataError] = useState("")
@@ -194,115 +192,19 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   }
 
   // 加载文件树
-  const loadFileTree = async (torrentPath: string) => {
-    try {
-      const result = await window.electronAPI.getTorrentInfo(torrentPath)
-      if (result.success && result.info) {
-        // 转换后端返回的文件树结构为前端需要的 FileNode 结构
-        const convertToFileNodes = (nodes: any[]): FileNode[] => {
-          return nodes.map((node) => {
-            const fileNode: FileNode = {
-              name: node.name,
-              selected: node.selected !== undefined ? node.selected : true,
-              isExpanded: node.isExpanded,
-              index: node.index,
-              isFile: node.isFile,
-            }
-
-            if (node.children && node.children.length > 0) {
-              fileNode.children = convertToFileNodes(node.children)
-            }
-
-            return fileNode
-          })
-        }
-
-        const fileNodes = convertToFileNodes(result.info.files)
-        setFiles(fileNodes)
-        setShowFileTree(fileNodes.length > 0)
-
-        // 设置种子名称和是否多文件
-        setTorrentName(result.info.name)
-        setIsMultiFile(result.info.isMultiFile || false)
-        setTorrentSize(result.info.totalSize || 0)
-
-        // 如果是多文件，自动将文件名设置为种子名称（文件夹名）
-        if (result.info.isMultiFile) {
-          setFileName(result.info.name)
-        }
-      } else {
-        console.warn("Failed to get torrent info:", result.error)
-      }
-    } catch (error) {
-      console.error("Failed to load file tree:", error)
-    }
-  }
+  // const loadFileTree = async (torrentPath: string) => { ... }
 
   // 切换文件选择状态
-  const toggleFileSelection = (index: number, parentIndex?: number) => {
-    setFiles((prevFiles) => {
-      const newFiles = JSON.parse(JSON.stringify(prevFiles)) // 深拷贝
-
-      // 递归更新子节点的选中状态
-      const updateChildren = (node: FileNode, selected: boolean) => {
-        node.selected = selected
-        if (node.children) {
-          node.children.forEach((child) => updateChildren(child, selected))
-        }
-      }
-
-      let targetNode: FileNode
-      if (parentIndex !== undefined && newFiles[parentIndex]?.children) {
-        targetNode = newFiles[parentIndex].children[index]
-      } else {
-        targetNode = newFiles[index]
-      }
-
-      const newSelected = !targetNode.selected
-      updateChildren(targetNode, newSelected)
-
-      return newFiles
-    })
-  }
+  // const toggleFileSelection = (index: number, parentIndex?: number) => { ... }
 
   // 切换文件夹展开状态
-  const toggleExpandFolder = (index: number) => {
-    setFiles((prevFiles) => {
-      const newFiles = JSON.parse(JSON.stringify(prevFiles)) // 深拷贝
-      if (newFiles[index].children) {
-        newFiles[index].isExpanded = !newFiles[index].isExpanded
-      }
-      return newFiles
-    })
-  }
+  // const toggleExpandFolder = (index: number) => { ... }
 
   // 全选所有文件
-  const selectAllFiles = () => {
-    setFiles((prevFiles) => {
-      const updateSelection = (fileList: FileNode[]): FileNode[] => {
-        return fileList.map((file) => ({
-          ...file,
-          selected: true,
-          children: file.children ? updateSelection(file.children) : undefined,
-        }))
-      }
-      return updateSelection(prevFiles)
-    })
-  }
+  // const selectAllFiles = () => { ... }
 
   // 取消选择所有文件
-  const deselectAllFiles = () => {
-    setFiles((prevFiles) => {
-      const updateSelection = (fileList: FileNode[]): FileNode[] => {
-        return fileList.map((file) => ({
-          ...file,
-          selected: false,
-          children: file.children ? updateSelection(file.children) : undefined,
-        }))
-      }
-      return updateSelection(prevFiles)
-    })
-  }
+  // const deselectAllFiles = () => { ... }
 
   const handleSelectFolder = async () => {
     try {
@@ -323,14 +225,14 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
 
   const handleOpenTorrentFile = async () => {
     try {
-      const filePath = await window.electronAPI.selectTorrentFile()
+      const filePath = await window.grabbit.selectTorrentFile()
       if (filePath) {
         setTorrentFile(filePath)
         // 从文件路径提取文件名
         const name = filePath.split(/[\\/]/).pop() || ""
         setFileName(name.replace(".torrent", ""))
-        // 尝试加载文件树
-        await loadFileTree(filePath)
+        // 不预解析种子文件，提交后直接交给 aria2 处理。
+        // setTorrentSize(0)
       }
     } catch (error) {
       console.error("Failed to open torrent file:", error)
@@ -346,12 +248,12 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
       setUrl("")
     }
     setFileName("")
-    setFiles([])
-    setShowFileTree(false)
-    setIsMultiFile(false)
-    setTorrentName("")
-    setCreateFolder(true)
-    setTorrentSize(0)
+    // setFiles([])
+    // setShowFileTree(false)
+    // setIsMultiFile(false)
+    // setTorrentName("")
+    // setCreateFolder(true)
+    // setTorrentSize(0)
     setMetadata(null)
     setMetadataError("")
     // setDiskSpace(null)
@@ -361,106 +263,17 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
     e.preventDefault()
     const source = inputMode === "link" ? url.trim() : torrentFile
     if (source) {
-      const options: any = {}
-
-      // 处理下载目录
-      if (isMultiFile && createFolder) {
-        // 多文件种子且需要创建文件夹，直接使用选择的目录
-        // aria2 会自动在这个目录下创建以 torrent 名称命名的文件夹
-        options.dir = downloadDir
-      } else if (isMultiFile && !createFolder) {
-        // 多文件种子但不创建新文件夹，需要手动拼接路径
-        // 用户选择的路径应该已经包含了最终的目标文件夹
-        options.dir = downloadDir
-      } else {
-        // 单文件下载
-        options.dir = downloadDir
-      }
-
-      // 设置文件名（仅对单文件有效）
-      if (fileName.trim() && !isMultiFile) {
-        options.out = fileName.trim()
-      }
-
-      // 如果有文件树和选中的文件，添加到选项中
-      if (showFileTree && files.length > 0) {
-        const selectedIndices = getSelectedFileIndices()
-        if (selectedIndices.length > 0) {
-          // aria2 的 select-file 选项需要逗号分隔的文件索引
-          options["select-file"] = selectedIndices.join(",")
-        }
-      }
+      const options = { dir: downloadDir }
 
       onAdd(source, options)
     }
   }
 
   // 获取选中的文件索引列表
-  const getSelectedFileIndices = (): string[] => {
-    const selected: string[] = []
-
-    const traverse = (fileList: FileNode[]) => {
-      fileList.forEach((file) => {
-        // 只收集叶子节点（实际文件）的索引
-        if (file.selected && file.isFile && file.index !== undefined) {
-          selected.push(file.index)
-        }
-        if (file.children) {
-          traverse(file.children)
-        }
-      })
-    }
-
-    traverse(files)
-    return selected
-  }
+  // const getSelectedFileIndices = (): string[] => { ... }
 
   // 渲染文件树节点
-  const renderFileNode = (
-    file: FileNode,
-    index: number,
-    parentIndex?: number
-  ) => {
-    const isFolder = file.children && file.children.length > 0
-    const level = parentIndex !== undefined ? 2 : 1
-
-    return (
-      <div key={`${parentIndex}-${index}`} className={`ml-${level * 4}`}>
-        <div className="flex items-center gap-2 rounded-[10px] p-1.5 hover:bg-[#FFF1F4]">
-          {isFolder && (
-            <button
-              type="button"
-              onClick={() => toggleExpandFolder(index)}
-              className="rounded p-0 text-[#8B6A5D] hover:bg-[#F7E8E3]"
-            >
-              {file.isExpanded ? (
-                <ChevronDown size={16} />
-              ) : (
-                <ChevronRight size={16} />
-              )}
-            </button>
-          )}
-          {!isFolder && <div className="w-4" />}
-
-          <CheckboxWrapper
-            checked={file.selected}
-            onChange={() => toggleFileSelection(index, parentIndex)}
-          />
-          <TooltipWrapper content={file.name}>
-            <span className="truncate text-sm text-[#6B5448]">{file.name}</span>
-          </TooltipWrapper>
-        </div>
-
-        {isFolder && file.isExpanded && file.children && (
-          <div className="ml-6">
-            {file.children.map((child, childIndex) =>
-              renderFileNode(child, childIndex, index)
-            )}
-          </div>
-        )}
-      </div>
-    )
-  }
+  // const renderFileNode = (file: FileNode, index: number, parentIndex?: number) => { ... }
 
   return (
     <DialogWrapper
@@ -603,7 +416,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                   >
                     {torrentFile || t("selectTorrentFile")}
                   </button>
-                  {torrentName && (
+                  {/* {torrentName && (
                     <div className="mt-3 rounded-[14px] border border-[#F4E3DE] bg-[#FFF8F7] p-3 text-[12px] text-[#7A6257]">
                       <div className="flex items-center justify-between gap-3">
                         <span>{t("torrentName")}</span>
@@ -618,7 +431,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                         </span>
                       </div>
                     </div>
-                  )}
+                  )} */}
                 </section>
               )}
 
@@ -626,24 +439,24 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                 <section className="rounded-[18px] border border-[#F4E3DE] bg-white/70 p-4">
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <label className="text-[13px] font-medium text-[#6B5448]">
-                      {isMultiFile ? t("folderName") : t("fileName")}
+                      {t("fileName")}
                     </label>
-                    {isMultiFile && (
+                    {/* {isMultiFile && (
                       <span className="rounded-full bg-[#FFF1F4] px-2 py-0.5 text-[11px] font-medium text-[#FF5C78]">
                         {t("multiFile")}
                       </span>
-                    )}
+                    )} */}
                   </div>
                   <input
                     type="text"
                     value={fileName}
                     onChange={(e) => setFileName(e.target.value)}
                     placeholder={t("autoExtract")}
-                    disabled={isMultiFile}
+                    disabled={inputMode === "file"}
                     className="w-full rounded-[14px] border border-[#F0DED8] bg-[#FFFCFB] px-3 py-2.5 text-[13px] text-[#2D2522] placeholder:text-[#B7A59C] focus:border-[#FFC3CF] focus:ring-4 focus:ring-[#FFE6EC] focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
                   />
 
-                  {isMultiFile && (
+                  {/* {isMultiFile && (
                     <div className="mt-3 flex items-start gap-2">
                       <CheckboxWrapper
                         checked={createFolder}
@@ -661,7 +474,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                         </p>
                       </div>
                     </div>
-                  )}
+                  )} */}
                 </section>
               )}
 
@@ -741,7 +554,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                 )} */}
               </section>
 
-              {showFileTree && files.length > 0 && (
+              {/* {showFileTree && files.length > 0 && (
                 <section className="rounded-[18px] border border-[#F4E3DE] bg-white/70 p-4">
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <label className="text-[13px] font-medium text-[#6B5448]">
@@ -768,7 +581,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                     {files.map((file, index) => renderFileNode(file, index))}
                   </div>
                 </section>
-              )}
+              )} */}
             </div>
 
             {/* <aside className="flex min-h-0 flex-col gap-4 overflow-hidden">

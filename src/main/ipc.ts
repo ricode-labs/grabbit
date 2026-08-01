@@ -1,7 +1,7 @@
 import { clipboard, shell } from "electron"
 import { dialog, ipcMain } from "electron/main"
 import { callAria2 } from "./aria2"
-import parseTorrent from "parse-torrent"
+// import parseTorrent from "parse-torrent"
 
 import type {
   AddMetalinkPayload,
@@ -25,7 +25,7 @@ import type {
   Preferences,
 } from "../shared/types"
 import { readFile } from "fs-extra"
-import path from "node:path"
+// import path from "node:path"
 import {
   closeWindow,
   getMainWindow,
@@ -249,50 +249,50 @@ export function registerIpcHandlers() {
 
   ipcMain.handle("grabbit.getClipboardText", () => clipboard.readText())
 
-  ipcMain.handle(
-    "grabbit.getTorrentInfo",
-    async (_event, torrentPath: string) => {
-      try {
-        const torrent = await readFile(torrentPath)
-        const parsed = parseTorrent(torrent)
-        if (!("files" in parsed) || !parsed.files?.length) {
-          throw new Error("Torrent file does not contain file metadata")
-        }
+  // ipcMain.handle(
+  //   "grabbit.getTorrentInfo",
+  //   async (_event, torrentPath: string) => {
+  //     try {
+  //       const torrent = await readFile(torrentPath)
+  //       const parsed = parseTorrent(torrent)
+  //       if (!("files" in parsed) || !parsed.files?.length) {
+  //         throw new Error("Torrent file does not contain file metadata")
+  //       }
 
-        const files = parsed.files.map((file, index) => ({
-          name:
-            file.path ||
-            file.name ||
-            `${parsed.name || "torrent"}-${index + 1}`,
-          selected: true,
-          isExpanded: false,
-          index: String(index + 1),
-          isFile: true,
-          length: file.length,
-        }))
+  //       const files = parsed.files.map((file, index) => ({
+  //         name:
+  //           file.path ||
+  //           file.name ||
+  //           `${parsed.name || "torrent"}-${index + 1}`,
+  //         selected: true,
+  //         isExpanded: false,
+  //         index: String(index + 1),
+  //         isFile: true,
+  //         length: file.length,
+  //       }))
 
-        return {
-          success: true,
-          info: {
-            name:
-              parsed.name ||
-              path.basename(torrentPath, path.extname(torrentPath)),
-            files,
-            isMultiFile: files.length > 1,
-            totalSize:
-              parsed.length ??
-              files.reduce((sum, file) => sum + file.length, 0),
-          },
-        }
-      } catch (error) {
-        return {
-          success: false,
-          error:
-            error instanceof Error ? error.message : "Failed to parse torrent",
-        }
-      }
-    }
-  )
+  //       return {
+  //         success: true,
+  //         info: {
+  //           name:
+  //             parsed.name ||
+  //             path.basename(torrentPath, path.extname(torrentPath)),
+  //           files,
+  //           isMultiFile: files.length > 1,
+  //           totalSize:
+  //             parsed.length ??
+  //             files.reduce((sum, file) => sum + file.length, 0),
+  //         },
+  //       }
+  //     } catch (error) {
+  //       return {
+  //         success: false,
+  //         error:
+  //           error instanceof Error ? error.message : "Failed to parse torrent",
+  //       }
+  //     }
+  //   }
+  // )
 
   // ipcMain.handle(
   //   "electronAPI.getDownloadMetadata",
