@@ -39,7 +39,6 @@ interface ElectronAPI {
   ) => Promise<void>
   getHistory: () => Promise<any[]>
   removeFromHistory: (gid: string) => Promise<void>
-  deleteDownloadFile: (filePath: string) => Promise<any>
   getDownloadMetadata: (url: string) => Promise<any>
   // getDiskSpace: (dir: string) => Promise<any>
   minimizeWindow: () => Promise<void>
@@ -70,6 +69,7 @@ interface GrabbitAPI {
   selectTorrentFile: () => Promise<string | null>
   // getTorrentInfo: (torrentPath: string) => Promise<any>
   getClipboardText: () => Promise<string>
+  deleteDownloadFile: (filePath: string) => Promise<boolean>
   getPreferences: () => Promise<Preferences>
   minimizeWindow: () => Promise<void>
   maximizeWindow: () => Promise<void>
@@ -316,25 +316,9 @@ const App: React.FC = () => {
     try {
       // 删除本地文件
       if (deleteFile && deleteConfirmTask.filePath) {
-        const result = await window.electronAPI.deleteDownloadFile(
+        await window.grabbit.deleteDownloadFile(
           deleteConfirmTask.filePath
         )
-        if (!result.success) {
-          if (result.error === "File not found") {
-            setNotice({
-              title: t("noticeTitle"),
-              message: t("fileNotFound"),
-              variant: "error",
-            })
-          } else {
-            console.error("Failed to delete file:", result.error)
-            setNotice({
-              title: t("noticeTitle"),
-              message: `${t("deleteFileFailed")}: ${result.error}`,
-              variant: "error",
-            })
-          }
-        }
       }
 
       // 只对仍在 aria2 中的任务调用移除接口，已结束或历史任务只清理历史记录
