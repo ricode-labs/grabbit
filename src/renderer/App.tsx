@@ -40,7 +40,6 @@ interface ElectronAPI {
   getHistory: () => Promise<any[]>
   removeFromHistory: (gid: string) => Promise<void>
   deleteDownloadFile: (filePath: string) => Promise<any>
-  getClipboardText: () => Promise<string>
   getDownloadMetadata: (url: string) => Promise<any>
   // getDiskSpace: (dir: string) => Promise<any>
   minimizeWindow: () => Promise<void>
@@ -70,6 +69,7 @@ interface GrabbitAPI {
   selectFolder: () => Promise<string | null>
   selectTorrentFile: () => Promise<string | null>
   // getTorrentInfo: (torrentPath: string) => Promise<any>
+  getClipboardText: () => Promise<string>
   getPreferences: () => Promise<Preferences>
   minimizeWindow: () => Promise<void>
   maximizeWindow: () => Promise<void>
@@ -160,7 +160,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const checkClipboard = async () => {
       try {
-        const text = await window.electronAPI.getClipboardText()
+        const text = await window.grabbit.getClipboardText()
         if (text && isDownloadableLink(text) && text !== clipboardUrl) {
           setClipboardUrl(text)
           setShowAddModal(true)

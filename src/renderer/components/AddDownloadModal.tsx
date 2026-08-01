@@ -80,7 +80,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
     const loadClipboard = async () => {
       if (!initialUrl) {
         try {
-          const text = await window.electronAPI.getClipboardText()
+          const text = await window.grabbit.getClipboardText()
           // 检查是否为可下载的链接
           if (isDownloadableLink(text)) {
             setUrl(text)
