@@ -68,7 +68,7 @@ interface Aria2API {
 }
 
 interface GrabbitAPI {
-  savePreferences: (preferences: Preferences) => Promise<void>
+  savePreferences: (preferences: Preferences) => Promise<Preferences>
   selectFolder: () => Promise<string | null>
   getPreferences: () => Promise<Preferences>
   minimizeWindow: () => Promise<void>

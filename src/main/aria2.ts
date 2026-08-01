@@ -1,22 +1,14 @@
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process"
 import ky from "ky"
-
-// import { buildSchedulerGlobalOptions } from "../shared/grabbit"
-// import { getMainWindow } from "./app-state"
 import { getAria2Executable } from "./paths"
-// import { readPreferences, readSchedulerRule } from "./stores"
 import type { JsonRpcFailure, JsonRpcSuccess } from "./types"
 import { aria2StartupArgs } from "./aria2.conf"
 import { createServer } from "node:net"
 let aria2Process: ChildProcessWithoutNullStreams | null = null
 let rpcPort: number | null = null
 let rpcSecret = ""
-// let schedulerTimer: NodeJS.Timeout | null = null
-// let taskMonitorTimer: NodeJS.Timeout | null = null
-// let completedNotificationPrimed = false
-// const notifiedCompletedGids = new Set<string>()
 
-export const isAria2Running = () => Boolean(aria2Process)
+// export const isAria2Running = () => Boolean(aria2Process)
 
 function getAvailablePort() {
   return new Promise<number>((resolve, reject) => {

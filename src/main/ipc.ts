@@ -367,7 +367,7 @@ export function registerIpcHandlers() {
   ipcMain.handle(
     "grabbit.savePreferences",
     async (_event, payload: Preferences) => {
-      savePreferences(payload)
+      return await savePreferences(payload)
     }
   )
 
