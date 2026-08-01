@@ -19,7 +19,6 @@ import type {
   Aria2GlobalStat,
   Aria2Status,
   GidPayload,
-  GrabbitSettings,
   Options,
   Preferences,
   TellRangePayload
@@ -66,7 +65,7 @@ interface Aria2API {
 }
 
 interface GrabbitAPI {
-  saveSettings: (settings: GrabbitSettings) => Promise<boolean>;
+  savePreferences: (preferences: Preferences) => Promise<void>;
   selectFolder: () => Promise<string | null>;
   getPreferences: () => Promise<Preferences>;
   minimizeWindow: () => Promise<void>;

@@ -1,9 +1,3 @@
-// import {
-//   buildGlobalAria2Options,
-//   buildSchedulerGlobalOptions,
-//   type GrabbitPreferences,
-//   type TaskSchedulerRule,
-// } from "../shared/grabbit"
 import ky from "ky"
 import {
   btTrackerPath,
@@ -15,7 +9,9 @@ import {
   sessionPath,
 } from "./paths"
 import { outputFile, pathExists, readFile } from "fs-extra"
-import { preferences } from "./preferences"
+import { getPreferences } from "./preferences"
+
+const preferences = getPreferences()
 
 // update trackers
 export async function updateTrackers() {
@@ -37,23 +33,6 @@ async function readTrackers() {
     return ""
   }
 }
-
-// type BuildAria2StartupArgsInput = {
-//   preferences: GrabbitPreferences
-//   schedulerRule: TaskSchedulerRule
-//   sessionPath: string
-// }
-
-// export const buildAria2StartupArgs = ({
-//   preferences,
-//   schedulerRule,
-//   sessionPath,
-// }: BuildAria2StartupArgsInput) => {
-// const globalOptions = {
-//   ...buildGlobalAria2Options(preferences),
-//   ...buildSchedulerGlobalOptions(schedulerRule, preferences),
-// }
-// }
 
 async function basicOptions() {
   const options = [
@@ -145,34 +124,36 @@ function rpcOptions(rpcPort: number, rpcSecret: string) {
   ]
 }
 
-const advancedOptions = [
-  // Save a control file(*.aria2) every SEC seconds
-  "--auto-save-interval=10",
-  // Set log level to output to console
-  "--console-log-level=warn",
-  // Handle quoted string in Content-Disposition header as UTF-8 instead of ISO-8859-1
-  "--content-disposition-default-utf8=true",
-  // Enable disk cache
-  "--disk-cache=128M",
-  // Specify file allocation method
-  "--file-allocation=none",
-  // Set log level to output
-  "--log-level=warn",
-  // Show console readout
-  "--show-console-readout=false",
-  // Set interval in seconds to output download progress summary
-  "--summary-interval=0",
-  // Set max overall download speed in bytes/sec
-  `--max-overall-download-limit=${preferences.maxOverallDownloadLimit}`,
-  // Disable loading aria2.conf file
-  "--no-conf=true",
-  // Save error/unfinished downloads to FILE on exit
-  `--save-session=${sessionPath}`,
-  // Save error/unfinished downloads to a file specified by --save-session option every SEC seconds
-  "--save-session-interval=10",
-  // Stop application when process PID is not running
-  `--stop-with-process=${process.pid}`,
-]
+function advancedOptions() {
+  return [
+    // Save a control file(*.aria2) every SEC seconds
+    "--auto-save-interval=10",
+    // Set log level to output to console
+    "--console-log-level=warn",
+    // Handle quoted string in Content-Disposition header as UTF-8 instead of ISO-8859-1
+    "--content-disposition-default-utf8=true",
+    // Enable disk cache
+    "--disk-cache=128M",
+    // Specify file allocation method
+    "--file-allocation=none",
+    // Set log level to output
+    "--log-level=warn",
+    // Show console readout
+    "--show-console-readout=false",
+    // Set interval in seconds to output download progress summary
+    "--summary-interval=0",
+    // Set max overall download speed in bytes/sec
+    `--max-overall-download-limit=${preferences.maxOverallDownloadLimit}`,
+    // Disable loading aria2.conf file
+    "--no-conf=true",
+    // Save error/unfinished downloads to FILE on exit
+    `--save-session=${sessionPath}`,
+    // Save error/unfinished downloads to a file specified by --save-session option every SEC seconds
+    "--save-session-interval=10",
+    // Stop application when process PID is not running
+    `--stop-with-process=${process.pid}`,
+  ]
+}
 
 export async function aria2StartupArgs(rpcPort: number, rpcSecret: string) {
   return [
@@ -180,6 +161,6 @@ export async function aria2StartupArgs(rpcPort: number, rpcSecret: string) {
     ...httpFtpSftpOptions,
     ...await bitTorrentSpecificOptions(),
     ...rpcOptions(rpcPort, rpcSecret),
-    ...advancedOptions,
+    ...advancedOptions(),
   ]
 }

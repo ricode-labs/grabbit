@@ -228,14 +228,6 @@ export function registerIpcHandlers() {
     return await callAria2<Ok>("aria2.saveSession")
   })
 
-  ipcMain.handle(
-    "grabbit.saveSettings",
-    async (_event, payload: GrabbitSettings) => {
-      // writeSettings(payload)
-      return true
-    }
-  )
-
   ipcMain.handle("grabbit.selectFolder", async () => {
     const result = await dialog.showOpenDialog(getMainWindow(), {
       properties: ["openDirectory", "createDirectory"],

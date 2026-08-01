@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Sun, Moon } from 'lucide-react';
 import { useUI } from '../context/UIContext';
-import type { Language, Theme } from '../../shared/types';
+import type { Language, Preferences, Theme } from '../../shared/types';
 import { ListboxWrapper } from './ui/ListboxWrapper';
 import { TooltipWrapper } from './ui/TooltipWrapper';
 import { NoticeModal } from './ui/NoticeModal';
@@ -81,15 +81,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
       const uploadSpeed = uploadSpeedValue === '0' ? 0 :
         parseFloat(uploadSpeedValue) * (uploadSpeedUnit === 'MB/s' ? 1024 * 1024 : 1024);
 
-      const newSettings = {
-        'max-overall-download-limit': String(downloadSpeed),
-        'max-overall-upload-limit': String(uploadSpeed),
-        dir: settings.defaultDownloadDir
+      const newPreferences: Preferences = {
+        maxOverallDownloadLimit: downloadSpeed,
+        maxOverallUploadLimit: uploadSpeed,
+        downloadDirectoryPath: settings.defaultDownloadDir,
+        theme: localTheme,
+        language: localLanguage
       };
 
-      await window.grabbit.saveSettings(newSettings);
+      await window.grabbit.savePreferences(newPreferences);
 
-      // 保存UI设置
       setTheme(localTheme);
       setLanguage(localLanguage);
 
