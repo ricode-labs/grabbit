@@ -17,7 +17,7 @@ interface SettingsPageProps {
   onBack: () => void
 }
 
-export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
+export const SettingsPage: React.FC<SettingsPageProps> = () => {
   const { theme, language, setTheme, setLanguage, t } = useUI()
 
   const [settings, setSettings] = useState<Settings>({
@@ -26,7 +26,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
     defaultDownloadDir: "",
   })
 
-  // 本地UI设置状态（未保存）
   const [localTheme, setLocalTheme] = useState<Theme>(theme)
   const [localLanguage, setLocalLanguage] = useState<Language>(language)
 
@@ -41,22 +40,48 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
   const [notice, setNotice] = useState<{
     message: string
     variant?: "info" | "success" | "error"
-    onConfirm?: () => void
   } | null>(null)
 
   useEffect(() => {
     loadSettings()
-    // 同步全局UI设置到本地状态
-    setLocalTheme(theme)
-    setLocalLanguage(language)
-  }, [theme, language])
+  }, [])
+
+  const toAria2Speed = (value: string, unit: "KB/s" | "MB/s") => {
+    const amount = Number(value)
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return 0
+    }
+    return amount * (unit === "MB/s" ? 1024 * 1024 : 1024)
+  }
+
+  const buildPreferences = (overrides: Partial<Preferences> = {}): Preferences => ({
+    maxOverallDownloadLimit: toAria2Speed(downloadSpeedValue, downloadSpeedUnit),
+    maxOverallUploadLimit: toAria2Speed(uploadSpeedValue, uploadSpeedUnit),
+    downloadDirectoryPath: settings.defaultDownloadDir,
+    theme: localTheme,
+    language: localLanguage,
+    ...overrides,
+  })
+
+  const savePreferences = async (nextPreferences: Preferences) => {
+    try {
+      await window.grabbit.savePreferences(nextPreferences)
+    } catch (error) {
+      console.error("Failed to save settings:", error)
+      setNotice({
+        message: t("saveFailed"),
+        variant: "error",
+      })
+    }
+  }
 
   const loadSettings = async () => {
     try {
-      const loadedSettings = mapPreferencesToSettings(
-        await window.grabbit.getPreferences()
-      )
+      const preferences = await window.grabbit.getPreferences()
+      const loadedSettings = mapPreferencesToSettings(preferences)
       setSettings(loadedSettings)
+      setLocalTheme(preferences.theme)
+      setLocalLanguage(preferences.language)
 
       // 转换速度单位为可读格式
       if (loadedSettings.maxDownloadSpeed === 0) {
@@ -89,63 +114,64 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
     }
   }
 
-  const handleSave = async () => {
-    try {
-      // 转换速度单位为 bytes/s
-      const downloadSpeed =
-        downloadSpeedValue === "0"
-          ? 0
-          : parseFloat(downloadSpeedValue) *
-            (downloadSpeedUnit === "MB/s" ? 1024 * 1024 : 1024)
-      const uploadSpeed =
-        uploadSpeedValue === "0"
-          ? 0
-          : parseFloat(uploadSpeedValue) *
-            (uploadSpeedUnit === "MB/s" ? 1024 * 1024 : 1024)
-
-      const newPreferences: Preferences = {
-        maxOverallDownloadLimit: downloadSpeed,
-        maxOverallUploadLimit: uploadSpeed,
-        downloadDirectoryPath: settings.defaultDownloadDir,
-        theme: localTheme,
-        language: localLanguage,
-      }
-
-      await window.grabbit.savePreferences(newPreferences)
-
-      setTheme(localTheme)
-      setLanguage(localLanguage)
-
-      setNotice({
-        message: t("settingsSaved"),
-        variant: "success",
-        onConfirm: onBack,
-      })
-    } catch (error) {
-      console.error("Failed to save settings:", error)
-      setNotice({
-        message: t("saveFailed"),
-        variant: "error",
-      })
-    }
-  }
-
   const handleSelectFolder = async () => {
     try {
       const folder = await window.grabbit.selectFolder()
       if (folder) {
         setSettings({ ...settings, defaultDownloadDir: folder })
+        void savePreferences(buildPreferences({ downloadDirectoryPath: folder }))
       }
     } catch (error) {
       console.error("Failed to select folder:", error)
     }
   }
 
-  const handleReset = () => {
-    loadSettings()
-    // 重置UI设置到全局状态
-    setLocalTheme(theme)
-    setLocalLanguage(language)
+  const handleDownloadSpeedValueChange = (value: string) => {
+    setDownloadSpeedValue(value)
+    void savePreferences(
+      buildPreferences({
+        maxOverallDownloadLimit: toAria2Speed(value, downloadSpeedUnit),
+      })
+    )
+  }
+
+  const handleDownloadSpeedUnitChange = (unit: "KB/s" | "MB/s") => {
+    setDownloadSpeedUnit(unit)
+    void savePreferences(
+      buildPreferences({
+        maxOverallDownloadLimit: toAria2Speed(downloadSpeedValue, unit),
+      })
+    )
+  }
+
+  const handleUploadSpeedValueChange = (value: string) => {
+    setUploadSpeedValue(value)
+    void savePreferences(
+      buildPreferences({
+        maxOverallUploadLimit: toAria2Speed(value, uploadSpeedUnit),
+      })
+    )
+  }
+
+  const handleUploadSpeedUnitChange = (unit: "KB/s" | "MB/s") => {
+    setUploadSpeedUnit(unit)
+    void savePreferences(
+      buildPreferences({
+        maxOverallUploadLimit: toAria2Speed(uploadSpeedValue, unit),
+      })
+    )
+  }
+
+  const handleThemeChange = (nextTheme: Theme) => {
+    setLocalTheme(nextTheme)
+    setTheme(nextTheme)
+    void savePreferences(buildPreferences({ theme: nextTheme }))
+  }
+
+  const handleLanguageChange = (nextLanguage: Language) => {
+    setLocalLanguage(nextLanguage)
+    setLanguage(nextLanguage)
+    void savePreferences(buildPreferences({ language: nextLanguage }))
   }
 
   return (
@@ -173,14 +199,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
                 <input
                   type="number"
                   value={downloadSpeedValue}
-                  onChange={(e) => setDownloadSpeedValue(e.target.value)}
+                  onChange={(e) => handleDownloadSpeedValueChange(e.target.value)}
                   className="w-32 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-xs text-zinc-900 placeholder-zinc-500 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-400"
                   placeholder="0"
                 />
                 <ListboxWrapper
                   value={downloadSpeedUnit}
                   onChange={(value) =>
-                    setDownloadSpeedUnit(value as "KB/s" | "MB/s")
+                    handleDownloadSpeedUnitChange(value as "KB/s" | "MB/s")
                   }
                   options={["KB/s", "MB/s"]}
                   className="w-24"
@@ -202,14 +228,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
                 <input
                   type="number"
                   value={uploadSpeedValue}
-                  onChange={(e) => setUploadSpeedValue(e.target.value)}
+                  onChange={(e) => handleUploadSpeedValueChange(e.target.value)}
                   className="w-32 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-xs text-zinc-900 placeholder-zinc-500 transition-all focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-400"
                   placeholder="0"
                 />
                 <ListboxWrapper
                   value={uploadSpeedUnit}
                   onChange={(value) =>
-                    setUploadSpeedUnit(value as "KB/s" | "MB/s")
+                    handleUploadSpeedUnitChange(value as "KB/s" | "MB/s")
                   }
                   options={["KB/s", "MB/s"]}
                   className="w-24"
@@ -256,7 +282,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setLocalTheme("light")}
+                  onClick={() => handleThemeChange("light")}
                   className={`rounded-lg p-2 transition-all ${
                     localTheme === "light"
                       ? "bg-indigo-500 text-white"
@@ -267,7 +293,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
                   <Sun size={18} />
                 </button>
                 <button
-                  onClick={() => setLocalTheme("dark")}
+                  onClick={() => handleThemeChange("dark")}
                   className={`rounded-lg p-2 transition-all ${
                     localTheme === "dark"
                       ? "bg-indigo-500 text-white"
@@ -289,7 +315,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => setLocalLanguage("zh")}
+                  onClick={() => handleLanguageChange("zh")}
                   className={`rounded-lg px-4 py-2 text-xs font-medium transition-all ${
                     localLanguage === "zh"
                       ? "bg-indigo-500 text-white"
@@ -299,7 +325,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
                   {t("chinese")}
                 </button>
                 <button
-                  onClick={() => setLocalLanguage("en")}
+                  onClick={() => handleLanguageChange("en")}
                   className={`rounded-lg px-4 py-2 text-xs font-medium transition-all ${
                     localLanguage === "en"
                       ? "bg-indigo-500 text-white"
@@ -309,7 +335,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
                   {t("english")}
                 </button>
                 <button
-                  onClick={() => setLocalLanguage("ja")}
+                  onClick={() => handleLanguageChange("ja")}
                   className={`rounded-lg px-4 py-2 text-xs font-medium transition-all ${
                     localLanguage === "ja"
                       ? "bg-indigo-500 text-white"
@@ -322,21 +348,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2 pt-2">
-            <button
-              onClick={handleReset}
-              className="flex-1 rounded-lg bg-zinc-200 px-4 py-2 text-xs font-medium text-zinc-700 transition-all duration-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-600"
-            >
-              {t("reset")}
-            </button>
-            <button
-              onClick={handleSave}
-              className="flex-1 rounded-lg bg-indigo-500 px-4 py-2 text-xs font-medium text-white transition-all duration-200 hover:bg-indigo-600 hover:shadow-lg hover:shadow-indigo-500/30"
-            >
-              {t("saveSettings")}
-            </button>
-          </div>
         </div>
       </div>
 
@@ -347,7 +358,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
           message={notice.message}
           variant={notice.variant}
           onClose={() => setNotice(null)}
-          onConfirm={() => notice.onConfirm?.()}
+          onConfirm={() => setNotice(null)}
         />
       )}
     </div>
