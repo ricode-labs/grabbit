@@ -4,5 +4,6 @@ import Store from 'electron-store';
 const store = new Store<Preferences>();
 
 export const preferences: Preferences = {
-  maxOverallDownloadLimit: store.get("maxOverallDownloadLimit", 0)
+  maxOverallDownloadLimit: store.get("maxOverallDownloadLimit", 0),
+  maxOverallUploadLimit: store.get("maxOverallUploadLimit", 0)
 }

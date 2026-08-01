@@ -141,7 +141,6 @@ export default {
 
   // Hints and messages
   zeroMeansUnlimited: '0 にすると無制限です',
-  concurrentRange: '同時に実行するダウンロード数（1〜16）',
   defaultSaveLocation: '新しいタスクの既定の保存場所',
   settingsSaved: '設定を保存しました',
   saveFailed: '設定の保存に失敗しました',

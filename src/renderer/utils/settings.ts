@@ -3,7 +3,6 @@ import type { Options } from "../../shared/types"
 export interface AppSettings {
   maxDownloadSpeed: number
   maxUploadSpeed: number
-  maxConcurrent: number
   defaultDownloadDir: string
 }
 
@@ -39,6 +38,5 @@ export const mapGlobalOptionsToSettings = (options: Options): AppSettings => ({
   maxUploadSpeed: parseAria2Size(
     options["max-overall-upload-limit"] ?? options["max-upload-limit"]
   ),
-  maxConcurrent: Number(options["max-concurrent-downloads"]) || 5,
   defaultDownloadDir: options.dir ?? "",
 })

@@ -10,7 +10,6 @@ import { mapGlobalOptionsToSettings } from '../utils/settings';
 interface Settings {
   maxDownloadSpeed: number;
   maxUploadSpeed: number;
-  maxConcurrent: number;
   defaultDownloadDir: string;
 }
 
@@ -24,7 +23,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
   const [settings, setSettings] = useState<Settings>({
     maxDownloadSpeed: 0,
     maxUploadSpeed: 0,
-    maxConcurrent: 5,
     defaultDownloadDir: ''
   });
 
@@ -86,7 +84,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
       const newSettings = {
         'max-overall-download-limit': String(downloadSpeed),
         'max-overall-upload-limit': String(uploadSpeed),
-        'max-concurrent-downloads': String(settings.maxConcurrent),
         dir: settings.defaultDownloadDir
       };
 
@@ -181,22 +178,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
                   className="w-24"
                 />
               </div>
-            </div>
-
-            {/* Max Concurrent Downloads */}
-            <div className="flex items-center justify-between gap-6 mb-4">
-              <div className="flex-shrink-0">
-                <label className="text-sm font-medium text-[#2D2522]">{t('maxConcurrent')}</label>
-                <p className="mt-1 text-xs text-[#8B6A5D]">{t('concurrentRange')}</p>
-              </div>
-              <input
-                type="number"
-                value={settings.maxConcurrent}
-                onChange={(e) => setSettings({ ...settings, maxConcurrent: parseInt(e.target.value) || 5 })}
-                className="w-32 rounded-lg border border-[#F0DED8] bg-white px-3 py-2 text-sm text-[#2D2522] transition-all focus:border-[#FFC3CF] focus:outline-none focus:ring-2 focus:ring-[#FFE6EC]"
-                min="1"
-                max="16"
-              />
             </div>
 
             {/* Default Download Directory */}

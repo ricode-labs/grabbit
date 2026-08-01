@@ -5,7 +5,6 @@ export function useSettings() {
   const [settings, setSettings] = useState<AppSettings>({
     maxDownloadSpeed: 0,
     maxUploadSpeed: 0,
-    maxConcurrent: 5,
     defaultDownloadDir: ''
   });
 

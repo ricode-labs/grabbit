@@ -10,7 +10,6 @@ import { mapGlobalOptionsToSettings } from '../utils/settings';
 interface Settings {
   maxDownloadSpeed: number;
   maxUploadSpeed: number;
-  maxConcurrent: number;
   defaultDownloadDir: string;
 }
 
@@ -24,7 +23,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
   const [settings, setSettings] = useState<Settings>({
     maxDownloadSpeed: 0,
     maxUploadSpeed: 0,
-    maxConcurrent: 5,
     defaultDownloadDir: ''
   });
 
@@ -86,7 +84,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
       const newSettings = {
         'max-overall-download-limit': String(downloadSpeed),
         'max-overall-upload-limit': String(uploadSpeed),
-        'max-concurrent-downloads': String(settings.maxConcurrent),
         dir: settings.defaultDownloadDir
       };
 
@@ -181,22 +178,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({ onBack }) => {
                   className="w-24"
                 />
               </div>
-            </div>
-
-            {/* Max Concurrent Downloads */}
-            <div className="flex items-center justify-between gap-6 mb-4">
-              <div className="flex-shrink-0">
-                <label className="text-xs font-medium text-zinc-900 dark:text-zinc-100">{t('maxConcurrent')}</label>
-                <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1">{t('concurrentRange')}</p>
-              </div>
-              <input
-                type="number"
-                value={settings.maxConcurrent}
-                onChange={(e) => setSettings({ ...settings, maxConcurrent: parseInt(e.target.value) || 5 })}
-                className="w-32 bg-white dark:bg-zinc-700 border border-zinc-300 dark:border-zinc-600 rounded-lg px-3 py-2 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 transition-all"
-                min="1"
-                max="16"
-              />
             </div>
 
             {/* Default Download Directory */}

@@ -141,7 +141,6 @@ export default {
 
     // Hints and messages
     zeroMeansUnlimited: '设置为 0 表示不限制',
-    concurrentRange: '同时进行下载的任务数量（1-16）',
     defaultSaveLocation: '新增下载任务时的默认保存位置',
     settingsSaved: '设置已保存',
     saveFailed: '保存设置失败',

@@ -141,7 +141,6 @@ export default {
 
     // Hints and messages
     zeroMeansUnlimited: 'Set to 0 for unlimited',
-    concurrentRange: 'Number of concurrent download tasks (1-16)',
     defaultSaveLocation: 'Default save location for new download tasks',
     settingsSaved: 'Settings saved',
     saveFailed: 'Failed to save settings',
