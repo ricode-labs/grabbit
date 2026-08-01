@@ -14,6 +14,7 @@ interface DialogWrapperProps {
   description?: string
   children: React.ReactNode
   className?: string
+  contentClassName?: string
   showCloseButton?: boolean
 }
 
@@ -24,6 +25,7 @@ export const DialogWrapper: React.FC<DialogWrapperProps> = ({
   description,
   children,
   className = "max-w-xl",
+  contentClassName,
   showCloseButton = true,
 }) => {
   // 当弹窗打开时，禁止 body 滚动
@@ -41,7 +43,7 @@ export const DialogWrapper: React.FC<DialogWrapperProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        className={`w-full ${className} gap-0 overflow-hidden rounded-lg border border-zinc-200 bg-white p-0 shadow-2xl dark:border-zinc-700 dark:bg-zinc-800`}
+        className={`w-full gap-0 overflow-hidden rounded-lg border border-zinc-200 bg-white p-0 shadow-2xl dark:border-zinc-700 dark:bg-zinc-800 ${className}`}
         showCloseButton={showCloseButton}
       >
         {(title || showCloseButton) && (
@@ -57,7 +59,10 @@ export const DialogWrapper: React.FC<DialogWrapperProps> = ({
           </DialogDescription>
         )}
         <div
-          className={`flex flex-1 flex-col overflow-hidden p-4 ${description ? "pt-2" : ""}`}
+          className={
+            contentClassName ??
+            `flex flex-1 flex-col overflow-hidden p-4 ${description ? "pt-2" : ""}`
+          }
         >
           {children}
         </div>

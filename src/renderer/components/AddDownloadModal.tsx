@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react"
 import {
   AlertTriangle,
-  CheckCircle2,
   ChevronDown,
   ChevronRight,
   Clipboard,
@@ -472,7 +471,8 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
       onClose={onClose}
       title=""
       showCloseButton={false}
-      className="flex h-[86vh] max-h-[820px] max-w-[880px] flex-col rounded-[22px] border border-[#F1DDD4] bg-[#FFFBF8]"
+      className="flex h-[86vh] max-h-[820px] w-[min(880px,calc(100vw-2rem))] max-w-none flex-col rounded-[22px] !border-[#F1DDD4] !bg-[#FFFBF8] sm:max-w-none dark:!border-[#F1DDD4] dark:!bg-[#FFFBF8]"
+      contentClassName="flex min-h-0 flex-1 flex-col overflow-hidden p-0"
     >
       <div className="flex h-full flex-col">
         <header className="flex items-center justify-between border-b border-[#F4E3DE] px-6 py-4">

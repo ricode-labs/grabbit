@@ -25,7 +25,6 @@ import type {
   Preferences,
 } from "../shared/types"
 import { readFile } from "fs-extra"
-import fs from "node:fs/promises"
 import path from "node:path"
 import {
   closeWindow,
@@ -295,62 +294,62 @@ export function registerIpcHandlers() {
     }
   )
 
-  ipcMain.handle(
-    "electronAPI.getDownloadMetadata",
-    async (_event, url: string) => {
-      try {
-        const response = await fetch(url, {
-          method: "HEAD",
-          redirect: "follow",
-        })
-        const contentDisposition =
-          response.headers.get("content-disposition") || ""
-        const fileNameMatch = contentDisposition.match(
-          /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i
-        )
-        const fileName = fileNameMatch?.[1]
-          ? decodeURIComponent(fileNameMatch[1])
-          : fileNameMatch?.[2] ||
-            path.basename(new URL(response.url || url).pathname)
+  // ipcMain.handle(
+  //   "electronAPI.getDownloadMetadata",
+  //   async (_event, url: string) => {
+  //     try {
+  //       const response = await fetch(url, {
+  //         method: "HEAD",
+  //         redirect: "follow",
+  //       })
+  //       const contentDisposition =
+  //         response.headers.get("content-disposition") || ""
+  //       const fileNameMatch = contentDisposition.match(
+  //         /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i
+  //       )
+  //       const fileName = fileNameMatch?.[1]
+  //         ? decodeURIComponent(fileNameMatch[1])
+  //         : fileNameMatch?.[2] ||
+  //           path.basename(new URL(response.url || url).pathname)
 
-        return {
-          success: true,
-          metadata: {
-            fileName,
-            totalLength: Number(response.headers.get("content-length")) || 0,
-            contentType: response.headers.get("content-type") || undefined,
-            acceptRanges: response.headers.get("accept-ranges") === "bytes",
-            finalUrl: response.url,
-            statusCode: response.status,
-          },
-        }
-      } catch (error) {
-        return {
-          success: false,
-          error:
-            error instanceof Error ? error.message : "Failed to fetch metadata",
-        }
-      }
-    }
-  )
+  //       return {
+  //         success: true,
+  //         metadata: {
+  //           fileName,
+  //           totalLength: Number(response.headers.get("content-length")) || 0,
+  //           contentType: response.headers.get("content-type") || undefined,
+  //           acceptRanges: response.headers.get("accept-ranges") === "bytes",
+  //           finalUrl: response.url,
+  //           statusCode: response.status,
+  //         },
+  //       }
+  //     } catch (error) {
+  //       return {
+  //         success: false,
+  //         error:
+  //           error instanceof Error ? error.message : "Failed to fetch metadata",
+  //       }
+  //     }
+  //   }
+  // )
 
-  ipcMain.handle("electronAPI.getDiskSpace", async (_event, dir: string) => {
-    try {
-      const stats = await fs.statfs(dir)
-      return {
-        success: true,
-        available: stats.bavail * stats.bsize,
-        total: stats.blocks * stats.bsize,
-        path: dir,
-      }
-    } catch (error) {
-      return {
-        success: false,
-        error:
-          error instanceof Error ? error.message : "Failed to get disk space",
-      }
-    }
-  })
+  // ipcMain.handle("electronAPI.getDiskSpace", async (_event, dir: string) => {
+  //   try {
+  //     const stats = await fs.statfs(dir)
+  //     return {
+  //       success: true,
+  //       available: stats.bavail * stats.bsize,
+  //       total: stats.blocks * stats.bsize,
+  //       path: dir,
+  //     }
+  //   } catch (error) {
+  //     return {
+  //       success: false,
+  //       error:
+  //         error instanceof Error ? error.message : "Failed to get disk space",
+  //     }
+  //   }
+  // })
 
   ipcMain.handle(
     "grabbit.deleteDownloadFile",
