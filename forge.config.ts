@@ -5,7 +5,10 @@ import { MakerDeb } from "@electron-forge/maker-deb"
 import { MakerRpm } from "@electron-forge/maker-rpm"
 import { VitePlugin } from "@electron-forge/plugin-vite"
 import { FusesPlugin } from "@electron-forge/plugin-fuses"
+import { AutoUnpackNativesPlugin } from "@electron-forge/plugin-auto-unpack-natives"
 import { FuseV1Options, FuseVersion } from "@electron/fuses"
+import { copy } from "fs-extra"
+import { join } from "node:path"
 
 const config: ForgeConfig = {
   packagerConfig: {
@@ -29,6 +32,15 @@ const config: ForgeConfig = {
     },
   },
   rebuildConfig: {},
+  hooks: {
+    packageAfterCopy: async (_forgeConfig, buildPath) => {
+      const packagePath = "node_modules/node-portmapping"
+      await copy(
+        join(process.cwd(), packagePath),
+        join(buildPath, packagePath)
+      )
+    },
+  },
   makers: [
     new MakerSquirrel({}),
     new MakerZIP({}, ["darwin"]),
@@ -52,6 +64,7 @@ const config: ForgeConfig = {
     }),
   ],
   plugins: [
+    new AutoUnpackNativesPlugin({}),
     new VitePlugin({
       // `build` can specify multiple entry builds, which can be Main process, Preload scripts, Worker process, etc.
       // If you are familiar with Vite configuration, it will look really familiar.
