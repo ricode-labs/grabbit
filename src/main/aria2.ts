@@ -32,21 +32,32 @@ function getAvailablePort() {
 function portMapping(btPort: number) {
   undoPortMapping()
   const protocols: Protocol[] = ["TCP", "UDP"]
-  btPortMappings = protocols.map((protocol) =>
-    createMapping({ internalPort: btPort, protocol }, (info) => {
-      if (info.state === "Success") {
-        console.log(
-          `[portmapping] ${info.protocol} ${info.externalHost}:${info.externalPort}`
-        )
-      }
-      return {}
-    })
-  )
+  for (const protocol of protocols) {
+    try {
+      const mapping = createMapping({ internalPort: btPort, protocol }, (info) => {
+        if (info.state === "Success") {
+          console.log(
+            `[portmapping] ${info.protocol} ${info.externalHost}:${info.externalPort}`
+          )
+        } else if (info.state === "Failure") {
+          console.warn(`[portmapping] ${info.protocol} mapping failed`)
+        }
+        return {}
+      })
+      btPortMappings.push(mapping)
+    } catch (error) {
+      console.warn(`[portmapping] ${protocol} mapping unavailable`, error)
+    }
+  }
 }
 
 function undoPortMapping() {
   for (const mapping of btPortMappings) {
-    mapping.destroy()
+    try {
+      mapping.destroy()
+    } catch (error) {
+      console.warn("[portmapping] failed to destroy mapping", error)
+    }
   }
   btPortMappings = []
 }

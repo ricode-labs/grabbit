@@ -74,5 +74,10 @@
   },
   "overrides": {
     "yauzl": "3.3.1"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "node-portmapping@0.3.4": true,
+    "electron-winstaller@5.4.4": true
   }
 }
