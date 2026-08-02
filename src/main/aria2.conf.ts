@@ -10,6 +10,7 @@ import {
 } from "./paths"
 import { outputFile, pathExists, readFile } from "fs-extra"
 import { getPreferences } from "./preferences"
+import { callAria2 } from "./aria2"
 
 const preferences = getPreferences()
 
@@ -22,6 +23,7 @@ export async function updateTrackers() {
     .text()
   const trackers = text.split("\n").join(",")
   await outputFile(btTrackerPath, trackers, "utf8")
+  await callAria2("aria2.changeGlobalOption", [{ "bt-tracker": trackers }])
 }
 
 // read trackers
