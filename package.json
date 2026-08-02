@@ -63,6 +63,7 @@
     "fs-extra": "^11.3.6",
     "ky": "^2.0.2",
     "lucide-react": "^1.14.0",
+    "node-portmapping": "^0.3.4",
     "parse-torrent": "^9.1.5",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
