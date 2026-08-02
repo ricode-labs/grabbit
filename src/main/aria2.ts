@@ -4,8 +4,11 @@ import { getAria2Executable } from "./paths"
 import type { JsonRpcFailure, JsonRpcSuccess } from "./types"
 import { aria2StartupArgs } from "./aria2.conf"
 import { createServer } from "node:net"
-import { createMapping } from "node-portmapping"
+import { createMapping, type Mapping, type Protocol } from "node-portmapping"
 let aria2Process: ChildProcessWithoutNullStreams | null = null
+let btPortMappings: Mapping[] = []
+let rpcPort: number | null = null
+let rpcSecret: string | null = null
 
 // export const isAria2Running = () => Boolean(aria2Process)
 
@@ -26,12 +29,26 @@ function getAvailablePort() {
   })
 }
 
-function mapPort(btPort: number) {
-  const mapping = createMapping(btPort, (info) => {
-    if (info.state == "Success") {
-      console.log(`${info.externalHost}:${info.externalPort}`)
-    }
-  })
+function portMapping(btPort: number) {
+  undoPortMapping()
+  const protocols: Protocol[] = ["TCP", "UDP"]
+  btPortMappings = protocols.map((protocol) =>
+    createMapping({ internalPort: btPort, protocol }, (info) => {
+      if (info.state === "Success") {
+        console.log(
+          `[portmapping] ${info.protocol} ${info.externalHost}:${info.externalPort}`
+        )
+      }
+      return {}
+    })
+  )
+}
+
+function undoPortMapping() {
+  for (const mapping of btPortMappings) {
+    mapping.destroy()
+  }
+  btPortMappings = []
 }
 
 export async function callAria2<T = unknown>(
@@ -60,11 +77,11 @@ export async function startAria2() {
   }
 
   let btPort: number
-  const rpcPort = await getAvailablePort()
+  rpcPort = await getAvailablePort()
   do {
     btPort = await getAvailablePort()
-  } while (rpcPort == btPort)
-  const rpcSecret = crypto.randomUUID()
+  } while (rpcPort === btPort)
+  rpcSecret = crypto.randomUUID()
   const aria2Path = getAria2Executable()
 
   aria2Process = spawn(
@@ -77,11 +94,16 @@ export async function startAria2() {
 
   aria2Process.on("exit", () => {
     aria2Process = null
+    rpcPort = null
+    rpcSecret = null
+    undoPortMapping()
   })
 
   aria2Process.stderr.on("data", (chunk) => {
     console.error(`[aria2] ${chunk}`)
   })
+
+  portMapping(btPort)
 }
 
 export async function stopAria2() {
@@ -89,12 +111,6 @@ export async function stopAria2() {
     return
   }
 
-  try {
-    await callAria2("aria2.saveSession")
-  } catch (error) {
-    console.error("Failed to save aria2 session", error)
-  }
-
+  await callAria2("aria2.saveSession")
   aria2Process.kill()
-  aria2Process = null
 }
