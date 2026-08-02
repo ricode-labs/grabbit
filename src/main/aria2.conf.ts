@@ -77,7 +77,7 @@ const httpFtpSftpOptions = [
 
 // const bitTorrentMetalinkOptions = []
 
-async function bitTorrentSpecificOptions() {
+async function bitTorrentSpecificOptions(btPort: number) {
   return [
     // Exclude seed only downloads when counting concurrent active downloads
     "--bt-detach-seed-only=true",
@@ -101,8 +101,12 @@ async function bitTorrentSpecificOptions() {
     `--dht-file-path=${dhtPath}`,
     // Change the IPv6 DHT routing table file to PATH
     `--dht-file-path6=${dht6Path}`,
+    // Set UDP listening port used by DHT(IPv4, IPv6) and UDP tracker
+    `--dht-listen-port=${btPort}`,
     // Enable IPv6 DHT functionality
     "--enable-dht6=true",
+    // Set TCP port number for BitTorrent downloads
+    `--listen-port=${btPort}`,
     // Set max overall upload speed in bytes/sec
     `--max-overall-upload-limit=${preferences.maxOverallUploadLimit}`,
     // Specify share ratio
@@ -155,11 +159,15 @@ function advancedOptions() {
   ]
 }
 
-export async function aria2StartupArgs(rpcPort: number, rpcSecret: string) {
+export async function aria2StartupArgs(
+  rpcPort: number,
+  rpcSecret: string,
+  btPort: number
+) {
   return [
     ...(await basicOptions()),
     ...httpFtpSftpOptions,
-    ...(await bitTorrentSpecificOptions()),
+    ...(await bitTorrentSpecificOptions(btPort)),
     ...rpcOptions(rpcPort, rpcSecret),
     ...advancedOptions(),
   ]

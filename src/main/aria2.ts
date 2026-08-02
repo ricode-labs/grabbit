@@ -4,9 +4,8 @@ import { getAria2Executable } from "./paths"
 import type { JsonRpcFailure, JsonRpcSuccess } from "./types"
 import { aria2StartupArgs } from "./aria2.conf"
 import { createServer } from "node:net"
+import { createMapping } from "node-portmapping"
 let aria2Process: ChildProcessWithoutNullStreams | null = null
-let rpcPort: number | null = null
-let rpcSecret = ""
 
 // export const isAria2Running = () => Boolean(aria2Process)
 
@@ -24,6 +23,14 @@ function getAvailablePort() {
       const port = address.port
       server.close(() => resolve(port))
     })
+  })
+}
+
+function mapPort(btPort: number) {
+  const mapping = createMapping(btPort, (info) => {
+    if (info.state == "Success") {
+      console.log(`${info.externalHost}:${info.externalPort}`)
+    }
   })
 }
 
@@ -52,16 +59,21 @@ export async function startAria2() {
     return
   }
 
-  rpcPort = await getAvailablePort()
-  rpcSecret = crypto.randomUUID()
+  let btPort: number
+  const rpcPort = await getAvailablePort()
+  do {
+    btPort = await getAvailablePort()
+  } while (rpcPort == btPort)
+  const rpcSecret = crypto.randomUUID()
   const aria2Path = getAria2Executable()
-  // const preferences = await readPreferences()
-  // const schedulerRule = await readSchedulerRule()
-  // const downloadDir = preferences.downloadDir
 
-  aria2Process = spawn(aria2Path, await aria2StartupArgs(rpcPort, rpcSecret), {
-    stdio: "pipe",
-  })
+  aria2Process = spawn(
+    aria2Path,
+    await aria2StartupArgs(rpcPort, rpcSecret, btPort),
+    {
+      stdio: "pipe",
+    }
+  )
 
   aria2Process.on("exit", () => {
     aria2Process = null
@@ -70,19 +82,6 @@ export async function startAria2() {
   aria2Process.stderr.on("data", (chunk) => {
     console.error(`[aria2] ${chunk}`)
   })
-
-  // ensureSchedulerTimer()
-  // ensureTaskMonitorTimer()
-
-  // if (preferences.resumeAllOnLaunch) {
-  //   void callAria2("aria2.unpauseAll").catch((error) => {
-  //     console.error("Failed to resume all tasks on launch", error)
-  //   })
-  // }
-
-  // void updateTaskProgressAndNotifications().catch((error) => {
-  //   console.error("Failed to update task progress/notifications", error)
-  // })
 }
 
 export async function stopAria2() {
