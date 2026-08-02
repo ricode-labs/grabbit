@@ -18,6 +18,7 @@ import type {
   AddUriPayload,
   Aria2GlobalStat,
   Aria2Status,
+  Aria2Version,
   GidPayload,
   Options,
   Preferences,
@@ -51,6 +52,7 @@ interface Aria2API {
   addUri: (payload: AddUriPayload) => Promise<string>
   addTorrent: (payload: AddTorrentPayload) => Promise<string>
   remove: (payload: GidPayload) => Promise<string>
+  forceRemove: (payload: GidPayload) => Promise<string>
   removeDownloadResult: (payload: GidPayload) => Promise<"OK">
   pause: (payload: GidPayload) => Promise<string>
   unpause: (payload: GidPayload) => Promise<string>
@@ -60,6 +62,7 @@ interface Aria2API {
   tellStopped: (payload: TellRangePayload) => Promise<Aria2Status[]>
   getGlobalOption: () => Promise<Options>
   getGlobalStat: () => Promise<Aria2GlobalStat>
+  getVersion: () => Promise<Aria2Version>
   changeGlobalOption: (payload: Options) => Promise<"OK">
 }
 
@@ -91,6 +94,11 @@ type NoticeState = {
   variant?: "info" | "success" | "error"
   title?: string
   onConfirm?: () => void
+}
+
+const isMissingAria2TaskError = (error: unknown) => {
+  const message = error instanceof Error ? error.message : String(error)
+  return /not found|Could not remove download result/i.test(message)
 }
 
 const App: React.FC = () => {
@@ -292,11 +300,17 @@ const App: React.FC = () => {
 
       if (!task) return
 
+      const torrentName = task.bittorrent?.info?.name
       const fileName =
-        task.files?.[0]?.path?.split("/").pop() || task.fileName || t("unknown")
+        torrentName ||
+        task.files?.[0]?.path?.split("/").pop() ||
+        task.fileName ||
+        t("unknown")
       const filePath =
-        task.files?.[0]?.path ||
-        (task.dir && task.fileName ? `${task.dir}/${task.fileName}` : "")
+        torrentName && task.dir
+          ? `${task.dir}/${torrentName}`
+          : task.files?.[0]?.path ||
+            (task.dir && task.fileName ? `${task.dir}/${task.fileName}` : "")
 
       setDeleteConfirmTask({
         gid: task.gid,
@@ -315,15 +329,28 @@ const App: React.FC = () => {
 
     try {
       // 只对仍在 aria2 中的任务调用移除接口，已结束或历史任务只清理历史记录
-      if (
+      const shouldRemoveLiveTask =
         deleteConfirmTask.isLiveTask &&
         ["active", "waiting", "paused"].includes(deleteConfirmTask.status)
-      ) {
-        await window.aria2.remove({ gid: deleteConfirmTask.gid })
+
+      if (shouldRemoveLiveTask) {
+        try {
+          await window.aria2.forceRemove({ gid: deleteConfirmTask.gid })
+        } catch (error) {
+          if (!isMissingAria2TaskError(error)) throw error
+        }
       }
 
-      if (!["active", "waiting", "paused"].includes(deleteConfirmTask.status)) {
-        await window.aria2.removeDownloadResult({ gid: deleteConfirmTask.gid })
+      // remove/removeForce already removes an active or queued task completely;
+      // only stopped and historical tasks have a download result to remove.
+      if (!shouldRemoveLiveTask) {
+        try {
+          await window.aria2.removeDownloadResult({
+            gid: deleteConfirmTask.gid,
+          })
+        } catch (error) {
+          if (!isMissingAria2TaskError(error)) throw error
+        }
       }
 
       // aria2 不再管理任务后再删除本地文件，避免 .aria2 控制文件被重新写出。
@@ -399,7 +426,6 @@ const App: React.FC = () => {
               <DownloadPage
                 downloads={downloads}
                 historyTasks={historyTasks}
-                globalStat={globalStat}
                 aria2Status={aria2Status}
                 settings={settings}
                 currentCategory={currentCategory}
@@ -407,7 +433,6 @@ const App: React.FC = () => {
                 deleteConfirmTask={deleteConfirmTask}
                 initialModalOpen={showAddModal}
                 initialModalUrl={clipboardUrl}
-                onCategoryChange={setCurrentCategory}
                 onSelectTask={handleSelectTask}
                 onBackToList={handleBackToList}
                 onPause={handlePause}
@@ -426,7 +451,7 @@ const App: React.FC = () => {
 
           {currentView === "list" && (
             <div className="px-5 pt-4 pb-4">
-              <StatusBar globalStat={globalStat} />
+              <StatusBar globalStat={globalStat} downloads={downloads} />
             </div>
           )}
         </div>

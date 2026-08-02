@@ -12,7 +12,7 @@ interface DeleteConfirmModalProps {
     status: string
     isLiveTask: boolean
   }
-  onConfirm: (deleteFile: boolean) => void
+  onConfirm: (deleteFile: boolean) => Promise<void>
   onCancel: () => void
 }
 
@@ -23,6 +23,16 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
 }) => {
   const { t } = useUI()
   const [deleteFile, setDeleteFile] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  const handleConfirm = async () => {
+    setIsDeleting(true)
+    try {
+      await onConfirm(deleteFile)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   return (
     <DialogWrapper
@@ -70,8 +80,9 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
 
       <div className="mt-6 flex items-center gap-3">
         <button
-          onClick={() => onConfirm(deleteFile)}
-          className="flex-1 rounded-lg bg-red-500 px-4 py-3 font-semibold text-white transition-all duration-200 hover:bg-red-600 hover:shadow-lg hover:shadow-red-500/30"
+          onClick={handleConfirm}
+          disabled={isDeleting}
+          className="flex-1 rounded-lg bg-red-500 px-4 py-3 font-semibold text-white transition-all duration-200 hover:bg-red-600 hover:shadow-lg hover:shadow-red-500/30 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {t("confirmDeleteBtn")}
         </button>

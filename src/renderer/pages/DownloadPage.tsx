@@ -19,7 +19,6 @@ import faviconUrl from "../assets/favicon.webp"
 interface DownloadPageProps {
   downloads: any
   historyTasks: any[]
-  globalStat: any
   aria2Status: any
   settings: any
   currentCategory: CategoryType
@@ -27,7 +26,6 @@ interface DownloadPageProps {
   deleteConfirmTask: any
   initialModalOpen?: boolean
   initialModalUrl?: string
-  onCategoryChange: (category: CategoryType) => void
   onSelectTask: (gid: string) => void
   onBackToList: () => void
   onPause: (gid: string) => Promise<void>
@@ -42,7 +40,6 @@ interface DownloadPageProps {
 export const DownloadPage: React.FC<DownloadPageProps> = ({
   downloads,
   historyTasks,
-  globalStat,
   aria2Status,
   settings,
   currentCategory,
@@ -50,7 +47,6 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
   deleteConfirmTask,
   initialModalOpen = false,
   initialModalUrl = "",
-  onCategoryChange,
   onSelectTask,
   onBackToList,
   onPause,

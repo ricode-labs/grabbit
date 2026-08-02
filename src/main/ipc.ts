@@ -33,7 +33,6 @@ import {
   minimizeWindow,
 } from "./window"
 import { getPreferences, savePreferences } from "./preferences"
-import { log } from "node:console"
 
 export function registerIpcHandlers() {
   ipcMain.handle("aria2.addUri", async (_event, payload: AddUriPayload) => {
@@ -355,9 +354,16 @@ export function registerIpcHandlers() {
   ipcMain.handle(
     "grabbit.deleteDownloadFile",
     async (_event, filePath: string) => {
+      if (await pathExists(filePath)) {
+        await shell.trashItem(filePath)
+      }
+
       const aria2ControlFilePath = `${filePath}.aria2`
-      await shell.trashItem(aria2ControlFilePath)
-      await shell.trashItem(filePath)
+      if (await pathExists(aria2ControlFilePath)) {
+        await shell.trashItem(aria2ControlFilePath)
+      }
+
+      return true
     }
   )
 
