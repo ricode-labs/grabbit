@@ -45,7 +45,7 @@ export const TooltipWrapper: React.FC<TooltipWrapperProps> = ({
       {isVisible &&
         createPortal(
           <div
-            className="animate-in fade-in-0 zoom-in-95 pointer-events-none fixed z-[9999] rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-xs font-medium whitespace-nowrap text-white shadow-lg duration-200 dark:border-zinc-600 dark:bg-zinc-700"
+            className="animate-in fade-in-0 zoom-in-95 pointer-events-none fixed z-[9999] rounded-[12px] border border-[#8B6A5D] bg-[#6B5448] px-3 py-2 text-xs font-medium whitespace-nowrap text-white shadow-lg duration-200"
             style={{
               top: `${position.top}px`,
               left: `${position.left}px`,
@@ -55,7 +55,7 @@ export const TooltipWrapper: React.FC<TooltipWrapperProps> = ({
             {content}
             {/* Arrow */}
             <div className="absolute top-full left-1/2 -mt-px -translate-x-1/2 transform">
-              <div className="border-4 border-transparent border-t-zinc-900 dark:border-t-zinc-700"></div>
+              <div className="border-4 border-transparent border-t-[#6B5448]"></div>
             </div>
           </div>,
           document.body

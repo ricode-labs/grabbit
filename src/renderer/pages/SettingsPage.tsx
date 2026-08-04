@@ -177,18 +177,18 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-[#FFF8F7]">
       {/* Content */}
-      <div className="flex-1 overflow-y-auto px-4 pt-0">
-        <div className="mx-auto max-w-4xl space-y-3">
+      <div className="flex-1 overflow-y-auto px-4">
+        <div className="mx-auto max-w-3xl space-y-3">
           {/* Download Settings Section */}
-          <div className="rounded-[16px] border border-[#F6D7D3] bg-white/78 p-4 shadow-sm">
-            <h2 className="mb-4 text-base font-semibold text-[#2D2522]">
+          <div className="rounded-[14px] border border-[#F6D7D3] bg-white/78 p-3 shadow-sm">
+            <h2 className="mb-3 text-sm font-semibold text-[#2D2522]">
               {t("downloadSettings")}
             </h2>
 
             {/* Download Speed */}
-            <div className="mb-4 flex items-center justify-between gap-6">
+            <div className="mb-3 flex items-center justify-between gap-4">
               <div className="flex-shrink-0">
-                <label className="text-sm font-medium text-[#2D2522]">
+                <label className="text-xs font-medium text-[#2D2522]">
                   {t("downloadSpeedLimit")}
                 </label>
                 <p className="mt-1 text-xs text-[#8B6A5D]">
@@ -200,7 +200,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
                   type="number"
                   value={downloadSpeedValue}
                   onChange={(e) => handleDownloadSpeedValueChange(e.target.value)}
-                  className="w-32 rounded-lg border border-[#F0DED8] bg-white px-3 py-2 text-sm text-[#2D2522] placeholder-[#B7A59C] transition-all focus:border-[#FFC3CF] focus:ring-2 focus:ring-[#FFE6EC] focus:outline-none"
+                  className="w-28 rounded-lg border border-[#F0DED8] bg-white px-3 py-1.5 text-xs text-[#2D2522] placeholder-[#B7A59C] transition-all focus:border-[#FFC3CF] focus:ring-2 focus:ring-[#FFE6EC] focus:outline-none"
                   placeholder="0"
                 />
                 <ListboxWrapper
@@ -215,9 +215,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
             </div>
 
             {/* Upload Speed */}
-            <div className="mb-4 flex items-center justify-between gap-6">
+            <div className="mb-3 flex items-center justify-between gap-4">
               <div className="flex-shrink-0">
-                <label className="text-sm font-medium text-[#2D2522]">
+                <label className="text-xs font-medium text-[#2D2522]">
                   {t("uploadSpeedLimit")}
                 </label>
                 <p className="mt-1 text-xs text-[#8B6A5D]">
@@ -229,7 +229,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
                   type="number"
                   value={uploadSpeedValue}
                   onChange={(e) => handleUploadSpeedValueChange(e.target.value)}
-                  className="w-32 rounded-lg border border-[#F0DED8] bg-white px-3 py-2 text-sm text-[#2D2522] placeholder-[#B7A59C] transition-all focus:border-[#FFC3CF] focus:ring-2 focus:ring-[#FFE6EC] focus:outline-none"
+                  className="w-28 rounded-lg border border-[#F0DED8] bg-white px-3 py-1.5 text-xs text-[#2D2522] placeholder-[#B7A59C] transition-all focus:border-[#FFC3CF] focus:ring-2 focus:ring-[#FFE6EC] focus:outline-none"
                   placeholder="0"
                 />
                 <ListboxWrapper
@@ -244,9 +244,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
             </div>
 
             {/* Default Download Directory */}
-            <div className="flex items-center justify-between gap-6">
+            <div className="flex items-center justify-between gap-4">
               <div className="flex-shrink-0">
-                <label className="text-sm font-medium text-[#2D2522]">
+                <label className="text-xs font-medium text-[#2D2522]">
                   {t("defaultDownloadFolder")}
                 </label>
                 <p className="mt-1 text-xs text-[#8B6A5D]">
@@ -259,7 +259,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
               >
                 <button
                   onClick={handleSelectFolder}
-                  className="max-w-xs truncate rounded-lg border border-[#F0DED8] bg-white px-3 py-2 text-left text-sm font-medium text-[#FF5C78] transition-all hover:bg-[#FFF1F4] hover:text-[#E85068]"
+                  className="max-w-[220px] truncate rounded-lg border border-[#F0DED8] bg-white px-3 py-1.5 text-left text-xs font-medium text-[#FF5C78] transition-all hover:bg-[#FFF1F4] hover:text-[#E85068]"
                 >
                   {settings.defaultDownloadDir || t("selectFolder")}
                 </button>
@@ -268,22 +268,22 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
           </div>
 
           {/* Display Settings Section */}
-          <div className="rounded-[16px] border border-[#F6D7D3] bg-white/78 p-4 shadow-sm">
-            <h2 className="mb-4 text-base font-semibold text-[#2D2522]">
+          <div className="rounded-[14px] border border-[#F6D7D3] bg-white/78 p-3 shadow-sm">
+            <h2 className="mb-3 text-sm font-semibold text-[#2D2522]">
               {t("displaySettings")}
             </h2>
 
             {/* Theme */}
-            <div className="mb-4 flex items-center justify-between gap-6">
+            <div className="mb-3 flex items-center justify-between gap-4">
               <div className="flex-shrink-0">
-                <label className="text-sm font-medium text-[#2D2522]">
+                <label className="text-xs font-medium text-[#2D2522]">
                   {t("theme")}
                 </label>
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => handleThemeChange("light")}
-                  className={`rounded-lg p-2 transition-all ${
+                  className={`rounded-lg p-1.5 transition-all ${
                     localTheme === "light"
                       ? "bg-[#FF7D90] text-white"
                       : "border border-[#F0DED8] bg-white text-[#6B5448] hover:bg-[#FFF1F4]"
@@ -294,7 +294,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
                 </button>
                 <button
                   onClick={() => handleThemeChange("dark")}
-                  className={`rounded-lg p-2 transition-all ${
+                  className={`rounded-lg p-1.5 transition-all ${
                     localTheme === "dark"
                       ? "bg-[#FF7D90] text-white"
                       : "border border-[#F0DED8] bg-white text-[#6B5448] hover:bg-[#FFF1F4]"
@@ -307,16 +307,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
             </div>
 
             {/* Language */}
-            <div className="flex items-center justify-between gap-6">
+            <div className="flex items-center justify-between gap-4">
               <div className="flex-shrink-0">
-                <label className="text-sm font-medium text-[#2D2522]">
+                <label className="text-xs font-medium text-[#2D2522]">
                   {t("language")}
                 </label>
               </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => handleLanguageChange("zh")}
-                  className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                     localLanguage === "zh"
                       ? "bg-[#FF7D90] text-white"
                       : "border border-[#F0DED8] bg-white text-[#6B5448] hover:bg-[#FFF1F4]"
@@ -326,7 +326,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
                 </button>
                 <button
                   onClick={() => handleLanguageChange("en")}
-                  className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                     localLanguage === "en"
                       ? "bg-[#FF7D90] text-white"
                       : "border border-[#F0DED8] bg-white text-[#6B5448] hover:bg-[#FFF1F4]"
@@ -336,7 +336,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = () => {
                 </button>
                 <button
                   onClick={() => handleLanguageChange("ja")}
-                  className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                     localLanguage === "ja"
                       ? "bg-[#FF7D90] text-white"
                       : "border border-[#F0DED8] bg-white text-[#6B5448] hover:bg-[#FFF1F4]"

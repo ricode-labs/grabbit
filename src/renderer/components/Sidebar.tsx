@@ -70,21 +70,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
     "text-[#6B5448] hover:bg-[#FFF1F4] hover:text-[#FF5C78] border-transparent"
 
   return (
-    <aside className="flex h-full w-[208px] flex-shrink-0 flex-col border-r border-[#F2DED6] bg-[#FFFBF8]/95">
-      <div className="flex h-[104px] items-center gap-3 px-7">
-        <div className="flex h-16 w-16 items-center justify-center">
+    <aside className="flex h-full w-[176px] flex-shrink-0 flex-col border-r border-[#F2DED6] bg-[#FFFBF8]/95">
+      <div className="flex h-[78px] items-center gap-2 px-5">
+        <div className="flex h-12 w-12 items-center justify-center">
           <img
             src={logoUrl}
             alt="Grabbit"
-            className="h-16 w-16 object-contain"
+            className="h-12 w-12 object-contain"
           />
         </div>
-        <span className="text-[28px] leading-none font-semibold text-[#6B5448]">
+        <span className="text-[22px] leading-none font-semibold text-[#6B5448]">
           grabbit
         </span>
       </div>
 
-      <div className="flex-1 space-y-4 overflow-hidden px-5 py-1">
+      <div className="flex-1 space-y-2 overflow-hidden px-4 py-1">
         {categories.map((category) => {
           const Icon = category.icon
           const isActive =
@@ -95,7 +95,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               key={category.id}
               onClick={() => onCategoryChange(category.id)}
-              className={`relative flex h-11 w-full items-center gap-4 rounded-[16px] border px-4 text-[15px] font-medium transition-all duration-200 ${
+              className={`relative flex h-9 w-full items-center gap-3 rounded-[12px] border px-3 text-[13px] font-medium transition-all duration-200 ${
                 isActive ? activeStyle : inactiveStyle
               }`}
             >
@@ -109,7 +109,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <img
                   src={faviconUrl}
                   alt=""
-                  className="h-[26px] w-[26px] flex-shrink-0 object-contain"
+                  className="h-[22px] w-[22px] flex-shrink-0 object-contain"
                 />
               )}
               <span className="min-w-0 flex-1 text-left whitespace-nowrap">
@@ -132,15 +132,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
       </div>
 
       <div
-        className="mx-7 mb-8 h-[118px] bg-contain bg-center bg-no-repeat"
+        className="mx-6 mb-5 h-[88px] bg-contain bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${sidebarBgUrl})` }}
         aria-hidden="true"
       />
 
-      <div className="px-5 pb-5">
+      <div className="px-4 pb-4">
         <button
           onClick={onSettingsClick}
-          className={`flex h-11 w-full items-center gap-4 rounded-[16px] border px-4 text-[15px] font-medium transition-all duration-200 ${
+          className={`flex h-9 w-full items-center gap-3 rounded-[12px] border px-3 text-[13px] font-medium transition-all duration-200 ${
             currentView === "settings" ? activeStyle : inactiveStyle
           }`}
         >

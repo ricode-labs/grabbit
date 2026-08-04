@@ -32,13 +32,13 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
       className="max-w-sm"
     >
       <div className="mb-4 flex items-center gap-3">
-        <div className="rounded-lg bg-red-500/20 p-2.5">
-          <AlertTriangle size={24} className="text-red-500" />
+        <div className="rounded-[14px] bg-[#FFE8EA] p-2.5">
+          <AlertTriangle size={24} className="text-[#E85C61]" />
         </div>
         <div>
-          <p className="text-zinc-700 dark:text-zinc-300">
+          <p className="text-[#6B5448]">
             {t("confirmDeleteTask")}{" "}
-            <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+            <span className="font-semibold text-[#2D2522]">
               {task.fileName}
             </span>
             ?
@@ -47,22 +47,22 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
       </div>
 
       <div className="mt-4 mb-6 space-y-3">
-        <div className="rounded-lg border border-zinc-300 bg-zinc-100 p-4 dark:border-zinc-600 dark:bg-zinc-700">
-          <p className="mb-2 text-sm text-zinc-600 dark:text-zinc-400">
+        <div className="rounded-[14px] border border-[#F8EAE4] bg-white/70 p-4">
+          <p className="mb-2 text-sm text-[#8B6A5D]">
             {t("fileLocation")}
           </p>
-          <p className="font-mono text-sm break-all text-zinc-900 dark:text-zinc-100">
+          <p className="font-mono text-sm break-all text-[#2D2522]">
             {task.filePath || "-"}
           </p>
         </div>
 
-        <label className="flex cursor-pointer items-center gap-3 rounded-lg border border-red-500/40 bg-red-500/10 p-3 transition-all hover:bg-red-500/15">
+        <label className="flex cursor-pointer items-center gap-3 rounded-[14px] border border-[#FFD8DD] bg-[#FFF0F3] p-3 transition-all hover:bg-[#FFE8EA]">
           <CheckboxWrapper
             checked={deleteFile}
             onChange={setDeleteFile}
             accent="red"
           />
-          <span className="font-medium text-red-500 dark:text-red-400">
+          <span className="font-medium text-[#E85C61]">
             {t("deleteFile")}
           </span>
         </label>
@@ -71,13 +71,13 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
       <div className="mt-6 flex items-center gap-3">
         <button
           onClick={() => onConfirm(deleteFile)}
-          className="flex-1 rounded-lg bg-red-500 px-4 py-3 font-semibold text-white transition-all duration-200 hover:bg-red-600 hover:shadow-lg hover:shadow-red-500/30"
+          className="flex-1 rounded-[12px] bg-[#E85C61] px-4 py-3 font-semibold text-white transition-all duration-200 hover:bg-[#D94D54] hover:shadow-lg hover:shadow-[#E85C61]/20"
         >
           {t("confirmDeleteBtn")}
         </button>
         <button
           onClick={onCancel}
-          className="flex-1 rounded-lg bg-zinc-200 px-4 py-3 font-semibold text-zinc-700 transition-all duration-200 hover:bg-zinc-300 dark:bg-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-600"
+          className="flex-1 rounded-[12px] border border-[#F0DED8] bg-white px-4 py-3 font-semibold text-[#6B5448] transition-all duration-200 hover:bg-[#FFF1F4]"
         >
           {t("cancel")}
         </button>

@@ -237,13 +237,13 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
       onClose={onClose}
       title=""
       showCloseButton={false}
-      className="flex h-[86vh] max-h-[820px] w-[min(880px,calc(100vw-2rem))] max-w-none flex-col rounded-[22px] !border-[#F1DDD4] !bg-[#FFFBF8] sm:max-w-none dark:!border-[#F1DDD4] dark:!bg-[#FFFBF8]"
+      className="flex h-[calc(100vh-48px)] max-h-[552px] w-[min(620px,calc(100vw-2rem))] max-w-none flex-col rounded-[18px] !border-[#F8EAE4] !bg-[#FFFBF8] sm:max-w-none dark:!border-[#F8EAE4] dark:!bg-[#FFFBF8]"
       contentClassName="flex min-h-0 flex-1 flex-col overflow-hidden p-0"
     >
       <div className="flex h-full flex-col">
-        <header className="flex items-center justify-between border-b border-[#F4E3DE] px-6 py-4">
+        <header className="flex items-center justify-between border-b border-[#F8EAE4] px-5 py-3">
           <div>
-            <h2 className="text-[20px] font-semibold text-[#2D2522]">
+            <h2 className="text-[18px] font-semibold text-[#2D2522]">
               {t("newTask")}
             </h2>
           </div>
@@ -257,9 +257,9 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
         </header>
 
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
-          <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 px-6 py-5">
-            <div className="min-h-0 space-y-4 overflow-y-auto pr-1">
-              <section className="rounded-[18px] border border-[#F4E3DE] bg-white/70 p-4">
+          <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 px-5 py-4">
+            <div className="min-h-0 space-y-3 overflow-y-auto pr-1">
+              <section className="rounded-[14px] border border-[#F8EAE4] bg-white/70 p-3">
                 <label className="mb-2 block text-[13px] font-medium text-[#6B5448]">
                   {t("selectInputMethod")}
                 </label>
@@ -267,7 +267,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleInputModeChange("link")}
-                    className={`flex items-center justify-center gap-2 rounded-[14px] border px-4 py-2.5 text-[13px] font-medium transition-all ${
+                    className={`flex items-center justify-center gap-2 rounded-[12px] border px-3 py-2 text-[13px] font-medium transition-all ${
                       inputMode === "link"
                         ? "border-[#FFC3CF] bg-[#FFF1F4] text-[#FF5C78]"
                         : "border-[#F0DED8] bg-white text-[#6B5448] hover:bg-[#FFF1F4]"
@@ -279,7 +279,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                   <button
                     type="button"
                     onClick={() => handleInputModeChange("file")}
-                    className={`flex items-center justify-center gap-2 rounded-[14px] border px-4 py-2.5 text-[13px] font-medium transition-all ${
+                    className={`flex items-center justify-center gap-2 rounded-[12px] border px-3 py-2 text-[13px] font-medium transition-all ${
                       inputMode === "file"
                         ? "border-[#FFC3CF] bg-[#FFF1F4] text-[#FF5C78]"
                         : "border-[#F0DED8] bg-white text-[#6B5448] hover:bg-[#FFF1F4]"
@@ -292,7 +292,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
               </section>
 
               {inputMode === "link" && (
-                <section className="rounded-[18px] border border-[#F4E3DE] bg-white/70 p-4">
+                <section className="rounded-[14px] border border-[#F8EAE4] bg-white/70 p-3">
                   <div className="mb-2 flex items-center gap-2 text-[13px] font-medium text-[#6B5448]">
                     <LinkIcon size={15} />
                     {t("downloadLink")}
@@ -302,8 +302,8 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                     onChange={(e) => setUrl(e.target.value)}
                     placeholder={t("linkPlaceholder")}
                     autoFocus
-                    rows={4}
-                    className="w-full resize-none rounded-[14px] border border-[#F0DED8] bg-[#FFFCFB] px-3 py-3 text-[13px] text-[#2D2522] placeholder:text-[#B7A59C] focus:border-[#FFC3CF] focus:ring-4 focus:ring-[#FFE6EC] focus:outline-none"
+                    rows={3}
+                    className="w-full resize-none rounded-[12px] border border-[#F0DED8] bg-[#FFFCFB] px-3 py-2.5 text-[13px] text-[#2D2522] placeholder:text-[#B7A59C] focus:border-[#FFC3CF] focus:ring-4 focus:ring-[#FFE6EC] focus:outline-none"
                   />
 
                   {/* {(metadata || isLoadingMetadata || metadataError) && (
@@ -360,7 +360,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
               )}
 
               {inputMode === "file" && (
-                <section className="rounded-[18px] border border-[#F4E3DE] bg-white/70 p-4">
+                <section className="rounded-[14px] border border-[#F8EAE4] bg-white/70 p-3">
                   <div className="mb-2 flex items-center gap-2 text-[13px] font-medium text-[#6B5448]">
                     <FolderOpen size={15} />
                     {t("torrentFile")}
@@ -368,7 +368,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                   <button
                     type="button"
                     onClick={handleOpenTorrentFile}
-                    className="w-full rounded-[14px] border border-[#F0DED8] bg-[#FFFCFB] px-3 py-2.5 text-left text-[13px] font-medium text-[#FF5C78] transition-all hover:bg-[#FFF1F4]"
+                    className="w-full rounded-[12px] border border-[#F0DED8] bg-[#FFFCFB] px-3 py-2.5 text-left text-[13px] font-medium text-[#FF5C78] transition-all hover:bg-[#FFF1F4]"
                   >
                     {torrentFile || t("selectTorrentFile")}
                   </button>
@@ -393,7 +393,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
 
               {/* 文件名功能已注释：不再让 renderer 传 out 给 aria2。 */}
 
-              <section className="rounded-[18px] border border-[#F4E3DE] bg-white/70 p-4">
+              <section className="rounded-[14px] border border-[#F8EAE4] bg-white/70 p-3">
                 <div className="mb-2 flex items-center justify-between gap-3">
                   <div>
                     <label className="text-[13px] font-medium text-[#6B5448]">
@@ -418,7 +418,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                 <button
                   type="button"
                   onClick={handleSelectFolder}
-                  className="flex w-full items-center justify-between gap-3 rounded-[14px] border border-[#F0DED8] bg-[#FFFCFB] px-3 py-2.5 text-left text-[13px] font-medium text-[#2D2522] transition-all hover:bg-[#FFF1F4]"
+                  className="flex w-full items-center justify-between gap-3 rounded-[12px] border border-[#F0DED8] bg-[#FFFCFB] px-3 py-2.5 text-left text-[13px] font-medium text-[#2D2522] transition-all hover:bg-[#FFF1F4]"
                 >
                   <span className="min-w-0 truncate">
                     {downloadDir || t("selectFolder")}
@@ -571,18 +571,18 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
             </aside> */}
           </div>
 
-          <div className="flex items-center justify-end gap-2.5 border-t border-[#F4E3DE] px-6 py-4">
+          <div className="flex shrink-0 items-center justify-end gap-2.5 border-t border-[#F8EAE4] px-5 py-3">
             <button
               type="button"
               onClick={onClose}
-              className="rounded-[14px] border border-[#F0DED8] bg-white px-4 py-2.5 text-[13px] font-medium text-[#6B5448] transition-all hover:bg-[#FFF1F4]"
+              className="rounded-[12px] border border-[#F0DED8] bg-white px-4 py-2 text-[13px] font-medium text-[#6B5448] transition-all hover:bg-[#FFF1F4]"
             >
               {t("cancel")}
             </button>
             <button
               type="submit"
               disabled={!hasDownloadData}
-              className="rounded-[14px] bg-[#FF7D90] px-5 py-2.5 text-[13px] font-medium text-white transition-all hover:bg-[#FF5C78] disabled:cursor-not-allowed disabled:bg-[#E9DDD8] disabled:text-[#A89488]"
+              className="rounded-[12px] bg-[#FF7D90] px-5 py-2 text-[13px] font-medium text-white transition-all hover:bg-[#FF5C78] disabled:cursor-not-allowed disabled:bg-[#E9DDD8] disabled:text-[#A89488]"
             >
               {t("startDownload")}
             </button>

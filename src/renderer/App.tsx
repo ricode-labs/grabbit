@@ -48,6 +48,7 @@ interface ElectronAPI {
 }
 
 interface Aria2API {
+  getVersion: () => Promise<unknown>
   addUri: (payload: AddUriPayload) => Promise<string>
   addTorrent: (payload: AddTorrentPayload) => Promise<string>
   remove: (payload: GidPayload) => Promise<string>
@@ -391,15 +392,14 @@ const App: React.FC = () => {
           categoryUpdates={categoryUpdates}
         />
 
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[#FFF8F7] pt-[67px]">
-          <main className="flex flex-1 flex-col overflow-hidden px-5">
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[#FFF8F7] pt-11">
+          <main className="flex flex-1 flex-col overflow-hidden px-4">
             {currentView === "settings" ? (
               <SettingsPage onBack={handleBackFromSettings} />
             ) : (
               <DownloadPage
                 downloads={downloads}
                 historyTasks={historyTasks}
-                globalStat={globalStat}
                 aria2Status={aria2Status}
                 settings={settings}
                 currentCategory={currentCategory}
@@ -407,7 +407,6 @@ const App: React.FC = () => {
                 deleteConfirmTask={deleteConfirmTask}
                 initialModalOpen={showAddModal}
                 initialModalUrl={clipboardUrl}
-                onCategoryChange={setCurrentCategory}
                 onSelectTask={handleSelectTask}
                 onBackToList={handleBackToList}
                 onPause={handlePause}
@@ -425,7 +424,7 @@ const App: React.FC = () => {
           </main>
 
           {currentView === "list" && (
-            <div className="px-5 pt-4 pb-4">
+            <div className="px-4 pt-3 pb-3">
               <StatusBar globalStat={globalStat} />
             </div>
           )}

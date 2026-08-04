@@ -19,7 +19,6 @@ import faviconUrl from "../assets/favicon.webp"
 interface DownloadPageProps {
   downloads: any
   historyTasks: any[]
-  globalStat: any
   aria2Status: any
   settings: any
   currentCategory: CategoryType
@@ -27,7 +26,6 @@ interface DownloadPageProps {
   deleteConfirmTask: any
   initialModalOpen?: boolean
   initialModalUrl?: string
-  onCategoryChange: (category: CategoryType) => void
   onSelectTask: (gid: string) => void
   onBackToList: () => void
   onPause: (gid: string) => Promise<void>
@@ -42,7 +40,6 @@ interface DownloadPageProps {
 export const DownloadPage: React.FC<DownloadPageProps> = ({
   downloads,
   historyTasks,
-  globalStat,
   aria2Status,
   settings,
   currentCategory,
@@ -50,7 +47,6 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
   deleteConfirmTask,
   initialModalOpen = false,
   initialModalUrl = "",
-  onCategoryChange,
   onSelectTask,
   onBackToList,
   onPause,
@@ -130,22 +126,22 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
 
   return (
     <>
-      <div className="relative grid min-h-0 flex-1 grid-cols-1 grid-rows-[38px_minmax(0,1fr)] gap-y-4 overflow-hidden">
-        <div className="flex h-[38px] items-center justify-between gap-3">
+      <div className="relative grid min-h-0 flex-1 grid-cols-1 grid-rows-[34px_minmax(0,1fr)] gap-y-3 overflow-hidden">
+        <div className="flex h-[34px] items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <div className="flex h-[34px] overflow-hidden rounded-[16px] border border-[#FFC3CF] bg-[#FFF1F4] text-[13px] font-semibold text-[#FF5C78] shadow-[0_8px_18px_rgba(255,124,148,0.16)]">
+            <div className="flex h-[32px] overflow-hidden rounded-[14px] border border-[#FFC3CF] bg-[#FFF1F4] text-[12px] font-semibold text-[#FF5C78] shadow-[0_8px_18px_rgba(255,124,148,0.16)]">
               <button
                 onClick={() => setShowAddModal(true)}
                 disabled={!aria2Status.connected}
-                className="flex items-center gap-2 px-4 transition-all hover:bg-[#FFE5EC] disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex items-center gap-1.5 px-3 transition-all hover:bg-[#FFE5EC] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <Plus size={17} strokeWidth={2} />
+                <Plus size={15} strokeWidth={2} />
                 {t("addDownload")}
               </button>
               <button
                 onClick={() => setShowAddModal(true)}
                 disabled={!aria2Status.connected}
-                className="flex w-9 items-center justify-center border-l border-[#FFD3DD] transition-all hover:bg-[#FFE5EC] disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex w-8 items-center justify-center border-l border-[#FFD3DD] transition-all hover:bg-[#FFE5EC] disabled:cursor-not-allowed disabled:opacity-50"
                 title={t("addDownload")}
               >
                 <ChevronDown size={15} />
@@ -154,7 +150,7 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
             <button
               onClick={handleResumeVisible}
               disabled={resumableTasks.length === 0}
-              className="flex h-[34px] w-[34px] items-center justify-center rounded-full border border-[#F0DED8] bg-white/90 text-[#9A7C70] shadow-sm transition-all hover:border-[#FFC3CF] hover:text-[#FF5C78] disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-[#F0DED8] bg-white/90 text-[#9A7C70] shadow-sm transition-all hover:border-[#FFC3CF] hover:text-[#FF5C78] disabled:cursor-not-allowed disabled:opacity-40"
               title={t("resume")}
             >
               <Play size={16} />
@@ -162,21 +158,21 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
             <button
               onClick={handlePauseVisible}
               disabled={pausableTasks.length === 0}
-              className="flex h-[34px] w-[34px] items-center justify-center rounded-full border border-[#F0DED8] bg-white/90 text-[#9A7C70] shadow-sm transition-all hover:border-[#FFC3CF] hover:text-[#FF5C78] disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-[#F0DED8] bg-white/90 text-[#9A7C70] shadow-sm transition-all hover:border-[#FFC3CF] hover:text-[#FF5C78] disabled:cursor-not-allowed disabled:opacity-40"
               title={t("pause")}
             >
               <Pause size={16} />
             </button>
             <button
               disabled
-              className="flex h-[34px] w-[34px] cursor-not-allowed items-center justify-center rounded-full border border-[#F0DED8] bg-white/90 text-[#BCAAA1] opacity-60 shadow-sm"
+              className="flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-full border border-[#F0DED8] bg-white/90 text-[#BCAAA1] opacity-60 shadow-sm"
               title={t("delete")}
             >
               <X size={16} />
             </button>
             <button
               disabled
-              className="flex h-[34px] w-[34px] cursor-not-allowed items-center justify-center rounded-full border border-[#F0DED8] bg-white/90 text-[#BCAAA1] opacity-60 shadow-sm"
+              className="flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-full border border-[#F0DED8] bg-white/90 text-[#BCAAA1] opacity-60 shadow-sm"
               title={t("saveLocation")}
             >
               <FolderOpen size={16} />
@@ -184,7 +180,7 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
-            <div className="relative w-[160px]">
+            <div className="relative w-[142px]">
               <Search
                 size={15}
                 className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[#9A8276]"
@@ -193,14 +189,14 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder={t("searchPlaceholder")}
-                className="h-[34px] w-full rounded-[16px] border border-[#F0DED8] bg-white/90 pr-3 pl-9 text-[12px] text-[#6B5448] shadow-sm transition-all outline-none placeholder:text-[#B7A59C] focus:border-[#FFC3CF] focus:ring-4 focus:ring-[#FFE6EC]"
+                className="h-8 w-full rounded-[14px] border border-[#F0DED8] bg-white/90 pr-3 pl-9 text-[12px] text-[#6B5448] shadow-sm transition-all outline-none placeholder:text-[#B7A59C] focus:border-[#FFC3CF] focus:ring-4 focus:ring-[#FFE6EC]"
               />
             </div>
-            <div className="flex h-[34px] w-[34px] items-center justify-center rounded-full border border-[#F0DED8] bg-white/90 shadow-sm">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-[#F0DED8] bg-white/90 shadow-sm">
               <img
                 src={faviconUrl}
                 alt="Grabbit"
-                className="h-[26px] w-[26px] object-contain"
+                className="h-[24px] w-[24px] object-contain"
               />
             </div>
           </div>
@@ -221,7 +217,7 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
         </div>
 
         {showDetailDrawer && (
-          <div className="absolute top-0 right-0 bottom-0 z-30 w-[min(520px,72%)] min-w-[430px]">
+          <div className="absolute top-0 right-0 bottom-0 z-30 w-[min(440px,76%)] min-w-[360px]">
             <DownloadDetail
               task={selectedTask}
               historyTask={selectedHistoryTask}

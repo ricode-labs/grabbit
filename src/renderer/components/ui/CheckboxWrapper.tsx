@@ -6,7 +6,7 @@ interface CheckboxWrapperProps {
   onChange: (checked: boolean) => void
   label?: string
   className?: string
-  accent?: "indigo" | "red"
+  accent?: "pink" | "red"
 }
 
 export const CheckboxWrapper: React.FC<CheckboxWrapperProps> = ({
@@ -14,11 +14,11 @@ export const CheckboxWrapper: React.FC<CheckboxWrapperProps> = ({
   onChange,
   label,
   className = "",
-  accent = "indigo",
+  accent = "pink",
 }) => {
   const accentClasses = {
-    indigo: "border-indigo-500 bg-indigo-500",
-    red: "border-red-500 bg-red-500",
+    pink: "border-[#FF7D90] bg-[#FF7D90]",
+    red: "border-[#E85C61] bg-[#E85C61]",
   }
 
   const handleClick = (e: React.MouseEvent) => {
@@ -43,8 +43,8 @@ export const CheckboxWrapper: React.FC<CheckboxWrapperProps> = ({
         className={`relative inline-flex h-4 w-4 shrink-0 cursor-pointer rounded border transition-all ${
           checked
             ? accentClasses[accent]
-            : "border-zinc-300 bg-white dark:border-zinc-600 dark:bg-zinc-700"
-        } focus-visible:ring-2 focus-visible:ring-offset-0 focus-visible:outline-none focus-visible:ring-${accent}-500/20`}
+            : "border-[#F0DED8] bg-white"
+        } focus-visible:ring-2 focus-visible:ring-[#FFE6EC] focus-visible:ring-offset-0 focus-visible:outline-none`}
       >
         {checked && (
           <Check
@@ -55,7 +55,7 @@ export const CheckboxWrapper: React.FC<CheckboxWrapperProps> = ({
       </div>
       {label && (
         <span
-          className="cursor-pointer text-sm font-medium text-zinc-900 dark:text-zinc-100"
+          className="cursor-pointer text-sm font-medium text-[#2D2522]"
           onClick={handleClick}
         >
           {label}

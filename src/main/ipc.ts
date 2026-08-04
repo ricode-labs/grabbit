@@ -24,7 +24,7 @@ import type {
   TellRangePayload,
   Preferences,
 } from "../shared/types"
-import { pathExists, readFile } from "fs-extra"
+import { readFile } from "fs-extra"
 // import path from "node:path"
 import {
   closeWindow,
@@ -33,7 +33,7 @@ import {
   minimizeWindow,
 } from "./window"
 import { getPreferences, savePreferences } from "./preferences"
-import { log } from "node:console"
+import { updateTrayMenu } from "./tray"
 
 export function registerIpcHandlers() {
   ipcMain.handle("aria2.addUri", async (_event, payload: AddUriPayload) => {
@@ -368,7 +368,9 @@ export function registerIpcHandlers() {
   ipcMain.handle(
     "grabbit.savePreferences",
     async (_event, payload: Preferences) => {
-      return await savePreferences(payload)
+      const preferences = await savePreferences(payload)
+      updateTrayMenu()
+      return preferences
     }
   )
 
