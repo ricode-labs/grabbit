@@ -39,4 +39,5 @@ export async function savePreferences(preferences: Preferences) {
       "max-overall-upload-limit": preferences.maxOverallUploadLimit,
     },
   ])
+  return store.store
 }

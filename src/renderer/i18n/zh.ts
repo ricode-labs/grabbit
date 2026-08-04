@@ -13,6 +13,9 @@ export default {
   waitting: "等待",
   downloadSpeed: "下载速度",
   uploadSpeed: "上传速度",
+  aria2Checking: "正在检查 aria2...",
+  aria2Connected: "已连接 aria2",
+  aria2CheckFailed: "检查 aria2 状态失败",
 
   // Download list
   noDownloading: "暂无正在下载的任务",
@@ -158,4 +161,5 @@ export default {
   deleteFileFailed: "删除文件失败",
   fileNotFound: "找不到该文件，或许已被删除",
   deleteTaskFailed: "删除任务失败",
+  toggleDevTools: "切换开发者工具",
 }

@@ -30,17 +30,17 @@ export const ListboxWrapper: React.FC<ListboxWrapperProps> = ({
     >
       <div className="relative">
         {label && (
-          <SelectLabel className="mb-1.5 block px-0 py-0 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+          <SelectLabel className="mb-1.5 block px-0 py-0 text-sm font-medium text-[#6B5448]">
             {label}
           </SelectLabel>
         )}
         <SelectTrigger
-          className={`${className} border-zinc-300 bg-white py-2 pr-2 pl-3 text-xs text-zinc-900 focus-visible:border-indigo-500 focus-visible:ring-indigo-500/20 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100`}
+          className={`${className} border-[#F0DED8] bg-white py-2 pr-2 pl-3 text-xs text-[#2D2522] focus-visible:border-[#FFC3CF] focus-visible:ring-[#FFE6EC]`}
         >
           <SelectValue>{value}</SelectValue>
         </SelectTrigger>
         <SelectContent
-          className={`${className} border-zinc-300 bg-white text-xs text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100`}
+          className={`${className} border-[#F0DED8] bg-[#FFFBF8] text-xs text-[#2D2522]`}
           align="start"
           alignItemWithTrigger={false}
         >
@@ -48,7 +48,7 @@ export const ListboxWrapper: React.FC<ListboxWrapperProps> = ({
             <SelectItem
               key={option}
               value={option}
-              className="py-2 pr-8 pl-3 text-xs focus:bg-indigo-100 focus:text-indigo-900 dark:focus:bg-indigo-900/30 dark:focus:text-indigo-100"
+              className="py-2 pr-8 pl-3 text-xs focus:bg-[#FFF1F4] focus:text-[#FF5C78]"
             >
               {option}
             </SelectItem>

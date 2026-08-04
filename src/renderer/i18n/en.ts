@@ -13,6 +13,9 @@ export default {
   waitting: "waitting",
   downloadSpeed: "Download speed",
   uploadSpeed: "Upload speed",
+  aria2Checking: "Checking aria2...",
+  aria2Connected: "Connected to aria2",
+  aria2CheckFailed: "Failed to check aria2 status",
 
   // Download list
   noDownloading: "No downloading tasks",
@@ -159,4 +162,5 @@ export default {
   deleteFileFailed: "Failed to delete file",
   fileNotFound: "File not found. It may have already been deleted",
   deleteTaskFailed: "Failed to delete task",
+  toggleDevTools: "Toggle DevTools",
 }

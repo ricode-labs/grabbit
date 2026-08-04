@@ -13,6 +13,9 @@ export default {
   waitting: "待機中",
   downloadSpeed: "ダウンロード速度",
   uploadSpeed: "アップロード速度",
+  aria2Checking: "aria2 を確認中...",
+  aria2Connected: "aria2 に接続しました",
+  aria2CheckFailed: "aria2 の状態確認に失敗しました",
 
   // Download list
   noDownloading: "ダウンロード中のタスクはありません",
@@ -160,4 +163,5 @@ export default {
   fileNotFound:
     "ファイルが見つかりません。すでに削除されている可能性があります",
   deleteTaskFailed: "タスクの削除に失敗しました",
+  toggleDevTools: "開発者ツールを切り替え",
 }

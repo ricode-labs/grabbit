@@ -43,25 +43,25 @@ export const DialogWrapper: React.FC<DialogWrapperProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        className={`w-full gap-0 overflow-hidden rounded-lg border border-zinc-200 bg-white p-0 shadow-2xl dark:border-zinc-700 dark:bg-zinc-800 ${className}`}
+        className={`flex max-h-[calc(100vh-48px)] w-full flex-col gap-0 overflow-hidden rounded-[18px] border border-[#F8EAE4] bg-[#FFFBF8] p-0 shadow-[0_18px_42px_rgba(107,84,72,0.10)] ${className}`}
         showCloseButton={showCloseButton}
       >
         {(title || showCloseButton) && (
-          <DialogHeader className="flex-shrink-0 border-b border-zinc-200 p-4 dark:border-zinc-700">
-            <DialogTitle className="text-xl font-bold text-zinc-900 dark:text-zinc-100">
+          <DialogHeader className="flex-shrink-0 border-b border-[#F8EAE4] px-4 py-3">
+            <DialogTitle className="text-lg font-bold text-[#2D2522]">
               {title}
             </DialogTitle>
           </DialogHeader>
         )}
         {description && (
-          <DialogDescription className="px-4 pt-2 text-sm text-zinc-600 dark:text-zinc-400">
+          <DialogDescription className="px-4 pt-2 text-sm text-[#8B6A5D]">
             {description}
           </DialogDescription>
         )}
         <div
           className={
             contentClassName ??
-            `flex flex-1 flex-col overflow-hidden p-4 ${description ? "pt-2" : ""}`
+            `flex min-h-0 flex-1 flex-col overflow-y-auto p-4 ${description ? "pt-2" : ""}`
           }
         >
           {children}

@@ -143,17 +143,17 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
     ? "bg-[#FFF1F4] ring-1 ring-[#FFB9C6]"
     : "bg-white/35 hover:bg-[#FFFBF8]"
   const actionButtonClass =
-    "flex h-8 w-8 items-center justify-center rounded-full text-[#8B6A5D] transition-colors hover:bg-[#FFF1F4] hover:text-[#FF5C78]"
+    "flex h-7 w-7 items-center justify-center rounded-full text-[#8B6A5D] transition-colors hover:bg-[#FFF1F4] hover:text-[#FF5C78]"
 
   return (
     <div
       onClick={() => onSelect(download.gid)}
-      className={`group grid h-[72px] cursor-pointer grid-cols-[44px_minmax(0,1fr)_70px_76px_70px] items-center gap-3 border-b border-[#F4E3DE] px-5 transition-colors last:border-b-0 ${rowState}`}
+      className={`group grid h-16 cursor-pointer grid-cols-[38px_minmax(0,1fr)_62px_54px_64px] items-center gap-2 border-b border-[#F4E3DE] px-4 transition-colors last:border-b-0 ${rowState}`}
     >
       <div
-        className={`relative flex h-10 w-10 items-center justify-center rounded-[7px] border ${getFileTone()}`}
+        className={`relative flex h-9 w-9 items-center justify-center rounded-[7px] border ${getFileTone()}`}
       >
-        <FileIcon size={22} strokeWidth={1.7} />
+        <FileIcon size={19} strokeWidth={1.7} />
         {extension && (
           <span className="absolute bottom-[5px] max-w-[31px] truncate text-[9px] leading-none font-bold">
             {extension.slice(0, 4)}
@@ -162,7 +162,7 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
       </div>
 
       <div className="min-w-0">
-        <div className="mb-1.5 flex items-center gap-2">
+        <div className="mb-1 flex items-center gap-2">
           <TooltipWrapper content={fileName} className="min-w-0">
             <h3 className="truncate text-[13px] leading-tight font-semibold text-[#2D2522]">
               {fileName}
@@ -175,7 +175,7 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
           </span>
         </div>
 
-        <div className="mb-2 flex items-center gap-2 text-[11px] text-[#7F6A5F]">
+        <div className="mb-1.5 flex items-center gap-2 text-[11px] text-[#7F6A5F]">
           <span>{formatBytes(completedLength)}</span>
           {totalLength > 0 && (
             <>
@@ -213,11 +213,11 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
         )}
       </div>
 
-      <div className="flex h-[58px] items-center justify-center">
+      <div className="flex h-12 items-center justify-center">
         <img
           src={getMascotUrl()}
           alt=""
-          className="h-[58px] w-[58px] object-contain"
+          className="h-12 w-12 object-contain"
         />
       </div>
 
@@ -263,7 +263,7 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
             e.stopPropagation()
             onRemove(download.gid)
           }}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-[#8B6A5D] transition-colors hover:bg-[#FFE4E4] hover:text-[#E85C61]"
+          className="flex h-7 w-7 items-center justify-center rounded-full text-[#8B6A5D] transition-colors hover:bg-[#FFE4E4] hover:text-[#E85C61]"
           title={t("delete")}
         >
           <Trash2 size={16} />
@@ -271,7 +271,7 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
 
         <button
           onClick={(e) => e.stopPropagation()}
-          className="flex h-8 w-8 items-center justify-center rounded-full text-[#8B6A5D] transition-colors hover:bg-[#F7F0EA]"
+          className="flex h-7 w-7 items-center justify-center rounded-full text-[#8B6A5D] transition-colors hover:bg-[#F7F0EA]"
           title={fileName}
         >
           <MoreHorizontal size={17} />

@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react"
+import { useUI } from "../context/UIContext"
 
 export interface Aria2Status {
   connected: boolean
@@ -6,26 +7,27 @@ export interface Aria2Status {
 }
 
 export function useAria2Status() {
+  const { t } = useUI()
   const [aria2Status, setAria2Status] = useState<Aria2Status>({
     connected: false,
-    message: "Checking aria2...",
+    message: t("aria2Checking"),
   })
 
   const checkAria2Status = useCallback(async () => {
     try {
       await window.aria2.getVersion()
-      const status = { connected: true, message: "Connected to aria2" }
+      const status = { connected: true, message: t("aria2Connected") }
       setAria2Status(status)
       return true
     } catch (error) {
       console.error("Failed to check aria2 status:", error)
       setAria2Status({
         connected: false,
-        message: "Failed to check aria2 status",
+        message: t("aria2CheckFailed"),
       })
       return false
     }
-  }, [])
+  }, [t])
 
   return { aria2Status, checkAria2Status }
 }

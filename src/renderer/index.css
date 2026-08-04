@@ -2,11 +2,11 @@
 
 @layer components {
   .btn-primary {
-    @apply px-4 py-2 bg-indigo-500 text-white rounded-lg font-medium hover:bg-indigo-600 transition-colors;
+    @apply rounded-xl bg-[#FF7D90] px-4 py-2 font-medium text-white transition-colors hover:bg-[#FF5C78];
   }
 
   .btn-secondary {
-    @apply px-4 py-2 bg-zinc-200 text-zinc-900 rounded-lg font-medium hover:bg-zinc-300 transition-colors;
+    @apply rounded-xl border border-[#F0DED8] bg-white px-4 py-2 font-medium text-[#6B5448] transition-colors hover:bg-[#FFF1F4];
   }
 
   .btn-sm {
@@ -35,7 +35,7 @@ body,
 
 body {
   margin: 0;
-  background: var(--grabbit-bg);
+  background: transparent;
   color: #2D2522;
   font-family: Inter, ui-rounded, "SF Pro Rounded", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, sans-serif;
   letter-spacing: 0;
@@ -47,7 +47,7 @@ html.dark {
 }
 
 html.dark body {
-  background: var(--grabbit-bg);
+  background: transparent;
   color: #2D2522;
 }
 
@@ -57,8 +57,8 @@ html.dark body {
 }
 
 .app-window {
-  border: 1px solid #F0DDD6;
-  border-radius: 18px;
+  border: 1px solid #F1DDD4;
+  border-radius: 22px;
   box-shadow: 0 18px 50px rgba(107, 84, 72, 0.12);
 }
 
@@ -88,6 +88,5 @@ html.dark body {
 html.dark * {
   scrollbar-color: #F2CFC8 #FFF8F7;
 }
-
 
 

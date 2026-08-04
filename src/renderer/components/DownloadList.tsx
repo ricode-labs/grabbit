@@ -90,11 +90,11 @@ export const DownloadList: React.FC<DownloadListProps> = ({
     }
 
     return (
-      <div className="flex h-full flex-col items-center justify-center rounded-[17px] border border-[#F6D7D3] bg-white/70">
+      <div className="flex h-full flex-col items-center justify-center rounded-[14px] border border-[#F6D7D3] bg-white/70">
         <img
           src={emptyUrl}
           alt=""
-          className="mb-3 h-[122px] w-[122px] object-contain opacity-95"
+          className="mb-3 h-[96px] w-[96px] object-contain opacity-95"
         />
         <p className="text-[15px] font-medium text-[#6B5448]">
           {emptyMessages[category]}
@@ -107,7 +107,7 @@ export const DownloadList: React.FC<DownloadListProps> = ({
   }
 
   return (
-    <div className="h-full overflow-hidden rounded-[17px] border border-[#F6D7D3] bg-white/82 shadow-[0_10px_28px_rgba(107,84,72,0.06)]">
+    <div className="h-full overflow-hidden rounded-[14px] border border-[#F6D7D3] bg-white/82 shadow-[0_10px_28px_rgba(107,84,72,0.06)]">
       <div className="h-full overflow-y-auto">
         {filteredTasks.map((task) => {
           // 如果是历史任务（已完成或失败），从 allTasks 中查找对应的实时状态
