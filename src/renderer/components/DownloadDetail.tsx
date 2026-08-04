@@ -1,18 +1,11 @@
 import React from "react"
 import {
-  CheckCircle2,
-  ChevronDown,
-  ClipboardList,
   FileText,
-  Folder,
   FolderOpen,
-  Info,
-  Link as LinkIcon,
   Pin,
   Trash2,
   X,
 } from "lucide-react"
-import { formatBytes, formatSpeed } from "../utils/format"
 import { useUI } from "../context/UIContext"
 import downloadedUrl from "../assets/downloaded.webp"
 
@@ -42,7 +35,6 @@ export const DownloadDetail: React.FC<DownloadDetailProps> = ({
     task?.completedLength || historyTask?.completedLength || 0
   )
   const totalLength = Number(task?.totalLength || historyTask?.totalLength || 0)
-  const speed = Number(task?.downloadSpeed || 0)
   const progress =
     totalLength > 0 ? Math.min((completedLength / totalLength) * 100, 100) : 0
 
@@ -68,64 +60,9 @@ export const DownloadDetail: React.FC<DownloadDetailProps> = ({
     return "bg-[#F4ECE7] text-[#8B6A5D]"
   }
 
-  const getProtocol = () => {
-    if (!url) return "-"
-    if (url.startsWith("magnet:")) return "Magnet"
-    try {
-      return new URL(url).protocol.replace(":", "").toUpperCase()
-    } catch {
-      return "-"
-    }
-  }
-
-  const getServer = () => {
-    if (!url || url.startsWith("magnet:")) return "-"
-    try {
-      return new URL(url).hostname || "-"
-    } catch {
-      return "-"
-    }
-  }
-
-  const formatTime = (timestamp?: number) => {
-    if (!timestamp) return "-"
-    return new Date(timestamp).toLocaleString()
-  }
-
-  const estimatedTime = () => {
-    if (!isActive || speed <= 0 || totalLength <= completedLength) return "-"
-    const seconds = Math.ceil((totalLength - completedLength) / speed)
-    if (seconds < 60) return `${seconds} ${t("seconds")}`
-    const minutes = Math.ceil(seconds / 60)
-    if (minutes < 60) return `${minutes} ${t("minutes")}`
-    return `${Math.ceil(minutes / 60)} ${t("hours")}`
-  }
-
   const infoRows = [
     { label: t("downloadUrl"), value: url || "-", link: Boolean(url) },
     { label: t("savePath"), value: dir, link: Boolean(dir && dir !== "-") },
-    {
-      label: t("fileSize"),
-      value: `${formatBytes(totalLength)}${totalLength ? ` (${totalLength.toLocaleString()} ${t("bytes")})` : ""}`,
-    },
-    {
-      label: t("downloaded"),
-      value: `${formatBytes(completedLength)}${completedLength ? ` (${completedLength.toLocaleString()} ${t("bytes")})` : ""}`,
-    },
-    { label: t("downloadSpeed"), value: speed > 0 ? formatSpeed(speed) : "-" },
-    { label: t("estimatedTime"), value: estimatedTime() },
-    { label: t("addedTime"), value: formatTime(historyTask?.addedDate) },
-    { label: t("connectionCount"), value: task?.connections ?? "-" },
-    { label: t("protocol"), value: getProtocol() },
-    {
-      label: t("supportsResume"),
-      value: isComplete || isActive || isPaused ? t("yes") : "-",
-    },
-    { label: t("server"), value: getServer() },
-    {
-      label: t("etag"),
-      value: task?.verifiedLength ? `"${task.verifiedLength}"` : "-",
-    },
   ]
 
   const handleDelete = async () => {
@@ -184,32 +121,12 @@ export const DownloadDetail: React.FC<DownloadDetailProps> = ({
           </div>
         </section>
 
-        <nav className="grid h-11 shrink-0 grid-cols-4 border-b border-[#F4E3DE] px-5 text-[13px] font-medium text-[#6B5448]">
-          <button className="relative flex items-center justify-center gap-1.5 text-[#FF5C78]">
-            <Info size={16} />
-            {t("detailInfo")}
-            <span className="absolute right-2 bottom-0 left-2 h-[2px] rounded-full bg-[#FF7D90]" />
-          </button>
-          <button className="flex items-center justify-center gap-1.5">
-            <LinkIcon size={16} />
-            {t("connections")}
-          </button>
-          <button className="flex items-center justify-center gap-1.5">
-            <Folder size={16} />
-            {t("files")}
-          </button>
-          <button className="flex items-center justify-center gap-1.5">
-            <ClipboardList size={16} />
-            {t("logs")}
-          </button>
-        </nav>
-
         <main className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
           <div className="overflow-hidden rounded-[12px] border border-[#F4E3DE] bg-white/58">
-            {infoRows.map((row, index) => (
+            {infoRows.map((row) => (
               <div
                 key={row.label}
-                className="grid min-h-[42px] grid-cols-[96px_minmax(0,1fr)_20px] items-start gap-3 border-b border-[#F4E3DE] px-3 py-3 last:border-b-0"
+                className="grid min-h-[42px] grid-cols-[96px_minmax(0,1fr)] items-start gap-3 border-b border-[#F4E3DE] px-3 py-3 last:border-b-0"
               >
                 <span className="pt-0.5 text-[13px] text-[#6B5448]">
                   {row.label}
@@ -219,13 +136,6 @@ export const DownloadDetail: React.FC<DownloadDetailProps> = ({
                 >
                   {row.value}
                 </span>
-                {row.label === t("supportsResume") && row.value === t("yes") ? (
-                  <CheckCircle2 size={16} className="mt-0.5 text-[#79C96B]" />
-                ) : index === infoRows.length - 1 ? (
-                  <ChevronDown size={16} className="mt-0.5 text-[#8B6A5D]" />
-                ) : (
-                  <span />
-                )}
               </div>
             ))}
           </div>
