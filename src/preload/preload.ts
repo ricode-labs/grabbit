@@ -21,8 +21,8 @@ contextBridge.exposeInMainWorld("grabbit", {
   getTorrentInfo: (torrentPath: string) =>
     ipcRenderer.invoke("grabbit.getTorrentInfo", torrentPath),
 
-  getDownloadMetadata: (url: string) =>
-    ipcRenderer.invoke("grabbit.getHttpInfo", url),
+  // getHttpInfo: (url: string) =>
+  //   ipcRenderer.invoke("grabbit.getHttpInfo", url),
 
   deleteDownloadFile: (filePath: string) =>
     ipcRenderer.invoke("grabbit.deleteDownloadFile", filePath),

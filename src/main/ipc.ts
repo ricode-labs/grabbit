@@ -2,8 +2,8 @@ import { clipboard, shell } from "electron"
 import { dialog, ipcMain } from "electron/main"
 import { callAria2 } from "./aria2"
 import parseTorrent from "parse-torrent"
-import ky from "ky"
-import { parse as parseContentDisposition } from "content-disposition"
+// import ky from "ky"
+// import { parse as parseContentDisposition } from "content-disposition"
 
 import type {
   AddMetalinkPayload,
@@ -255,18 +255,18 @@ export function registerIpcHandlers() {
     }
   )
 
-  ipcMain.handle("grabbit.getHttpInfo", async (_event, url: string) => {
-    const response = await ky.head(url)
-    const contentDisposition = response.headers.get("content-disposition")
-    let filename
-    if (contentDisposition) {
-      filename = parseContentDisposition(contentDisposition).parameters.filename
-    } else {
-      const parsed = new URL(response.url || url)
-      filename = basename(parsed.pathname) || parsed.hostname
-    }
-    return { filename }
-  })
+  // ipcMain.handle("grabbit.getHttpInfo", async (_event, url: string) => {
+  //   const response = await ky.head(url)
+  //   const contentDisposition = response.headers.get("content-disposition")
+  //   let filename
+  //   if (contentDisposition) {
+  //     filename = parseContentDisposition(contentDisposition).parameters.filename
+  //   } else {
+  //     const parsed = new URL(response.url || url)
+  //     filename = basename(parsed.pathname) || parsed.hostname
+  //   }
+  //   return { filename }
+  // })
 
   ipcMain.handle("grabbit.getMagnetInfo", async (_event, url: string) => {
     const filename = parseTorrent(url).name
