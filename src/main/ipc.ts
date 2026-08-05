@@ -2,6 +2,8 @@ import { clipboard, shell } from "electron"
 import { dialog, ipcMain } from "electron/main"
 import { callAria2 } from "./aria2"
 import parseTorrent from "parse-torrent"
+import ky from "ky"
+import { parse as parseContentDisposition } from "content-disposition"
 
 import type {
   AddMetalinkPayload,
@@ -248,16 +250,18 @@ export function registerIpcHandlers() {
     async (_event, torrentPath: string) => {
       try {
         const torrent = await readFile(torrentPath)
-        const parsed = parseTorrent(torrent)
-        if (!("files" in parsed) || !parsed.files?.length) {
-          throw new Error("Torrent file does not contain file metadata")
+        const parsed = parseTorrent(torrent) as {
+          name?: string
+          length?: number
+          files?: Array<{ path?: string; name?: string; length: number }>
         }
-
-        const files = parsed.files.map((file, index) => ({
+        const files = (parsed.files || []).map((file, index) => ({
           name:
             file.path ||
             file.name ||
-            `${parsed.name || "torrent"}-${index + 1}`,
+            `${parsed.name || basename(torrentPath, extname(torrentPath))}-${
+              index + 1
+            }`,
           selected: true,
           isExpanded: false,
           index: String(index + 1),
@@ -268,9 +272,7 @@ export function registerIpcHandlers() {
         return {
           success: true,
           info: {
-            name:
-              parsed.name ||
-              basename(torrentPath, extname(torrentPath)),
+            name: parsed.name || basename(torrentPath, extname(torrentPath)),
             files,
             isMultiFile: files.length > 1,
             totalSize:
@@ -292,23 +294,16 @@ export function registerIpcHandlers() {
     "grabbit.getHttpInfo",
     async (_event, url: string) => {
       try {
-        const response = await fetch(url, {
-          method: "HEAD",
-          redirect: "follow",
-        })
+        const response = await ky.head(url)
         const contentDisposition =
-          response.headers.get("content-disposition") || ""
-        const fileNameMatch = contentDisposition.match(
-          /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i
-        )
-        const fileName = fileNameMatch?.[1]
-          ? decodeURIComponent(fileNameMatch[1])
-          : fileNameMatch?.[2] ||
-            path.basename(new URL(response.url || url).pathname)
+          response.headers.get("content-disposition")
+        const fileName = contentDisposition
+          ? parseContentDisposition(contentDisposition).parameters.filename
+          : basename(new URL(response.url || url).pathname)
 
         return {
           success: true,
-          metadata: {
+          info: {
             fileName,
             totalLength: Number(response.headers.get("content-length")) || 0,
             contentType: response.headers.get("content-type") || undefined,

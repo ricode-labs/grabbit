@@ -18,8 +18,11 @@ contextBridge.exposeInMainWorld("grabbit", {
 
   getClipboardText: () => ipcRenderer.invoke("grabbit.getClipboardText"),
 
-  // getTorrentInfo: (torrentPath: string) =>
-  //   ipcRenderer.invoke("grabbit.getTorrentInfo", torrentPath),
+  getTorrentInfo: (torrentPath: string) =>
+    ipcRenderer.invoke("grabbit.getTorrentInfo", torrentPath),
+
+  getDownloadMetadata: (url: string) =>
+    ipcRenderer.invoke("grabbit.getHttpInfo", url),
 
   deleteDownloadFile: (filePath: string) =>
     ipcRenderer.invoke("grabbit.deleteDownloadFile", filePath),
@@ -37,8 +40,6 @@ contextBridge.exposeInMainWorld("grabbit", {
 })
 
 // contextBridge.exposeInMainWorld("electronAPI", {
-//   getDownloadMetadata: (url: string) =>
-//     ipcRenderer.invoke("electronAPI.getDownloadMetadata", url),
 //   getDiskSpace: (dir: string) =>
 //     ipcRenderer.invoke("electronAPI.getDiskSpace", dir),
 // })
