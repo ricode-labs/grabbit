@@ -248,79 +248,25 @@ export function registerIpcHandlers() {
   ipcMain.handle(
     "grabbit.getTorrentInfo",
     async (_event, torrentPath: string) => {
-      try {
-        const torrent = await readFile(torrentPath)
-        const parsed = parseTorrent(torrent) as {
-          name?: string
-          length?: number
-          files?: Array<{ path?: string; name?: string; length: number }>
-        }
-        const files = (parsed.files || []).map((file, index) => ({
-          name:
-            file.path ||
-            file.name ||
-            `${parsed.name || basename(torrentPath, extname(torrentPath))}-${
-              index + 1
-            }`,
-          selected: true,
-          isExpanded: false,
-          index: String(index + 1),
-          isFile: true,
-          length: file.length,
-        }))
-
-        return {
-          success: true,
-          info: {
-            name: parsed.name || basename(torrentPath, extname(torrentPath)),
-            files,
-            isMultiFile: files.length > 1,
-            totalSize:
-              parsed.length ??
-              files.reduce((sum, file) => sum + file.length, 0),
-          },
-        }
-      } catch (error) {
-        return {
-          success: false,
-          error:
-            error instanceof Error ? error.message : "Failed to parse torrent",
-        }
-      }
+      const filename =
+        parseTorrent(await readFile(torrentPath)).name ||
+        basename(torrentPath, extname(torrentPath))
+      return { filename }
     }
   )
 
-  ipcMain.handle(
-    "grabbit.getHttpInfo",
-    async (_event, url: string) => {
-      try {
-        const response = await ky.head(url)
-        const contentDisposition =
-          response.headers.get("content-disposition")
-        const fileName = contentDisposition
-          ? parseContentDisposition(contentDisposition).parameters.filename
-          : basename(new URL(response.url || url).pathname)
-
-        return {
-          success: true,
-          info: {
-            fileName,
-            totalLength: Number(response.headers.get("content-length")) || 0,
-            contentType: response.headers.get("content-type") || undefined,
-            acceptRanges: response.headers.get("accept-ranges") === "bytes",
-            finalUrl: response.url,
-            statusCode: response.status,
-          },
-        }
-      } catch (error) {
-        return {
-          success: false,
-          error:
-            error instanceof Error ? error.message : "Failed to fetch metadata",
-        }
-      }
+  ipcMain.handle("grabbit.getHttpInfo", async (_event, url: string) => {
+    const response = await ky.head(url)
+    const contentDisposition = response.headers.get("content-disposition")
+    let filename
+    if (contentDisposition) {
+      filename = parseContentDisposition(contentDisposition).parameters.filename
+    } else {
+      const parsed = new URL(response.url || url)
+      filename = basename(parsed.pathname) || parsed.hostname
     }
-  )
+    return { filename }
+  })
 
   // ipcMain.handle("electronAPI.getDiskSpace", async (_event, dir: string) => {
   //   try {
