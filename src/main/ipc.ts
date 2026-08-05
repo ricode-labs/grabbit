@@ -268,6 +268,11 @@ export function registerIpcHandlers() {
     return { filename }
   })
 
+  ipcMain.handle("grabbit.getMagnetInfo", async (_event, url: string) => {
+    const filename = parseTorrent(url).name
+    return filename
+  })
+
   // ipcMain.handle("electronAPI.getDiskSpace", async (_event, dir: string) => {
   //   try {
   //     const stats = await fs.statfs(dir)
