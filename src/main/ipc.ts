@@ -1,7 +1,7 @@
 import { clipboard, shell } from "electron"
 import { dialog, ipcMain } from "electron/main"
 import { callAria2 } from "./aria2"
-// import parseTorrent from "parse-torrent"
+import parseTorrent from "parse-torrent"
 
 import type {
   AddMetalinkPayload,
@@ -34,6 +34,7 @@ import {
 } from "./window"
 import { getPreferences, savePreferences } from "./preferences"
 import { updateTrayMenu } from "./tray"
+import { basename, extname } from "node:path"
 
 export function registerIpcHandlers() {
   ipcMain.handle("aria2.addUri", async (_event, payload: AddUriPayload) => {
@@ -186,14 +187,6 @@ export function registerIpcHandlers() {
   ipcMain.handle(
     "aria2.changeGlobalOption",
     async (_event, payload: Options) => {
-      // const savedPreferences = await writePreferences(preferences)
-      //   if (isAria2Running()) {
-      //     await fs.mkdir(savedPreferences.downloadDir, { recursive: true })
-      //     await callAria2("aria2.changeGlobalOption", [
-      //       buildGlobalAria2Options(savedPreferences),
-      //     ])
-      //   }
-      //   return savedPreferences
       return await callAria2<Ok>("aria2.changeGlobalOption", [payload])
     }
   )
@@ -250,89 +243,89 @@ export function registerIpcHandlers() {
 
   ipcMain.handle("grabbit.getClipboardText", () => clipboard.readText())
 
-  // ipcMain.handle(
-  //   "grabbit.getTorrentInfo",
-  //   async (_event, torrentPath: string) => {
-  //     try {
-  //       const torrent = await readFile(torrentPath)
-  //       const parsed = parseTorrent(torrent)
-  //       if (!("files" in parsed) || !parsed.files?.length) {
-  //         throw new Error("Torrent file does not contain file metadata")
-  //       }
+  ipcMain.handle(
+    "grabbit.getTorrentInfo",
+    async (_event, torrentPath: string) => {
+      try {
+        const torrent = await readFile(torrentPath)
+        const parsed = parseTorrent(torrent)
+        if (!("files" in parsed) || !parsed.files?.length) {
+          throw new Error("Torrent file does not contain file metadata")
+        }
 
-  //       const files = parsed.files.map((file, index) => ({
-  //         name:
-  //           file.path ||
-  //           file.name ||
-  //           `${parsed.name || "torrent"}-${index + 1}`,
-  //         selected: true,
-  //         isExpanded: false,
-  //         index: String(index + 1),
-  //         isFile: true,
-  //         length: file.length,
-  //       }))
+        const files = parsed.files.map((file, index) => ({
+          name:
+            file.path ||
+            file.name ||
+            `${parsed.name || "torrent"}-${index + 1}`,
+          selected: true,
+          isExpanded: false,
+          index: String(index + 1),
+          isFile: true,
+          length: file.length,
+        }))
 
-  //       return {
-  //         success: true,
-  //         info: {
-  //           name:
-  //             parsed.name ||
-  //             path.basename(torrentPath, path.extname(torrentPath)),
-  //           files,
-  //           isMultiFile: files.length > 1,
-  //           totalSize:
-  //             parsed.length ??
-  //             files.reduce((sum, file) => sum + file.length, 0),
-  //         },
-  //       }
-  //     } catch (error) {
-  //       return {
-  //         success: false,
-  //         error:
-  //           error instanceof Error ? error.message : "Failed to parse torrent",
-  //       }
-  //     }
-  //   }
-  // )
+        return {
+          success: true,
+          info: {
+            name:
+              parsed.name ||
+              basename(torrentPath, extname(torrentPath)),
+            files,
+            isMultiFile: files.length > 1,
+            totalSize:
+              parsed.length ??
+              files.reduce((sum, file) => sum + file.length, 0),
+          },
+        }
+      } catch (error) {
+        return {
+          success: false,
+          error:
+            error instanceof Error ? error.message : "Failed to parse torrent",
+        }
+      }
+    }
+  )
 
-  // ipcMain.handle(
-  //   "electronAPI.getDownloadMetadata",
-  //   async (_event, url: string) => {
-  //     try {
-  //       const response = await fetch(url, {
-  //         method: "HEAD",
-  //         redirect: "follow",
-  //       })
-  //       const contentDisposition =
-  //         response.headers.get("content-disposition") || ""
-  //       const fileNameMatch = contentDisposition.match(
-  //         /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i
-  //       )
-  //       const fileName = fileNameMatch?.[1]
-  //         ? decodeURIComponent(fileNameMatch[1])
-  //         : fileNameMatch?.[2] ||
-  //           path.basename(new URL(response.url || url).pathname)
+  ipcMain.handle(
+    "grabbit.getHttpInfo",
+    async (_event, url: string) => {
+      try {
+        const response = await fetch(url, {
+          method: "HEAD",
+          redirect: "follow",
+        })
+        const contentDisposition =
+          response.headers.get("content-disposition") || ""
+        const fileNameMatch = contentDisposition.match(
+          /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i
+        )
+        const fileName = fileNameMatch?.[1]
+          ? decodeURIComponent(fileNameMatch[1])
+          : fileNameMatch?.[2] ||
+            path.basename(new URL(response.url || url).pathname)
 
-  //       return {
-  //         success: true,
-  //         metadata: {
-  //           fileName,
-  //           totalLength: Number(response.headers.get("content-length")) || 0,
-  //           contentType: response.headers.get("content-type") || undefined,
-  //           acceptRanges: response.headers.get("accept-ranges") === "bytes",
-  //           finalUrl: response.url,
-  //           statusCode: response.status,
-  //         },
-  //       }
-  //     } catch (error) {
-  //       return {
-  //         success: false,
-  //         error:
-  //           error instanceof Error ? error.message : "Failed to fetch metadata",
-  //       }
-  //     }
-  //   }
-  // )
+        return {
+          success: true,
+          metadata: {
+            fileName,
+            totalLength: Number(response.headers.get("content-length")) || 0,
+            contentType: response.headers.get("content-type") || undefined,
+            acceptRanges: response.headers.get("accept-ranges") === "bytes",
+            finalUrl: response.url,
+            statusCode: response.status,
+          },
+        }
+      } catch (error) {
+        return {
+          success: false,
+          error:
+            error instanceof Error ? error.message : "Failed to fetch metadata",
+        }
+      }
+    }
+  )
 
   // ipcMain.handle("electronAPI.getDiskSpace", async (_event, dir: string) => {
   //   try {
