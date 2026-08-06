@@ -44,7 +44,7 @@ jobs:
           flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
           flatpak --version
           flatpak-builder --version
-          runtime_version=$(flatpak remote-ls flathub --runtime --columns=ref |
+          runtime_version=$(flatpak remote-ls --user flathub --runtime --columns=ref |
             awk -F/ '/^runtime\/org\.freedesktop\.Platform\/x86_64\/[0-9]+\.[0-9]+$/ {print $4}' |
             sort -V |
             tail -1)
