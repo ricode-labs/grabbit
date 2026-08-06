@@ -85,7 +85,7 @@ jobs:
         run: |
           dmg=$(find out/make -type f -name '*.dmg' -print -quit)
           test -n "$dmg"
-          mountpoint=$(hdiutil attach "$dmg" -nobrowse -readonly | awk '/Apple_HFS|APFS/ {print $3; exit}')
+          mountpoint=$(hdiutil attach "$dmg" -nobrowse -readonly | awk '$NF ~ /^\/Volumes\// {print $NF; exit}')
           app_path="$RUNNER_TEMP/grabbit.app"
           ditto "$mountpoint/grabbit.app" "$app_path"
           hdiutil detach "$mountpoint"
