@@ -1,6 +1,6 @@
 export default {
   // Sidebar
-  downloading: "Downloading",
+  downloading: "Unfinished",
   completed: "Completed",
   paused: "Paused",
   allTasks: "All Tasks",
@@ -18,7 +18,7 @@ export default {
   aria2CheckFailed: "Failed to check aria2 status",
 
   // Download list
-  noDownloading: "No downloading tasks",
+  noDownloading: "No unfinished tasks",
   noCompleted: "No completed downloads",
   noPaused: "No paused tasks",
   noTasks: "No tasks yet",

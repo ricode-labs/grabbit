@@ -5,8 +5,7 @@ import faviconUrl from "../assets/favicon.webp"
 import logoUrl from "../assets/logo.svg"
 import sidebarBgUrl from "../assets/sidebar-bg.webp"
 
-export type CategoryType =
-  "downloading" | "completed" | "paused" | "all" | "deleted"
+export type CategoryType = "downloading" | "completed" | "all" | "deleted"
 
 interface SidebarProps {
   currentCategory: CategoryType
@@ -16,7 +15,6 @@ interface SidebarProps {
   categoryUpdates: {
     downloading: number
     completed: number
-    paused: number
     all: number
     deleted: number
   }
@@ -43,12 +41,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: t("completed"),
       icon: null,
       count: categoryUpdates.completed,
-    },
-    {
-      id: "paused" as CategoryType,
-      label: t("paused"),
-      icon: null,
-      count: categoryUpdates.paused,
     },
     {
       id: "all" as CategoryType,

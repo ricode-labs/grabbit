@@ -1,6 +1,6 @@
 export default {
   // Sidebar
-  downloading: "ダウンロード中",
+  downloading: "未完了",
   completed: "完了",
   paused: "一時停止",
   allTasks: "すべてのタスク",
@@ -18,7 +18,7 @@ export default {
   aria2CheckFailed: "aria2 の状態確認に失敗しました",
 
   // Download list
-  noDownloading: "ダウンロード中のタスクはありません",
+  noDownloading: "未完了のタスクはありません",
   noCompleted: "完了したダウンロードはありません",
   noPaused: "一時停止中のタスクはありません",
   noTasks: "タスクはありません",

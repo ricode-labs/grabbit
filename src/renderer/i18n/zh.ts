@@ -1,7 +1,7 @@
 export default {
   // Sidebar
-  downloading: "正在下载",
-  completed: "已下载",
+  downloading: "未完成",
+  completed: "已完成",
   paused: "已暂停",
   allTasks: "全部任务",
   trash: "回收站",
@@ -18,7 +18,7 @@ export default {
   aria2CheckFailed: "检查 aria2 状态失败",
 
   // Download list
-  noDownloading: "暂无正在下载的任务",
+  noDownloading: "暂无未完成的任务",
   noCompleted: "暂无已完成的下载",
   noPaused: "暂无已暂停的任务",
   noTasks: "暂无任务",

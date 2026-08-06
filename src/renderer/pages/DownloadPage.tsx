@@ -75,11 +75,8 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
   const currentTasks = (() => {
     if (currentCategory === "downloading") {
       return liveTasks.filter((task: any) =>
-        ["active", "waiting"].includes(task.status)
+        ["active", "waiting", "paused"].includes(task.status)
       )
-    }
-    if (currentCategory === "paused") {
-      return liveTasks.filter((task: any) => task.status === "paused")
     }
     if (currentCategory === "completed") {
       return historyTasks.filter((task: any) => task.status === "complete")

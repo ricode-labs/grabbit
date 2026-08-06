@@ -3,8 +3,7 @@ import { DownloadItem } from "./DownloadItem"
 import { useUI } from "../context/UIContext"
 import emptyUrl from "../assets/empty.webp"
 
-export type CategoryType =
-  "downloading" | "completed" | "paused" | "all" | "deleted"
+export type CategoryType = "downloading" | "completed" | "all" | "deleted"
 
 interface DownloadListProps {
   downloads: {
@@ -46,12 +45,13 @@ export const DownloadList: React.FC<DownloadListProps> = ({
   const filterTasksByCategory = () => {
     if (category === "downloading") {
       return allTasks.filter(
-        (task) => task.status === "active" || task.status === "waiting"
+        (task) =>
+          task.status === "active" ||
+          task.status === "waiting" ||
+          task.status === "paused"
       )
     } else if (category === "completed") {
       return historyTasks.filter((task) => task.status === "complete")
-    } else if (category === "paused") {
-      return allTasks.filter((task) => task.status === "paused")
     } else if (category === "all") {
       const seen = new Set<string>()
       return [...allTasks, ...historyTasks].filter((task) => {
@@ -84,7 +84,6 @@ export const DownloadList: React.FC<DownloadListProps> = ({
     const emptyMessages: Record<string, string> = {
       downloading: t("noDownloading"),
       completed: t("noCompleted"),
-      paused: t("noPaused"),
       all: t("noTasks"),
       deleted: t("noDeleted"),
     }

@@ -1,19 +1,14 @@
 import React from "react"
 import { formatBytes, formatSpeed } from "../utils/format"
 import {
-  Archive,
   CheckCircle2,
-  File,
-  FileAudio,
-  FileImage,
-  FileText,
-  FileVideo,
   FolderOpen,
   MoreHorizontal,
   Pause,
   Play,
   Trash2,
 } from "lucide-react"
+import { FileIcon } from "@untitledui/file-icons"
 import { useUI } from "../context/UIContext"
 import { TooltipWrapper } from "./ui/TooltipWrapper"
 import deletingUrl from "../assets/deleting.webp"
@@ -22,6 +17,33 @@ import downloadingUrl from "../assets/downloading.webp"
 import errorUrl from "../assets/error.webp"
 import pausedUrl from "../assets/paused.webp"
 import pendingUrl from "../assets/pending.webp"
+
+const getFileIconType = (fileName: string): string => {
+  const extension = fileName.split(".").pop()?.toLowerCase() || ""
+
+  const aliases: Record<string, string> = {
+    "7z": "zip",
+    aac: "audio",
+    aep: "aep",
+    bz2: "zip",
+    flac: "audio",
+    gz: "zip",
+    m4a: "audio",
+    markdown: "code",
+    md: "code",
+    mov: "video",
+    mpg: "mpeg",
+    ogg: "audio",
+    tar: "zip",
+    ts: "code",
+    tsx: "code",
+    webm: "video",
+    yaml: "code",
+    yml: "code",
+  }
+
+  return aliases[extension] || extension || "empty"
+}
 
 interface DownloadItemProps {
   download: any
@@ -80,44 +102,6 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
     return "bg-[#FF7D90]"
   }
 
-  const getFileIcon = () => {
-    const extension = fileName.split(".").pop()?.toLowerCase()
-
-    if (extension && ["zip", "rar", "7z", "tar", "gz"].includes(extension))
-      return Archive
-    if (extension && ["mp4", "mov", "mkv", "avi", "webm"].includes(extension))
-      return FileVideo
-    if (extension && ["mp3", "wav", "flac", "aac", "ogg"].includes(extension))
-      return FileAudio
-    if (
-      extension &&
-      ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(extension)
-    )
-      return FileImage
-    if (extension && ["pdf", "doc", "docx", "txt", "md"].includes(extension))
-      return FileText
-    return File
-  }
-
-  const getFileTone = () => {
-    const extension = fileName.split(".").pop()?.toLowerCase()
-
-    if (extension && ["mp3", "wav", "flac", "aac", "ogg"].includes(extension))
-      return "border-[#BFE3A8] bg-[#F0FAE9] text-[#79C96B]"
-    if (extension && ["pdf", "doc", "docx", "txt", "md"].includes(extension))
-      return "border-[#FFD4A6] bg-[#FFF5E9] text-[#F7A94A]"
-    if (
-      extension &&
-      ["jpg", "jpeg", "png", "gif", "webp", "svg"].includes(extension)
-    )
-      return "border-[#D6C9F2] bg-[#F4F0FF] text-[#9B82D6]"
-    if (extension && ["zip", "rar", "7z", "tar", "gz"].includes(extension))
-      return "border-[#FFC8D1] bg-[#FFF1F4] text-[#FF6B80]"
-    if (extension && ["mp4", "mov", "mkv", "avi", "webm"].includes(extension))
-      return "border-[#FFC8D1] bg-[#FFF1F4] text-[#FF6B80]"
-    return "border-[#F0D2CB] bg-[#FFFBF7] text-[#8B6A5D]"
-  }
-
   const getMascotUrl = () => {
     if (download.status === "removed") return deletingUrl
     if (isComplete) return downloadedUrl
@@ -136,9 +120,8 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
     return `${Math.ceil(minutes / 60)} ${t("hours")}`
   }
 
-  const FileIcon = getFileIcon()
   const remainingTime = formatRemainingTime()
-  const extension = fileName.split(".").pop()?.toUpperCase() || ""
+  const fileIconType = getFileIconType(fileName)
   const rowState = isSelected
     ? "bg-[#FFF1F4] ring-1 ring-[#FFB9C6]"
     : "bg-white/35 hover:bg-[#FFFBF8]"
@@ -151,14 +134,14 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
       className={`group grid h-16 cursor-pointer grid-cols-[38px_minmax(0,1fr)_62px_54px_64px] items-center gap-2 border-b border-[#F4E3DE] px-4 transition-colors last:border-b-0 ${rowState}`}
     >
       <div
-        className={`relative flex h-9 w-9 items-center justify-center rounded-[7px] border ${getFileTone()}`}
+        className="flex h-9 w-9 items-center justify-center"
       >
-        <FileIcon size={19} strokeWidth={1.7} />
-        {extension && (
-          <span className="absolute bottom-[5px] max-w-[31px] truncate text-[9px] leading-none font-bold">
-            {extension.slice(0, 4)}
-          </span>
-        )}
+        <FileIcon
+          type={fileIconType}
+          variant="default"
+          theme="light"
+          size={36}
+        />
       </div>
 
       <div className="min-w-0">

@@ -127,7 +127,6 @@ const App: React.FC = () => {
   const [categoryUpdates, setCategoryUpdates] = useState<CategoryUpdates>({
     downloading: 0,
     completed: 0,
-    paused: 0,
     all: 0,
     deleted: 0,
   })
