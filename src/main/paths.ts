@@ -4,41 +4,26 @@ import path from "node:path"
 const userDataPath = app.getPath("userData")
 
 export function getAria2Executable() {
-  const executableName =
-    process.platform === "linux" && process.arch === "x64"
-      ? "aria2c-linux-x86_64"
-      : process.platform === "darwin" && process.arch === "arm64"
-        ? "aria2c-macos-arm64"
-        : process.platform === "win32" && process.arch === "x64"
-          ? "aria2c-windows-x86_64.exe"
-          : null
-
+  let executableName: string | undefined
+  const platform = process.platform
+  const arch = process.arch
+  if (platform === "linux" && arch === "x64") {
+    executableName = "aria2c-linux-x86_64"
+  } else if (platform === "darwin" && arch === "arm64") {
+    executableName = "aria2c-macos-arm64"
+  } else if (platform === "win32" && arch === "x64") {
+    executableName = "aria2c-windows-x86_64.exe"
+  }
   if (!executableName) {
     throw new Error(
-      `Unsupported aria2 platform: ${process.platform}-${process.arch}`
+      `Unsupported aria2 platform: ${platform}-${arch}`
     )
   }
-
   if (app.isPackaged) {
     return path.join(process.resourcesPath, "aria2", executableName)
   }
-
-  return path.join(
-    app.getAppPath(),
-    "resources",
-    "aria2",
-    executableName
-  )
+  return path.join(app.getAppPath(), "resources", "aria2", executableName)
 }
-
-// export const getSchedulerPath = () =>
-//   path.join(app.getPath("userData"), "scheduler.json")
-
-// export const getWindowStatePath = () =>
-//   path.join(app.getPath("userData"), "window-state.json")
-
-// export const getFallbackDownloadDir = () =>
-//   path.join(app.getPath("downloads"), "Grabbit")
 
 export const btTrackerPath = path.join(userDataPath, "aria2.bt-tracker.txt")
 export const downloadDirectoryPath = path.join(
