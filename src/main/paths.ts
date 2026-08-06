@@ -4,16 +4,30 @@ import path from "node:path"
 const userDataPath = app.getPath("userData")
 
 export function getAria2Executable() {
+  const executableName =
+    process.platform === "linux" && process.arch === "x64"
+      ? "aria2c-linux-x86_64"
+      : process.platform === "darwin" && process.arch === "arm64"
+        ? "aria2c-macos-arm64"
+        : process.platform === "win32" && process.arch === "x64"
+          ? "aria2c-windows-x86_64.exe"
+          : null
+
+  if (!executableName) {
+    throw new Error(
+      `Unsupported aria2 platform: ${process.platform}-${process.arch}`
+    )
+  }
+
   if (app.isPackaged) {
-    return path.join(process.resourcesPath, "aria2", "linux-x64", "aria2c")
+    return path.join(process.resourcesPath, "aria2", executableName)
   }
 
   return path.join(
     app.getAppPath(),
     "resources",
     "aria2",
-    "linux-x64",
-    "aria2c"
+    executableName
   )
 }
 
