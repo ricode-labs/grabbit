@@ -41,6 +41,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install --yes elfutils flatpak flatpak-builder xvfb
           sudo flatpak remote-add --if-not-exists --system flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
           flatpak --version
           flatpak-builder --version
 
@@ -142,7 +143,8 @@ jobs:
           }
 
           if (-not $appProcess.HasExited) { Stop-Process -Id $appProcess.Id -Force -ErrorAction SilentlyContinue }
-          taskkill /PID $appProcess.Id /T /F 2>$null
+          cmd /c "taskkill /PID $($appProcess.Id) /T /F >NUL 2>NUL"
+          $LASTEXITCODE = 0
           Get-Process -Name 'aria2c-windows-x86_64' -ErrorAction SilentlyContinue |
             Stop-Process -Force
 
