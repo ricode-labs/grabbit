@@ -121,10 +121,14 @@ jobs:
         run: |
           $installer = Get-ChildItem out/make -Filter '*Setup.exe' -Recurse | Select-Object -First 1
           if (-not $installer) { throw 'Windows installer not found' }
-          Start-Process -FilePath $installer.FullName -ArgumentList '/S' -Wait
+          Start-Process -FilePath $installer.FullName -ArgumentList '/S'
 
-          $app = Get-ChildItem "$env:LOCALAPPDATA\grabbit" -Filter 'grabbit.exe' -Recurse |
-            Select-Object -First 1
+          $app = $null
+          for ($i = 0; $i -lt 30 -and -not $app; $i++) {
+            $app = Get-ChildItem "$env:LOCALAPPDATA\grabbit" -Filter 'grabbit.exe' -Recurse -ErrorAction SilentlyContinue |
+              Select-Object -First 1
+            if (-not $app) { Start-Sleep -Seconds 1 }
+          }
           if (-not $app) { throw 'Installed grabbit.exe not found' }
 
           $appProcess = Start-Process -FilePath $app.FullName -PassThru

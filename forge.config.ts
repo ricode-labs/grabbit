@@ -34,10 +34,7 @@ const config: ForgeConfig = {
   hooks: {
     packageAfterCopy: async (_forgeConfig, buildPath) => {
       const packagePath = "node_modules/node-portmapping"
-      await copy(
-        join(process.cwd(), packagePath),
-        join(buildPath, packagePath)
-      )
+      await copy(join(process.cwd(), packagePath), join(buildPath, packagePath))
     },
   },
   makers: [
@@ -45,6 +42,7 @@ const config: ForgeConfig = {
     new MakerDMG({}, ["darwin"]),
     new MakerFlatpak({
       options: {
+        runtimeVersion: "25.08",
         files: [],
         mimeType: [
           "application/x-bittorrent",
