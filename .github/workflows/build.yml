@@ -40,7 +40,9 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --yes elfutils flatpak flatpak-builder xvfb
-          sudo flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          sudo flatpak remote-add --if-not-exists --system flathub https://flathub.org/repo/flathub.flatpakrepo
+          flatpak --version
+          flatpak-builder --version
 
       - name: Install dependencies
         run: npm ci
@@ -49,6 +51,8 @@ jobs:
         run: npm run typecheck
 
       - name: Build installer
+        env:
+          DEBUG: "@malept/flatpak-bundler"
         run: npm run make
 
       - name: Install and run Linux installer
@@ -112,6 +116,7 @@ jobs:
 
       - name: Install and run Windows installer
         if: runner.os == 'Windows'
+        timeout-minutes: 3
         shell: pwsh
         run: |
           $installer = Get-ChildItem out/make -Filter '*Setup.exe' -Recurse | Select-Object -First 1
@@ -132,7 +137,8 @@ jobs:
             Start-Sleep -Seconds 1
           }
 
-          if (-not $appProcess.HasExited) { Stop-Process -Id $appProcess.Id -Force }
+          if (-not $appProcess.HasExited) { Stop-Process -Id $appProcess.Id -Force -ErrorAction SilentlyContinue }
+          taskkill /PID $appProcess.Id /T /F 2>$null
           Get-Process -Name 'aria2c-windows-x86_64' -ErrorAction SilentlyContinue |
             Stop-Process -Force
 
