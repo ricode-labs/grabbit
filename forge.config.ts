@@ -42,7 +42,7 @@ const config: ForgeConfig = {
     new MakerDMG({}, ["darwin"]),
     new MakerFlatpak({
       options: {
-        runtimeVersion: "25.08",
+        runtimeVersion: process.env.FLATPAK_RUNTIME_VERSION ?? "25.08",
         files: [],
         mimeType: [
           "application/x-bittorrent",
