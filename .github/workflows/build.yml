@@ -71,7 +71,7 @@ jobs:
           test -n "$package"
           flatpak install --user --noninteractive "$package"
 
-          dbus-run-session -- xvfb-run -a flatpak run io.atom.electron.grabbit >/tmp/grabbit.log 2>&1 &
+          dbus-run-session -- xvfb-run -a flatpak run io.github.ricode_labs.Grabbit >/tmp/grabbit.log 2>&1 &
           app_pid=$!
           found=0
           for _ in {1..20}; do
@@ -84,7 +84,7 @@ jobs:
 
           kill "$app_pid" 2>/dev/null || true
           pkill -f '[a]ria2c-linux-x86_64' 2>/dev/null || true
-          flatpak uninstall --user --noninteractive io.atom.electron.grabbit || true
+          flatpak uninstall --user --noninteractive io.github.ricode_labs.Grabbit || true
 
           if [ "$found" -ne 1 ]; then
             cat /tmp/grabbit.log

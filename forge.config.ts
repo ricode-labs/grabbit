@@ -42,6 +42,7 @@ const config: ForgeConfig = {
     new MakerDMG({}, ["darwin"]),
     new MakerFlatpak({
       options: {
+        id: "io.github.ricode_labs.Grabbit",
         runtimeVersion: process.env.FLATPAK_RUNTIME_VERSION ?? "25.08",
         files: [],
         modules: [
