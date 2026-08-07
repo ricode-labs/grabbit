@@ -61,7 +61,11 @@ const config: ForgeConfig = {
               },
               {
                 type: "shell",
-                commands: ["sed -i 's/^CXX := clang++/CXX := g++/' Makefile"],
+                commands: [
+                  "sed -i 's/^CXX := clang++/CXX := g++/' Makefile",
+                  "sed -i 's/ -Werror//' Makefile",
+                  "sed -i '1i#include <optional>' src/base/socket.h",
+                ],
               },
             ],
           },
