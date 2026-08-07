@@ -198,7 +198,6 @@ jobs:
       - name: Prepare release assets
         shell: bash
         run: |
-          version="${GITHUB_REF_NAME#v}"
           mkdir -p prepared-release-assets
 
           flatpak=$(find release-assets -type f -name '*.flatpak' -print -quit)
@@ -209,9 +208,9 @@ jobs:
           test -n "$dmg"
           test -n "$setup"
 
-          cp "$flatpak" "prepared-release-assets/Grabbit-$version-linux-x64.flatpak"
-          cp "$dmg" "prepared-release-assets/Grabbit-$version-macos-arm64.dmg"
-          cp "$setup" "prepared-release-assets/Grabbit-$version-windows-x64-setup.exe"
+          cp "$flatpak" "prepared-release-assets/Grabbit-linux-x64.flatpak"
+          cp "$dmg" "prepared-release-assets/Grabbit-macos-arm64.dmg"
+          cp "$setup" "prepared-release-assets/Grabbit-windows-x64-setup.exe"
 
       - name: Create release
         env:
