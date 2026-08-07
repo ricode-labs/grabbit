@@ -40,7 +40,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install --yes clang dbus-x11 g++ elfutils flatpak flatpak-builder xvfb
-          sudo flatpak remote-add --if-not-exists --system flathub https://flathub.org/repo/flathub.flatpakrepo
           flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
           flatpak --version
           flatpak-builder --version
