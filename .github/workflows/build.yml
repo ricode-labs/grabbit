@@ -61,7 +61,12 @@ jobs:
       - name: Build installer
         env:
           DEBUG: "@malept/flatpak-bundler"
-        run: npm run make
+        run: |
+          if [ "${{ runner.os }}" = "macOS" ]; then
+            npm run package
+          else
+            npm run make
+          fi
 
       - name: Build macOS pkg installers
         if: runner.os == 'macOS'
@@ -71,7 +76,6 @@ jobs:
           test -n "$app"
 
           mkdir -p out/make/pkg
-          chmod +x scripts/macos-pkg-postinstall/postinstall
           version=$(node -p "require('./package.json').version")
 
           pkgbuild \
@@ -80,14 +84,6 @@ jobs:
             --identifier io.github.ricodelabs.Grabbit \
             --version "$version" \
             out/make/pkg/Grabbit-macos-arm64.pkg
-
-          pkgbuild \
-            --component "$app" \
-            --install-location /Applications \
-            --identifier io.github.ricodelabs.Grabbit.postinstall \
-            --version "$version" \
-            --scripts scripts/macos-pkg-postinstall \
-            out/make/pkg/Grabbit-macos-arm64-postinstall.pkg
 
       - name: Install and run Linux installer
         if: runner.os == 'Linux'
@@ -121,14 +117,11 @@ jobs:
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          dmg=$(find out/make -type f -name '*.dmg' -print -quit)
-          test -n "$dmg"
-          mountpoint=$(hdiutil attach "$dmg" -nobrowse -readonly | awk '$NF ~ /^\/Volumes\// {print $NF; exit}')
-          app_path="$RUNNER_TEMP/grabbit.app"
-          ditto "$mountpoint/grabbit.app" "$app_path"
-          hdiutil detach "$mountpoint"
-          xattr -dr com.apple.quarantine "$app_path" || true
+          pkg=$(find out/make -type f -name 'Grabbit-macos-arm64.pkg' -print -quit)
+          test -n "$pkg"
+          sudo installer -pkg "$pkg" -target /
 
+          app_path="/Applications/grabbit.app"
           "$app_path/Contents/MacOS/grabbit" >/tmp/grabbit.log 2>&1 &
           app_pid=$!
           found=0
@@ -227,21 +220,15 @@ jobs:
           mkdir -p prepared-release-assets
 
           flatpak=$(find release-assets -type f -name '*.flatpak' -print -quit)
-          dmg=$(find release-assets -type f -name '*.dmg' -print -quit)
           pkg=$(find release-assets -type f -name 'Grabbit-macos-arm64.pkg' -print -quit)
-          pkg_postinstall=$(find release-assets -type f -name 'Grabbit-macos-arm64-postinstall.pkg' -print -quit)
           setup=$(find release-assets -type f -name '*Setup.exe' -print -quit)
 
           test -n "$flatpak"
-          test -n "$dmg"
           test -n "$pkg"
-          test -n "$pkg_postinstall"
           test -n "$setup"
 
           cp "$flatpak" "prepared-release-assets/Grabbit-linux-x64.flatpak"
-          cp "$dmg" "prepared-release-assets/Grabbit-macos-arm64.dmg"
           cp "$pkg" "prepared-release-assets/Grabbit-macos-arm64.pkg"
-          cp "$pkg_postinstall" "prepared-release-assets/Grabbit-macos-arm64-postinstall.pkg"
           cp "$setup" "prepared-release-assets/Grabbit-windows-x64-setup.exe"
 
       - name: Create release

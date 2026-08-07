@@ -1,6 +1,5 @@
 import type { ForgeConfig } from "@electron-forge/shared-types"
 import { MakerSquirrel } from "@electron-forge/maker-squirrel"
-import { MakerDMG } from "@electron-forge/maker-dmg"
 import { MakerFlatpak } from "@electron-forge/maker-flatpak"
 import { VitePlugin } from "@electron-forge/plugin-vite"
 import { FusesPlugin } from "@electron-forge/plugin-fuses"
@@ -39,7 +38,6 @@ const config: ForgeConfig = {
   },
   makers: [
     new MakerSquirrel({}),
-    new MakerDMG({}, ["darwin"]),
     new MakerFlatpak({
       options: {
         id: "io.github.ricode_labs.Grabbit",
