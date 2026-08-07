@@ -59,6 +59,10 @@ const config: ForgeConfig = {
                 url: "https://github.com/refi64/zypak",
                 tag: "v2021.02",
               },
+              {
+                type: "shell",
+                commands: ["sed -i 's/^CXX := clang++/CXX := g++/' Makefile"],
+              },
             ],
           },
         ],
