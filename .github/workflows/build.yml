@@ -39,7 +39,7 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install --yes elfutils flatpak flatpak-builder xvfb
+          sudo apt-get install --yes clang elfutils flatpak flatpak-builder xvfb
           sudo flatpak remote-add --if-not-exists --system flathub https://flathub.org/repo/flathub.flatpakrepo
           flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
           flatpak --version
