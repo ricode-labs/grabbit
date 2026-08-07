@@ -1,0 +1,6 @@
+#!/bin/sh
+
+/usr/bin/xattr -dr com.apple.quarantine "/Applications/grabbit.app" 2>/dev/null || true
+/usr/bin/xattr -dr com.apple.quarantine "/Applications/Grabbit.app" 2>/dev/null || true
+
+exit 0

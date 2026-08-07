@@ -63,6 +63,32 @@ jobs:
           DEBUG: "@malept/flatpak-bundler"
         run: npm run make
 
+      - name: Build macOS pkg installers
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          app=$(find out -type d -name 'grabbit.app' -print -quit)
+          test -n "$app"
+
+          mkdir -p out/make/pkg
+          chmod +x scripts/macos-pkg-postinstall/postinstall
+          version=$(node -p "require('./package.json').version")
+
+          pkgbuild \
+            --component "$app" \
+            --install-location /Applications \
+            --identifier io.github.ricodelabs.Grabbit \
+            --version "$version" \
+            out/make/pkg/Grabbit-macos-arm64.pkg
+
+          pkgbuild \
+            --component "$app" \
+            --install-location /Applications \
+            --identifier io.github.ricodelabs.Grabbit.postinstall \
+            --version "$version" \
+            --scripts scripts/macos-pkg-postinstall \
+            out/make/pkg/Grabbit-macos-arm64-postinstall.pkg
+
       - name: Install and run Linux installer
         if: runner.os == 'Linux'
         shell: bash
@@ -202,14 +228,20 @@ jobs:
 
           flatpak=$(find release-assets -type f -name '*.flatpak' -print -quit)
           dmg=$(find release-assets -type f -name '*.dmg' -print -quit)
+          pkg=$(find release-assets -type f -name 'Grabbit-macos-arm64.pkg' -print -quit)
+          pkg_postinstall=$(find release-assets -type f -name 'Grabbit-macos-arm64-postinstall.pkg' -print -quit)
           setup=$(find release-assets -type f -name '*Setup.exe' -print -quit)
 
           test -n "$flatpak"
           test -n "$dmg"
+          test -n "$pkg"
+          test -n "$pkg_postinstall"
           test -n "$setup"
 
           cp "$flatpak" "prepared-release-assets/Grabbit-linux-x64.flatpak"
           cp "$dmg" "prepared-release-assets/Grabbit-macos-arm64.dmg"
+          cp "$pkg" "prepared-release-assets/Grabbit-macos-arm64.pkg"
+          cp "$pkg_postinstall" "prepared-release-assets/Grabbit-macos-arm64-postinstall.pkg"
           cp "$setup" "prepared-release-assets/Grabbit-windows-x64-setup.exe"
 
       - name: Create release
