@@ -39,11 +39,12 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install --yes clang elfutils flatpak flatpak-builder xvfb
+          sudo apt-get install --yes clang g++ elfutils flatpak flatpak-builder xvfb
           sudo flatpak remote-add --if-not-exists --system flathub https://flathub.org/repo/flathub.flatpakrepo
           flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
           flatpak --version
           flatpak-builder --version
+          clang++ --version
           runtime_version=$(flatpak remote-ls --user flathub --runtime --columns=ref |
             awk -F/ '/^runtime\/org\.freedesktop\.Platform\/x86_64\/[0-9]+\.[0-9]+$/ {print $4}' |
             sort -V |
@@ -129,7 +130,7 @@ jobs:
         run: |
           $installer = Get-ChildItem out/make -Filter '*Setup.exe' -Recurse | Select-Object -First 1
           if (-not $installer) { throw 'Windows installer not found' }
-          Start-Process -FilePath $installer.FullName -ArgumentList '/S'
+          $installerProcess = Start-Process -FilePath $installer.FullName -ArgumentList '/S' -PassThru
 
           $app = $null
           for ($i = 0; $i -lt 30 -and -not $app; $i++) {
@@ -139,7 +140,18 @@ jobs:
           }
           if (-not $app) { throw 'Installed grabbit.exe not found' }
 
-          $appProcess = Start-Process -FilePath $app.FullName -PassThru
+          $installerProcess.WaitForExit(60000)
+
+          $appProcess = $null
+          for ($i = 0; $i -lt 30 -and -not $appProcess; $i++) {
+            try {
+              $appProcess = Start-Process -FilePath $app.FullName -PassThru -ErrorAction Stop
+            } catch {
+              Start-Sleep -Seconds 1
+            }
+          }
+          if (-not $appProcess) { throw "Installed grabbit.exe could not start: $($app.FullName)" }
+
           $found = $false
           for ($i = 0; $i -lt 20; $i++) {
             if (Get-Process -Name 'aria2c-windows-x86_64' -ErrorAction SilentlyContinue) {
