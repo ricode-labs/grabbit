@@ -47,25 +47,11 @@ const config: ForgeConfig = {
         modules: [
           {
             name: "zypak",
-            buildOptions: {
-              env: {
-                CC: "gcc",
-                CXX: "g++",
-              },
-            },
             sources: [
               {
                 type: "git",
                 url: "https://github.com/refi64/zypak",
-                tag: "v2021.02",
-              },
-              {
-                type: "shell",
-                commands: [
-                  "sed -i 's/^CXX := clang++/CXX := g++/' Makefile",
-                  "sed -i 's/ -Werror//' Makefile",
-                  "sed -i '1i#include <optional>' src/base/socket.h",
-                ],
+                tag: "v2025.09",
               },
             ],
           },
