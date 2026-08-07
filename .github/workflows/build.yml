@@ -195,6 +195,24 @@ jobs:
           path: release-assets
           merge-multiple: true
 
+      - name: Prepare release assets
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          mkdir -p prepared-release-assets
+
+          flatpak=$(find release-assets -type f -name '*.flatpak' -print -quit)
+          dmg=$(find release-assets -type f -name '*.dmg' -print -quit)
+          setup=$(find release-assets -type f -name '*Setup.exe' -print -quit)
+
+          test -n "$flatpak"
+          test -n "$dmg"
+          test -n "$setup"
+
+          cp "$flatpak" "prepared-release-assets/Grabbit-$version-linux-x64.flatpak"
+          cp "$dmg" "prepared-release-assets/Grabbit-$version-macos-arm64.dmg"
+          cp "$setup" "prepared-release-assets/Grabbit-$version-windows-x64-setup.exe"
+
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -205,5 +223,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          find release-assets -type f -print0 |
+          find prepared-release-assets -type f -print0 |
             xargs -0 -r gh release upload "$GITHUB_REF_NAME"
