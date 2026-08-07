@@ -185,6 +185,9 @@ jobs:
       contents: write
 
     steps:
+      - name: Check out source
+        uses: actions/checkout@v7.0.1
+
       - name: Download installer artifacts
         uses: actions/download-artifact@v8.0.1
         with:
