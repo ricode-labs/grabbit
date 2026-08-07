@@ -44,6 +44,24 @@ const config: ForgeConfig = {
       options: {
         runtimeVersion: process.env.FLATPAK_RUNTIME_VERSION ?? "25.08",
         files: [],
+        modules: [
+          {
+            name: "zypak",
+            buildOptions: {
+              env: {
+                CC: "gcc",
+                CXX: "g++",
+              },
+            },
+            sources: [
+              {
+                type: "git",
+                url: "https://github.com/refi64/zypak",
+                tag: "v2021.02",
+              },
+            ],
+          },
+        ],
         mimeType: [
           "application/x-bittorrent",
           "application/metalink+xml",
