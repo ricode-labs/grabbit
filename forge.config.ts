@@ -44,6 +44,7 @@ const config: ForgeConfig = {
     new MakerFlatpak({
       options: {
         id: "io.github.ricodelabs.Grabbit",
+        bin: "Grabbit",
         icon: "resources/icons/icon-512.png",
         runtimeVersion: "25.08",
         files: [],
