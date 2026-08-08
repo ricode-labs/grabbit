@@ -66,7 +66,7 @@ jobs:
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          app=$(find out -type d -name 'grabbit.app' -print -quit)
+          app=$(find out -type d -name 'Grabbit.app' -print -quit)
           test -n "$app"
 
           mkdir -p out/make/pkg
@@ -115,8 +115,8 @@ jobs:
           test -n "$pkg"
           sudo installer -pkg "$pkg" -target /
 
-          app_path="/Applications/grabbit.app"
-          "$app_path/Contents/MacOS/grabbit" >/tmp/grabbit.log 2>&1 &
+          app_path="/Applications/Grabbit.app"
+          "$app_path/Contents/MacOS/Grabbit" >/tmp/grabbit.log 2>&1 &
           app_pid=$!
           found=0
           for _ in {1..20}; do
