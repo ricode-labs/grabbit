@@ -9,9 +9,6 @@ let aria2Process: ChildProcessWithoutNullStreams | null = null
 let btPortMappings: Mapping[] = []
 let rpcPort: number | null = null
 let rpcSecret: string | null = null
-const shouldDebugPortMapping = process.env.GRABBIT_DEBUG_PORT_MAPPING === "1"
-
-// export const isAria2Running = () => Boolean(aria2Process)
 
 function getAvailablePort() {
   return new Promise<number>((resolve, reject) => {
@@ -34,35 +31,26 @@ function portMapping(btPort: number) {
   undoPortMapping()
   const protocols: Protocol[] = ["TCP", "UDP"]
   for (const protocol of protocols) {
-    try {
-      const mapping = createMapping({ internalPort: btPort, protocol }, (info) => {
+    const mapping = createMapping(
+      { internalPort: btPort, protocol },
+      (info) => {
         if (info.state === "Success") {
           console.log(
             `[portmapping] ${info.protocol} ${info.externalHost}:${info.externalPort}`
           )
-        } else if (info.state === "Failure" && shouldDebugPortMapping) {
+        } else if (info.state === "Failure") {
           console.debug(`[portmapping] ${info.protocol} mapping failed`)
         }
         return {}
-      })
-      btPortMappings.push(mapping)
-    } catch (error) {
-      if (shouldDebugPortMapping) {
-        console.debug(`[portmapping] ${protocol} mapping unavailable`, error)
       }
-    }
+    )
+    btPortMappings.push(mapping)
   }
 }
 
 function undoPortMapping() {
   for (const mapping of btPortMappings) {
-    try {
-      mapping.destroy()
-    } catch (error) {
-      if (shouldDebugPortMapping) {
-        console.debug("[portmapping] failed to destroy mapping", error)
-      }
-    }
+    mapping.destroy()
   }
   btPortMappings = []
 }
@@ -119,7 +107,9 @@ export async function startAria2() {
     console.error(`[aria2] ${chunk}`)
   })
 
-  portMapping(btPort)
+  try {
+    portMapping(btPort)
+  } catch { /* empty */ }
 }
 
 export async function stopAria2() {

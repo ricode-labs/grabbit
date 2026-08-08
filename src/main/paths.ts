@@ -1,5 +1,5 @@
 import { app } from "electron"
-import path from "node:path"
+import { join } from "node:path"
 
 const userDataPath = app.getPath("userData")
 
@@ -20,20 +20,31 @@ export function getAria2Executable() {
     )
   }
   if (app.isPackaged) {
-    return path.join(process.resourcesPath, "aria2", executableName)
+    return join(process.resourcesPath, "aria2", executableName)
   }
-  return path.join(app.getAppPath(), "resources", "aria2", executableName)
+  return join(app.getAppPath(), "resources", "aria2", executableName)
 }
 
-export const btTrackerPath = path.join(userDataPath, "aria2.bt-tracker.txt")
-export const downloadDirectoryPath = path.join(
+export const btTrackerPath = join(userDataPath, "aria2.bt-tracker.txt")
+export const downloadDirectoryPath = join(
   app.getPath("downloads"),
   "Grabbit"
 )
-export const sessionPath = path.join(userDataPath, "aria2.session")
-export const logPath = path.join(userDataPath, "aria2.log")
-export const netrcPath = path.join(userDataPath, "aria2.netrc")
-export const serverStatPath = path.join(userDataPath, "aria2.server-stat")
-export const dhtPath = path.join(userDataPath, "aria2.dht.dat")
-export const dht6Path = path.join(userDataPath, "aria2.dht6.dat")
-export const preferencesPath = path.join(userDataPath, "preferences.json")
+export const sessionPath = join(userDataPath, "aria2.session")
+export const logPath = join(userDataPath, "aria2.log")
+export const netrcPath = join(userDataPath, "aria2.netrc")
+export const serverStatPath = join(userDataPath, "aria2.server-stat")
+export const dhtPath = join(userDataPath, "aria2.dht.dat")
+export const dht6Path = join(userDataPath, "aria2.dht6.dat")
+export const preferencesPath = join(userDataPath, "preferences.json")
+
+export function getIconPathLinux() {
+  if (process.platform !== "linux") return undefined
+  return app.isPackaged
+    ? join(process.resourcesPath, "icons", "linux", "icon-512.png")
+    : join(process.cwd(), "resources", "icons", "linux", "icon-512.png")
+}
+
+export const trayIconPath = app.isPackaged
+  ? join(process.resourcesPath, "icons", "icon.png")
+  : join(process.cwd(), "resources", "icons", "icon.png")

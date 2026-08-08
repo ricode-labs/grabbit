@@ -14,7 +14,6 @@ const config: ForgeConfig = {
     icon: "resources/icons/icon",
     extraResource: ["resources/aria2", "resources/icons"],
     extendInfo: {
-      CFBundleIconFile: "icon.icns",
       CFBundleDocumentTypes: [
         {
           CFBundleTypeName: "BitTorrent File",
