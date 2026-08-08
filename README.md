@@ -12,8 +12,11 @@
 <p align="center">
   <img alt="Electron" src="https://img.shields.io/badge/Electron-43.2.0-FFB8C8?labelColor=FFF8F7&color=FF7D90" />
   <img alt="React" src="https://img.shields.io/badge/React-19.2-FFB8C8?labelColor=FFF8F7&color=FF7D90" />
-  <img alt="aria2" src="https://img.shields.io/badge/aria2-powered-FFB8C8?labelColor=FFF8F7&color=FF7D90" />
-  <img alt="License" src="https://img.shields.io/badge/license-MIT-FFB8C8?labelColor=FFF8F7&color=FF7D90" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-6.0-FFB8C8?labelColor=FFF8F7&color=FF7D90" />
+  <img alt="Vite" src="https://img.shields.io/badge/Vite-8.0-FFB8C8?labelColor=FFF8F7&color=FF7D90" />
+  <img alt="Tailwind CSS" src="https://img.shields.io/badge/Tailwind_CSS-4.2-FFB8C8?labelColor=FFF8F7&color=FF7D90" />
+  <img alt="shadcn" src="https://img.shields.io/badge/shadcn-4.6-FFB8C8?labelColor=FFF8F7&color=FF7D90" />
+  <img alt="Platforms" src="https://img.shields.io/badge/platforms-Linux%20%7C%20macOS%20%7C%20Windows-FFB8C8?labelColor=FFF8F7&color=FF7D90" />
 </p>
 
 ## 功能
