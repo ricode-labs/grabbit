@@ -39,12 +39,12 @@ const config: ForgeConfig = {
   },
   makers: [
     new MakerSquirrel({
-      setupIcon: "resources/icons/win/icon.ico",
+      setupIcon: "resources/icons/icon.ico",
     }),
     new MakerFlatpak({
       options: {
         id: "io.github.ricode_labs.Grabbit",
-        icon: "resources/icons/linux/icon-512.png",
+        icon: "resources/icons/icon-512.png",
         runtimeVersion: process.env.FLATPAK_RUNTIME_VERSION ?? "25.08",
         files: [],
         modules: [

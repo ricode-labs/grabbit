@@ -41,8 +41,8 @@ export const preferencesPath = join(userDataPath, "preferences.json")
 export function getIconPathLinux() {
   if (process.platform !== "linux") return undefined
   return app.isPackaged
-    ? join(process.resourcesPath, "icons", "linux", "icon-512.png")
-    : join(process.cwd(), "resources", "icons", "linux", "icon-512.png")
+    ? join(process.resourcesPath, "icons", "icon-512.png")
+    : join(process.cwd(), "resources", "icons", "icon-512.png")
 }
 
 export const trayIconPath = app.isPackaged
