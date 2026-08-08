@@ -20,11 +20,14 @@ contextBridge.exposeInMainWorld("grabbit", {
 
   getClipboardText: () => ipcRenderer.invoke("grabbit.getClipboardText"),
 
-  getTorrentInfo: (torrentPath: string) =>
-    ipcRenderer.invoke("grabbit.getTorrentInfo", torrentPath),
+  // getTorrentInfo: (torrentPath: string) =>
+  //   ipcRenderer.invoke("grabbit.getTorrentInfo", torrentPath),
 
   // getHttpInfo: (url: string) =>
   //   ipcRenderer.invoke("grabbit.getHttpInfo", url),
+
+  // getMagnetInfo: (url: string) =>
+  //   ipcRenderer.invoke("grabbit.getMagnetInfo", url),
 
   deleteDownloadFile: (filePath: string) =>
     ipcRenderer.invoke("grabbit.deleteDownloadFile", filePath),

@@ -1,10 +1,6 @@
 import { clipboard, shell } from "electron"
 import { dialog, ipcMain } from "electron/main"
 import { callAria2 } from "./aria2"
-import parseTorrent from "parse-torrent"
-// import ky from "ky"
-// import { parse as parseContentDisposition } from "content-disposition"
-
 import type {
   AddMetalinkPayload,
   AddTorrentPayload,
@@ -27,7 +23,6 @@ import type {
   Preferences,
 } from "../shared/types"
 import { pathExists, readFile } from "fs-extra"
-// import path from "node:path"
 import {
   closeWindow,
   getMainWindow,
@@ -36,7 +31,6 @@ import {
 } from "./window"
 import { getPreferences, savePreferences } from "./preferences"
 import { updateTrayMenu } from "./tray"
-import { basename, extname } from "node:path"
 
 export function registerIpcHandlers() {
   ipcMain.handle("aria2.addUri", async (_event, payload: AddUriPayload) => {
@@ -245,15 +239,15 @@ export function registerIpcHandlers() {
 
   ipcMain.handle("grabbit.getClipboardText", () => clipboard.readText())
 
-  ipcMain.handle(
-    "grabbit.getTorrentInfo",
-    async (_event, torrentPath: string) => {
-      const filename =
-        parseTorrent(await readFile(torrentPath)).name ||
-        basename(torrentPath, extname(torrentPath))
-      return { filename }
-    }
-  )
+  // ipcMain.handle(
+  //   "grabbit.getTorrentInfo",
+  //   async (_event, torrentPath: string) => {
+  //     const torrent = await parseTorrent(await readFile(torrentPath))
+  //     const filename =
+  //       torrent.name || basename(torrentPath, extname(torrentPath))
+  //     return { filename }
+  //   }
+  // )
 
   // ipcMain.handle("grabbit.getHttpInfo", async (_event, url: string) => {
   //   const response = await ky.head(url)
@@ -268,10 +262,10 @@ export function registerIpcHandlers() {
   //   return { filename }
   // })
 
-  ipcMain.handle("grabbit.getMagnetInfo", async (_event, url: string) => {
-    const filename = parseTorrent(url).name
-    return filename
-  })
+  // ipcMain.handle("grabbit.getMagnetInfo", async (_event, url: string) => {
+  //   const filename = (await parseTorrent(url)).name
+  //   return filename
+  // })
 
   // ipcMain.handle("electronAPI.getDiskSpace", async (_event, dir: string) => {
   //   try {
