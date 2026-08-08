@@ -47,6 +47,18 @@ const config: ForgeConfig = {
         icon: "resources/icons/icon-512.png",
         runtimeVersion: "25.08",
         files: [],
+        modules: [
+          {
+            name: "zypak",
+            sources: [
+              {
+                type: "git",
+                url: "https://github.com/refi64/zypak",
+                tag: "v2025.09",
+              },
+            ],
+          },
+        ],
         mimeType: [
           "application/x-bittorrent",
           "application/metalink+xml",
