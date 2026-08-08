@@ -43,22 +43,10 @@ const config: ForgeConfig = {
     }),
     new MakerFlatpak({
       options: {
-        id: "io.github.ricode_labs.Grabbit",
+        id: "io.github.ricodelabs.Grabbit",
         icon: "resources/icons/icon-512.png",
-        runtimeVersion: process.env.FLATPAK_RUNTIME_VERSION ?? "25.08",
+        runtimeVersion: "25.08",
         files: [],
-        modules: [
-          {
-            name: "zypak",
-            sources: [
-              {
-                type: "git",
-                url: "https://github.com/refi64/zypak",
-                tag: "v2025.09",
-              },
-            ],
-          },
-        ],
         mimeType: [
           "application/x-bittorrent",
           "application/metalink+xml",

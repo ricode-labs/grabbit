@@ -45,7 +45,7 @@ if (!gotTheLock) {
   })
 
   if (process.platform === "linux") {
-    app.setDesktopName("io.github.ricode_labs.Grabbit")
+    app.setDesktopName("io.github.ricodelabs.Grabbit")
   }
 
   // This method will be called when Electron has finished

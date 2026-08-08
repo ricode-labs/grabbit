@@ -44,13 +44,6 @@ jobs:
           flatpak --version
           flatpak-builder --version
           clang++ --version
-          runtime_version=$(flatpak remote-ls --user flathub --runtime --columns=ref |
-            awk -F/ '/^runtime\/org\.freedesktop\.Platform\/x86_64\/[0-9]+\.[0-9]+$/ {print $4}' |
-            sort -V |
-            tail -1)
-          test -n "$runtime_version"
-          echo "FLATPAK_RUNTIME_VERSION=$runtime_version" >> "$GITHUB_ENV"
-          echo "Using org.freedesktop.Platform $runtime_version"
 
       - name: Install dependencies
         run: npm ci
@@ -94,7 +87,7 @@ jobs:
           test -n "$package"
           flatpak install --user --noninteractive "$package"
 
-          dbus-run-session -- xvfb-run -a flatpak run io.github.ricode_labs.Grabbit >/tmp/grabbit.log 2>&1 &
+          dbus-run-session -- xvfb-run -a flatpak run io.github.ricodelabs.Grabbit >/tmp/grabbit.log 2>&1 &
           app_pid=$!
           found=0
           for _ in {1..20}; do
@@ -107,7 +100,7 @@ jobs:
 
           kill "$app_pid" 2>/dev/null || true
           pkill -f '[a]ria2c-linux-x86_64' 2>/dev/null || true
-          flatpak uninstall --user --noninteractive io.github.ricode_labs.Grabbit || true
+          flatpak uninstall --user --noninteractive io.github.ricodelabs.Grabbit || true
 
           if [ "$found" -ne 1 ]; then
             cat /tmp/grabbit.log
