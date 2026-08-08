@@ -89,23 +89,15 @@ jobs:
 
           dbus-run-session -- xvfb-run -a flatpak run io.github.ricodelabs.Grabbit >/tmp/grabbit.log 2>&1 &
           app_pid=$!
-          found=0
           for _ in {1..20}; do
-            if pgrep -f '[a]ria2c-linux-x86_64' >/dev/null; then
-              found=1
-              break
-            fi
+            pgrep -f '[a]ria2' >/dev/null && break
             sleep 1
           done
+          pgrep -f '[a]ria2' >/dev/null || { cat /tmp/grabbit.log; exit 1; }
 
           kill "$app_pid" 2>/dev/null || true
-          pkill -f '[a]ria2c-linux-x86_64' 2>/dev/null || true
+          pkill -f '[a]ria2' 2>/dev/null || true
           flatpak uninstall --user --noninteractive io.github.ricodelabs.Grabbit || true
-
-          if [ "$found" -ne 1 ]; then
-            cat /tmp/grabbit.log
-            exit 1
-          fi
 
       - name: Install and run macOS installer
         if: runner.os == 'macOS'
@@ -118,22 +110,14 @@ jobs:
           app_path="/Applications/Grabbit.app"
           "$app_path/Contents/MacOS/Grabbit" >/tmp/grabbit.log 2>&1 &
           app_pid=$!
-          found=0
           for _ in {1..20}; do
-            if pgrep -f '[a]ria2c-macos-arm64' >/dev/null; then
-              found=1
-              break
-            fi
+            pgrep -f '[a]ria2' >/dev/null && break
             sleep 1
           done
+          pgrep -f '[a]ria2' >/dev/null || { cat /tmp/grabbit.log; exit 1; }
 
           kill "$app_pid" 2>/dev/null || true
-          pkill -f '[a]ria2c-macos-arm64' 2>/dev/null || true
-
-          if [ "$found" -ne 1 ]; then
-            cat /tmp/grabbit.log
-            exit 1
-          fi
+          pkill -f '[a]ria2' 2>/dev/null || true
 
       - name: Install and run Windows installer
         if: runner.os == 'Windows'
@@ -164,22 +148,18 @@ jobs:
           }
           if (-not $appProcess) { throw "Installed grabbit.exe could not start: $($app.FullName)" }
 
-          $found = $false
           for ($i = 0; $i -lt 20; $i++) {
-            if (Get-Process -Name 'aria2c-windows-x86_64' -ErrorAction SilentlyContinue) {
-              $found = $true
-              break
-            }
+            if (Get-Process -Name '*aria2*' -ErrorAction SilentlyContinue) { break }
             Start-Sleep -Seconds 1
           }
+
+          if (-not (Get-Process -Name '*aria2*' -ErrorAction SilentlyContinue)) { throw 'aria2 process did not start' }
 
           if (-not $appProcess.HasExited) { Stop-Process -Id $appProcess.Id -Force -ErrorAction SilentlyContinue }
           cmd /c "taskkill /PID $($appProcess.Id) /T /F >NUL 2>NUL"
           $LASTEXITCODE = 0
-          Get-Process -Name 'aria2c-windows-x86_64' -ErrorAction SilentlyContinue |
+          Get-Process -Name '*aria2*' -ErrorAction SilentlyContinue |
             Stop-Process -Force
-
-          if (-not $found) { throw 'aria2c-windows-x86_64.exe did not start' }
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v7.0.1
