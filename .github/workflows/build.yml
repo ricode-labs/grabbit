@@ -59,6 +59,7 @@ jobs:
         run: npm run typecheck
 
       - name: Build installer
+        shell: bash
         env:
           DEBUG: "@malept/flatpak-bundler"
         run: |
