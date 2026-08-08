@@ -9,6 +9,7 @@ let aria2Process: ChildProcessWithoutNullStreams | null = null
 let btPortMappings: Mapping[] = []
 let rpcPort: number | null = null
 let rpcSecret: string | null = null
+const shouldDebugPortMapping = process.env.GRABBIT_DEBUG_PORT_MAPPING === "1"
 
 // export const isAria2Running = () => Boolean(aria2Process)
 
@@ -39,14 +40,16 @@ function portMapping(btPort: number) {
           console.log(
             `[portmapping] ${info.protocol} ${info.externalHost}:${info.externalPort}`
           )
-        } else if (info.state === "Failure") {
-          console.warn(`[portmapping] ${info.protocol} mapping failed`)
+        } else if (info.state === "Failure" && shouldDebugPortMapping) {
+          console.debug(`[portmapping] ${info.protocol} mapping failed`)
         }
         return {}
       })
       btPortMappings.push(mapping)
     } catch (error) {
-      console.warn(`[portmapping] ${protocol} mapping unavailable`, error)
+      if (shouldDebugPortMapping) {
+        console.debug(`[portmapping] ${protocol} mapping unavailable`, error)
+      }
     }
   }
 }
@@ -56,7 +59,9 @@ function undoPortMapping() {
     try {
       mapping.destroy()
     } catch (error) {
-      console.warn("[portmapping] failed to destroy mapping", error)
+      if (shouldDebugPortMapping) {
+        console.debug("[portmapping] failed to destroy mapping", error)
+      }
     }
   }
   btPortMappings = []

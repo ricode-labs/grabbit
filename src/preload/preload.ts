@@ -12,6 +12,8 @@ import type {
 } from "../shared/types"
 
 contextBridge.exposeInMainWorld("grabbit", {
+  platform: process.platform,
+
   selectFolder: () => ipcRenderer.invoke("grabbit.selectFolder"),
 
   selectTorrentFile: () => ipcRenderer.invoke("grabbit.selectTorrentFile"),

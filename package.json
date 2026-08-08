@@ -1,6 +1,7 @@
 {
   "name": "grabbit",
   "productName": "grabbit",
+  "desktopName": "grabbit.desktop",
   "version": "1.0.0",
   "description": "My Electron application description",
   "main": ".vite/build/main.js",
@@ -10,6 +11,7 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
+    "linux:install-desktop": "node scripts/install-linux-desktop-entry.mjs",
     "lint": "eslint .",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit"

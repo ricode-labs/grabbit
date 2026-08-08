@@ -67,6 +67,7 @@ interface Aria2API {
 }
 
 interface GrabbitAPI {
+  platform: NodeJS.Platform
   savePreferences: (preferences: Preferences) => Promise<Preferences>
   selectFolder: () => Promise<string | null>
   selectTorrentFile: () => Promise<string | null>

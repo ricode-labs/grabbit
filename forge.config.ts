@@ -11,8 +11,10 @@ import { join } from "node:path"
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
-    extraResource: ["resources/aria2"],
+    icon: "resources/icons/icon",
+    extraResource: ["resources/aria2", "resources/icons"],
     extendInfo: {
+      CFBundleIconFile: "icon.icns",
       CFBundleDocumentTypes: [
         {
           CFBundleTypeName: "BitTorrent File",
@@ -37,10 +39,13 @@ const config: ForgeConfig = {
     },
   },
   makers: [
-    new MakerSquirrel({}),
+    new MakerSquirrel({
+      setupIcon: "resources/icons/win/icon.ico",
+    }),
     new MakerFlatpak({
       options: {
         id: "io.github.ricode_labs.Grabbit",
+        icon: "resources/icons/linux/icon-512.png",
         runtimeVersion: process.env.FLATPAK_RUNTIME_VERSION ?? "25.08",
         files: [],
         modules: [

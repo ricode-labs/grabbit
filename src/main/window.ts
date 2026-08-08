@@ -1,8 +1,16 @@
-import { BrowserWindow } from "electron/main"
+import { app, BrowserWindow } from "electron/main"
 import { join } from "node:path"
 
 let mainWindow: BrowserWindow | null = null
 // let isQuitting = false
+
+function getWindowIcon() {
+  if (process.platform !== "linux") return undefined
+
+  return app.isPackaged
+    ? join(process.resourcesPath, "icons", "linux", "icon-512.png")
+    : join(process.cwd(), "resources", "icons", "linux", "icon-512.png")
+}
 
 export function showWindow() {
   // Show the browser window.
@@ -19,6 +27,7 @@ export function showWindow() {
     frame: false,
     transparent: true,
     backgroundColor: "#00000000",
+    icon: getWindowIcon(),
     webPreferences: {
       preload: join(__dirname, "preload.js"),
     },
