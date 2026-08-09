@@ -4,7 +4,7 @@ import {
   dht6Path,
   dhtPath,
   logPath,
-  netrcPath,
+  // netrcPath,
   serverStatPath,
   sessionPath,
 } from "./paths"
@@ -62,7 +62,7 @@ const httpFtpSftpOptions = [
   // aria2 does not split less than 2*SIZE byte range
   "--min-split-size=1M",
   // Specify the path to the netrc file
-  `--netrc-path=${netrcPath}`,
+  // `--netrc-path=${netrcPath}`,
   // Specify the file name to which performance profile of the servers is saved
   `--server-stat-of=${serverStatPath}`,
   // Specify the file name to load performance profile of the servers
