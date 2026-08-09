@@ -1,6 +1,6 @@
 import React from "react"
 import { DownloadItem } from "./DownloadItem"
-import { useUI } from "../context/UIContext"
+import { useUI } from "../context/useUI"
 import emptyUrl from "../assets/empty.webp"
 
 export type CategoryType = "downloading" | "completed" | "all" | "deleted"
@@ -73,7 +73,10 @@ export const DownloadList: React.FC<DownloadListProps> = ({
     if (!keyword) return true
 
     const fileName =
-      task.files?.[0]?.path?.split("/").pop() || task.fileName || ""
+      task.bittorrent?.info?.name ||
+      task.files?.[0]?.path?.split("/").pop() ||
+      task.fileName ||
+      ""
     const dir = task.dir || ""
     const status = task.status || ""
 

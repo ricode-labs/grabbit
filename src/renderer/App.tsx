@@ -5,7 +5,7 @@ import { StatusBar } from "./components/StatusBar"
 import { DownloadPage, SettingsPage } from "./pages"
 import type { CategoryType } from "./components/DownloadList"
 import { NoticeModal } from "./components"
-import { useUI } from "./context/UIContext"
+import { useUI } from "./context/useUI"
 import {
   useDownloads,
   useAria2Status,
@@ -55,6 +55,7 @@ interface Aria2API {
   forceRemove: (payload: GidPayload) => Promise<string>
   removeDownloadResult: (payload: GidPayload) => Promise<"OK">
   pause: (payload: GidPayload) => Promise<string>
+  forcePause: (payload: GidPayload) => Promise<string>
   unpause: (payload: GidPayload) => Promise<string>
   tellStatus: (payload: GidPayload) => Promise<Aria2Status>
   tellActive: (keys?: string[]) => Promise<Aria2Status[]>
@@ -73,7 +74,10 @@ interface GrabbitAPI {
   selectTorrentFile: () => Promise<string | null>
   // getTorrentInfo: (torrentPath: string) => Promise<any>
   getClipboardText: () => Promise<string>
+  showDownloadCompleteNotification: (message: string) => Promise<boolean>
   deleteDownloadFile: (filePath: string) => Promise<boolean>
+  openDownloadFile: (filePath: string) => Promise<boolean>
+  openDownloadFolder: (folderPath: string) => Promise<boolean>
   getPreferences: () => Promise<Preferences>
   minimizeWindow: () => Promise<void>
   maximizeWindow: () => Promise<void>
@@ -100,6 +104,14 @@ type NoticeState = {
 const isMissingAria2TaskError = (error: unknown) => {
   const message = error instanceof Error ? error.message : String(error)
   return /not found|Could not remove download result/i.test(message)
+}
+
+const isDownloadableLink = (text: string): boolean => {
+  const text_trimmed = text.trim()
+  return (
+    /^(https?:\/\/|magnet:|ftp:\/\/)/.test(text_trimmed) &&
+    text_trimmed.length > 10
+  )
 }
 
 const App: React.FC = () => {
@@ -147,22 +159,35 @@ const App: React.FC = () => {
       return
     }
 
-    let newlyCompletedCount = 0
-    completedIds.forEach((gid) => {
-      if (!previousCompletedIds.current?.has(gid)) {
-        newlyCompletedCount += 1
-      }
+    const newlyCompletedTasks = historyTasks.filter((task) => {
+      if (task.status !== "complete" || !task.gid) return false
+      return !previousCompletedIds.current?.has(task.gid)
     })
 
-    if (newlyCompletedCount > 0) {
+    if (newlyCompletedTasks.length > 0) {
       setCategoryUpdates((previous) => ({
         ...previous,
-        completed: previous.completed + newlyCompletedCount,
+        completed: previous.completed + newlyCompletedTasks.length,
       }))
+
+      void Promise.all(
+        newlyCompletedTasks.map((task) => {
+          const fileName =
+            task.bittorrent?.info?.name ||
+            task.files?.[0]?.path?.split("/").pop() ||
+            task.fileName ||
+            t("unknown")
+          return window.grabbit.showDownloadCompleteNotification(
+            `${fileName} ${t("downloadCompleteNotification")}`
+          )
+        })
+      ).catch((error) => {
+        console.error("Failed to show download completion notification:", error)
+      })
     }
 
     previousCompletedIds.current = completedIds
-  }, [historyTasks, isHistoryLoaded])
+  }, [historyTasks, isHistoryLoaded, t])
 
   // 检测剪切板中的可下载链接
   useEffect(() => {
@@ -183,14 +208,6 @@ const App: React.FC = () => {
 
     return () => clearInterval(clipboardInterval)
   }, [clipboardUrl])
-
-  const isDownloadableLink = (text: string): boolean => {
-    const text_trimmed = text.trim()
-    return (
-      /^(https?:\/\/|magnet:|ftp:\/\/)/.test(text_trimmed) &&
-      text_trimmed.length > 10
-    )
-  }
 
   useEffect(() => {
     let mounted = true
@@ -270,7 +287,7 @@ const App: React.FC = () => {
 
   const handlePause = async (gid: string) => {
     try {
-      await window.aria2.pause({ gid })
+      await window.aria2.forcePause({ gid })
       await refreshDownloads()
     } catch (error) {
       console.error("Failed to pause download:", error)

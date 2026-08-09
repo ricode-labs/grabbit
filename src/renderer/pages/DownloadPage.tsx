@@ -13,7 +13,7 @@ import {
   Search,
   X,
 } from "lucide-react"
-import { useUI } from "../context/UIContext"
+import { useUI } from "../context/useUI"
 import faviconUrl from "../assets/favicon.webp"
 
 interface DownloadPageProps {

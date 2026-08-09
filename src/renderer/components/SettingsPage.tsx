@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { Sun, Moon } from "lucide-react"
-import { useUI } from "../context/UIContext"
+import { useUI } from "../context/useUI"
 import type { Language, Preferences, Theme } from "../../shared/types"
 import { ListboxWrapper } from "./ui/ListboxWrapper"
 import { TooltipWrapper } from "./ui/TooltipWrapper"

@@ -1,7 +1,7 @@
 import React from "react"
 import type { Aria2GlobalStat, Aria2Status } from "../../shared/types"
 import { formatSpeed } from "../utils/format"
-import { useUI } from "../context/UIContext"
+import { useUI } from "../context/useUI"
 
 type DownloadsState = {
   active?: Aria2Status[]

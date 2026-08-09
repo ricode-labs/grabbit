@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react"
-import { useUI } from "../context/UIContext"
+import { useUI } from "../context/useUI"
 
 export interface Aria2Status {
   connected: boolean

@@ -1,6 +1,6 @@
 import React from "react"
 import { Minus, Square, X } from "lucide-react"
-import { useUI } from "../context/UIContext"
+import { useUI } from "../context/useUI"
 
 export const WindowControls: React.FC = () => {
   const { t } = useUI()

@@ -47,6 +47,9 @@ if (!gotTheLock) {
   if (process.platform === "linux") {
     app.setDesktopName("io.github.ricodelabs.Grabbit")
   }
+  if (process.platform === "win32") {
+    app.setAppUserModelId("io.github.ricodelabs.Grabbit")
+  }
 
   // This method will be called when Electron has finished
   // initialization and is ready to create browser windows.

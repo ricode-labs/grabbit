@@ -1,4 +1,4 @@
-import { clipboard, shell } from "electron"
+import { clipboard, Notification, shell } from "electron"
 import { dialog, ipcMain } from "electron/main"
 import { callAria2 } from "./aria2"
 import type {
@@ -31,6 +31,7 @@ import {
 } from "./window"
 import { getPreferences, savePreferences } from "./preferences"
 import { updateTrayMenu } from "./tray"
+import { trayIconPath } from "./paths"
 
 export function registerIpcHandlers() {
   ipcMain.handle("aria2.addUri", async (_event, payload: AddUriPayload) => {
@@ -239,6 +240,20 @@ export function registerIpcHandlers() {
 
   ipcMain.handle("grabbit.getClipboardText", () => clipboard.readText())
 
+  ipcMain.handle(
+    "grabbit.showDownloadCompleteNotification",
+    (_event, message: string) => {
+      if (!Notification.isSupported()) return false
+
+      new Notification({
+        title: "Grabbit",
+        body: message,
+        icon: trayIconPath,
+      }).show()
+      return true
+    }
+  )
+
   // ipcMain.handle(
   //   "grabbit.getTorrentInfo",
   //   async (_event, torrentPath: string) => {
@@ -298,6 +313,23 @@ export function registerIpcHandlers() {
       }
 
       return true
+    }
+  )
+
+  ipcMain.handle(
+    "grabbit.openDownloadFile",
+    async (_event, filePath: string) => {
+      if (!(await pathExists(filePath))) return false
+      shell.showItemInFolder(filePath)
+      return true
+    }
+  )
+
+  ipcMain.handle(
+    "grabbit.openDownloadFolder",
+    async (_event, folderPath: string) => {
+      if (!(await pathExists(folderPath))) return false
+      return (await shell.openPath(folderPath)) === ""
     }
   )
 

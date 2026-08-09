@@ -1,6 +1,6 @@
 import React from "react"
 import { AlertCircle, CheckCircle2, TriangleAlert } from "lucide-react"
-import { useUI } from "../../context/UIContext"
+import { useUI } from "../../context/useUI"
 import { DialogWrapper } from "./DialogWrapper"
 
 interface NoticeModalProps {

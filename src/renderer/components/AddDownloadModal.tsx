@@ -6,7 +6,7 @@ import {
   X,
 } from "lucide-react"
 // import { extractFileNameFromUrl, formatBytes } from "../utils/format"
-import { useUI } from "../context/UIContext"
+import { useUI } from "../context/useUI"
 import { DialogWrapper } from "./ui/DialogWrapper"
 // import { CheckboxWrapper } from "./ui/CheckboxWrapper"
 // import { TooltipWrapper } from "./ui/TooltipWrapper"

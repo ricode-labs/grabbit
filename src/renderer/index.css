@@ -65,6 +65,32 @@ html.dark body {
   box-shadow: 0 18px 50px rgba(107, 84, 72, 0.12);
 }
 
+@keyframes carrot-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes rabbit-ride {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-1.5px);
+  }
+
+  75% {
+    transform: translateX(1.5px);
+  }
+}
+
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -91,5 +117,3 @@ html.dark body {
 html.dark * {
   scrollbar-color: #F2CFC8 #FFF8F7;
 }
-
-

@@ -16,6 +16,7 @@ export { WindowControls } from "./WindowControls"
 export { DownloadList, type CategoryType } from "./DownloadList"
 export { DownloadItem } from "./DownloadItem"
 export { DownloadDetail } from "./DownloadDetail"
+export { CarrotProgress } from "./CarrotProgress"
 
 // Modal Components
 export { AddDownloadModal } from "./AddDownloadModal"

@@ -1,18 +1,9 @@
-import React, { createContext, useContext, useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import type { ReactNode } from "react"
 import { translations } from "../i18n/translations"
 import type { TranslationKey } from "../i18n/translations"
 import type { Language, Theme } from "../../shared/types"
-
-interface UIContextType {
-  theme: Theme
-  language: Language
-  setTheme: (theme: Theme) => void
-  setLanguage: (language: Language) => void
-  t: (key: TranslationKey) => string
-}
-
-const UIContext = createContext<UIContextType | undefined>(undefined)
+import { UIContext } from "./ui-context"
 
 export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>("light")
@@ -55,12 +46,4 @@ export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
       {children}
     </UIContext.Provider>
   )
-}
-
-export const useUI = () => {
-  const context = useContext(UIContext)
-  if (!context) {
-    throw new Error("useUI must be used within UIProvider")
-  }
-  return context
 }

@@ -1,6 +1,6 @@
 import React from "react"
 import { List, Settings, Trash2 } from "lucide-react"
-import { useUI } from "../context/UIContext"
+import { useUI } from "../context/useUI"
 import faviconUrl from "../assets/favicon.webp"
 import logoUrl from "../assets/logo.svg"
 import sidebarBgUrl from "../assets/sidebar-bg.webp"
@@ -113,7 +113,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     isActive
                       ? "bg-[#FF89A0] text-white"
                       : "bg-[#F3ECE7] text-[#9B857A]"
-                  }`}
+                  } animate-in duration-200 zoom-in-50`}
                 >
                   {category.count}
                 </span>

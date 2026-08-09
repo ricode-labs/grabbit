@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 import { AlertTriangle } from "lucide-react"
-import { useUI } from "../context/UIContext"
+import { useUI } from "../context/useUI"
 import { DialogWrapper } from "./ui/DialogWrapper"
 import { CheckboxWrapper } from "./ui/CheckboxWrapper"
 

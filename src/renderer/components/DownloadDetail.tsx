@@ -1,13 +1,8 @@
 import React from "react"
-import {
-  FileText,
-  FolderOpen,
-  Pin,
-  Trash2,
-  X,
-} from "lucide-react"
-import { useUI } from "../context/UIContext"
+import { FileText, FolderOpen, Pin, Trash2, X } from "lucide-react"
+import { useUI } from "../context/useUI"
 import downloadedUrl from "../assets/downloaded.webp"
+import { CarrotProgress } from "./CarrotProgress"
 
 interface DownloadDetailProps {
   task: any
@@ -23,12 +18,23 @@ export const DownloadDetail: React.FC<DownloadDetailProps> = ({
   onRemove,
 }) => {
   const { t } = useUI()
+  const files = task?.files?.length ? task.files : (historyTask?.files ?? [])
+  const torrentName = task?.bittorrent?.info?.name || historyTask?.bittorrent?.info?.name
+  const dir = task?.dir || historyTask?.dir || "-"
+  const isMultiFileTorrent = Boolean(torrentName && files.length > 1)
   const fileName =
-    task?.files?.[0]?.path?.split("/").pop() ||
+    torrentName ||
+    files[0]?.path?.split("/").pop() ||
     historyTask?.fileName ||
     t("unknown")
-  const url = task?.files?.[0]?.uris?.[0]?.uri || historyTask?.url || ""
-  const dir = task?.dir || historyTask?.dir || "-"
+  const infoHash = task?.infoHash || historyTask?.infoHash
+  const magnetUrl = infoHash
+    ? `magnet:?xt=urn:btih:${infoHash}&dn=${encodeURIComponent(fileName)}`
+    : ""
+  const url = files[0]?.uris?.[0]?.uri || historyTask?.url || magnetUrl
+  const filePath = files[0]?.path
+  const folderPath =
+    isMultiFileTorrent && dir !== "-" ? `${dir}/${torrentName}` : dir
   const gid = task?.gid || historyTask?.gid
   const status = task?.status || historyTask?.status || "unknown"
   const completedLength = Number(
@@ -71,6 +77,18 @@ export const DownloadDetail: React.FC<DownloadDetailProps> = ({
     onClose()
   }
 
+  const handleOpenFile = async () => {
+    if (!filePath) return
+    const opened = await window.grabbit.openDownloadFile(filePath)
+    if (!opened) console.error("Failed to open download file:", filePath)
+  }
+
+  const handleOpenFolder = async () => {
+    if (folderPath === "-") return
+    const opened = await window.grabbit.openDownloadFolder(folderPath)
+    if (!opened) console.error("Failed to open download folder:", folderPath)
+  }
+
   return (
     <aside className="flex h-full min-h-0 flex-col overflow-hidden rounded-[18px] border border-[#F2DED6] bg-[#FFFBF8]/98 shadow-[0_18px_46px_rgba(107,84,72,0.18)] backdrop-blur-sm">
       <header className="flex h-[58px] shrink-0 items-center justify-between border-b border-[#F4E3DE] px-5">
@@ -111,12 +129,7 @@ export const DownloadDetail: React.FC<DownloadDetailProps> = ({
                   {getStatusLabel()}
                 </span>
               </div>
-              <div className="h-1.5 overflow-hidden rounded-full bg-[#F0ECE9]">
-                <div
-                  className={`h-full rounded-full ${isComplete ? "bg-[#79C96B]" : "bg-[#FF7D90]"}`}
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
+              <CarrotProgress progress={progress} isActive={isActive} />
             </div>
           </div>
         </section>
@@ -148,11 +161,19 @@ export const DownloadDetail: React.FC<DownloadDetailProps> = ({
         </main>
 
         <footer className="grid h-[70px] shrink-0 grid-cols-3 gap-3 border-t border-[#F4E3DE] px-5 py-4">
-          <button className="flex items-center justify-center gap-2 rounded-[12px] border border-[#F0DED8] bg-white/82 text-[13px] font-medium text-[#6B5448] hover:bg-[#FFF1F4]">
+          <button
+            onClick={handleOpenFile}
+            disabled={!filePath}
+            className="flex items-center justify-center gap-2 rounded-[12px] border border-[#F0DED8] bg-white/82 text-[13px] font-medium text-[#6B5448] hover:bg-[#FFF1F4] disabled:cursor-not-allowed disabled:opacity-50"
+          >
             <FileText size={16} />
             {t("openFile")}
           </button>
-          <button className="flex items-center justify-center gap-2 rounded-[12px] border border-[#F0DED8] bg-white/82 text-[13px] font-medium text-[#6B5448] hover:bg-[#FFF1F4]">
+          <button
+            onClick={handleOpenFolder}
+            disabled={folderPath === "-"}
+            className="flex items-center justify-center gap-2 rounded-[12px] border border-[#F0DED8] bg-white/82 text-[13px] font-medium text-[#6B5448] hover:bg-[#FFF1F4] disabled:cursor-not-allowed disabled:opacity-50"
+          >
             <FolderOpen size={16} />
             {t("openFolder")}
           </button>

@@ -148,6 +148,7 @@ export default {
   settingsSaved: "Settings saved",
   saveFailed: "Failed to save settings",
   failedToAddDownload: "Failed to add download",
+  downloadCompleteNotification: "downloaded successfully",
   confirmDelete: "Confirm Delete",
   confirmDeleteTask: "Are you sure you want to delete the task",
   fileLocation: "File Location:",

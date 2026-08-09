@@ -9,8 +9,9 @@ import {
   Trash2,
 } from "lucide-react"
 import { FileIcon } from "@untitledui/file-icons"
-import { useUI } from "../context/UIContext"
+import { useUI } from "../context/useUI"
 import { TooltipWrapper } from "./ui/TooltipWrapper"
+import { CarrotProgress } from "./CarrotProgress"
 import deletingUrl from "../assets/deleting.webp"
 import downloadedUrl from "../assets/downloaded.webp"
 import downloadingUrl from "../assets/downloading.webp"
@@ -45,6 +46,9 @@ const getFileIconType = (fileName: string): string => {
   return aliases[extension] || extension || "empty"
 }
 
+const isFolderDownload = (download: any) =>
+  Boolean(download.bittorrent || download.infoHash || download.files?.length > 1)
+
 interface DownloadItemProps {
   download: any
   isSelected: boolean
@@ -64,6 +68,7 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
 }) => {
   const { t } = useUI()
   const fileName =
+    download.bittorrent?.info?.name ||
     download.files?.[0]?.path?.split("/").pop() ||
     download.fileName ||
     t("unknown")
@@ -95,13 +100,6 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
     return "bg-[#F4ECE7] text-[#8B6A5D]"
   }
 
-  const getProgressBarColor = () => {
-    if (isComplete) return "bg-[#79C96B]"
-    if (isPaused) return "bg-[#F7A94A]"
-    if (isError) return "bg-[#E85C61]"
-    return "bg-[#FF7D90]"
-  }
-
   const getMascotUrl = () => {
     if (download.status === "removed") return deletingUrl
     if (isComplete) return downloadedUrl
@@ -121,7 +119,7 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
   }
 
   const remainingTime = formatRemainingTime()
-  const fileIconType = getFileIconType(fileName)
+  const fileIconType = isFolderDownload(download) ? "folder" : getFileIconType(fileName)
   const rowState = isSelected
     ? "bg-[#FFF1F4] ring-1 ring-[#FFB9C6]"
     : "bg-white/35 hover:bg-[#FFFBF8]"
@@ -131,11 +129,9 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
   return (
     <div
       onClick={() => onSelect(download.gid)}
-      className={`group grid h-16 cursor-pointer grid-cols-[38px_minmax(0,1fr)_62px_54px_64px] items-center gap-2 border-b border-[#F4E3DE] px-4 transition-colors last:border-b-0 ${rowState}`}
+      className={`group grid h-[84px] cursor-pointer grid-cols-[38px_minmax(0,1fr)_62px_54px_64px] items-center gap-2 border-b border-[#F4E3DE] px-4 transition-colors last:border-b-0 ${rowState}`}
     >
-      <div
-        className="flex h-9 w-9 items-center justify-center"
-      >
+      <div className="flex h-9 w-9 items-center justify-center">
         <FileIcon
           type={fileIconType}
           variant="default"
@@ -176,12 +172,7 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
           )}
         </div>
 
-        <div className="h-[4px] overflow-hidden rounded-full bg-[#F0ECE9]">
-          <div
-            className={`h-full rounded-full transition-all duration-300 ${getProgressBarColor()}`}
-            style={{ width: `${Math.min(progress, 100)}%` }}
-          />
-        </div>
+        <CarrotProgress progress={progress} isActive={isActive} />
       </div>
 
       <div className="flex min-w-0 items-center justify-end">
@@ -200,7 +191,9 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
         <img
           src={getMascotUrl()}
           alt=""
-          className="h-12 w-12 object-contain"
+          className={`h-12 w-12 object-contain ${
+            isActive ? "animate-[rabbit-ride_1.2s_ease-in-out_infinite]" : ""
+          }`}
         />
       </div>
 

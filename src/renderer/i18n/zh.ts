@@ -147,6 +147,7 @@ export default {
   settingsSaved: "设置已保存",
   saveFailed: "保存设置失败",
   failedToAddDownload: "添加下载失败",
+  downloadCompleteNotification: "已下载完成",
   confirmDelete: "确认删除",
   confirmDeleteTask: "确定要删除任务",
   fileLocation: "文件位置：",

@@ -148,6 +148,7 @@ export default {
   settingsSaved: "設定を保存しました",
   saveFailed: "設定の保存に失敗しました",
   failedToAddDownload: "ダウンロードの追加に失敗しました",
+  downloadCompleteNotification: "のダウンロードが完了しました",
   confirmDelete: "削除の確認",
   confirmDeleteTask: "このタスクを削除しますか",
   fileLocation: "ファイルの場所：",
