@@ -8,14 +8,33 @@ import { FuseV1Options, FuseVersion } from "@electron/fuses"
 import { copy } from "fs-extra"
 import { join } from "node:path"
 
-const flatpakIcon = {
-  "16x16": "resources/icons/icon-16.png",
-  "32x32": "resources/icons/icon-32.png",
-  "64x64": "resources/icons/icon-64.png",
-  "128x128": "resources/icons/icon-128.png",
-  "256x256": "resources/icons/icon-256.png",
-  "512x512": "resources/icons/icon-512.png",
-} as unknown as string
+const flatpakId = "io.github.ricodelabs.Grabbit"
+const flatpakIconFiles: [string, string][] = [
+  [
+    "resources/icons/icon-16.png",
+    `/share/icons/hicolor/16x16/apps/${flatpakId}.png`,
+  ],
+  [
+    "resources/icons/icon-32.png",
+    `/share/icons/hicolor/32x32/apps/${flatpakId}.png`,
+  ],
+  [
+    "resources/icons/icon-64.png",
+    `/share/icons/hicolor/64x64/apps/${flatpakId}.png`,
+  ],
+  [
+    "resources/icons/icon-128.png",
+    `/share/icons/hicolor/128x128/apps/${flatpakId}.png`,
+  ],
+  [
+    "resources/icons/icon-256.png",
+    `/share/icons/hicolor/256x256/apps/${flatpakId}.png`,
+  ],
+  [
+    "resources/icons/icon-512.png",
+    `/share/icons/hicolor/512x512/apps/${flatpakId}.png`,
+  ],
+]
 
 const config: ForgeConfig = {
   packagerConfig: {
@@ -52,11 +71,12 @@ const config: ForgeConfig = {
     }),
     new MakerFlatpak({
       options: {
-        id: "io.github.ricodelabs.Grabbit",
+        id: flatpakId,
         bin: "Grabbit",
-        icon: flatpakIcon,
+        // Disable the installer's default pixmap icon; hicolor icons are exported by Flatpak.
+        icon: "",
         runtimeVersion: "25.08",
-        files: [],
+        files: flatpakIconFiles,
         finishArgs: [
           "--socket=wayland",
           "--socket=fallback-x11",
