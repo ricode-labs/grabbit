@@ -48,6 +48,15 @@ const config: ForgeConfig = {
         icon: "resources/icons/icon-512.png",
         runtimeVersion: "25.08",
         files: [],
+        finishArgs: [
+          "--socket=wayland",
+          "--socket=fallback-x11",
+          "--share=ipc",
+          "--device=dri",
+          "--filesystem=home",
+          "--env=TMPDIR=/var/tmp",
+          "--share=network",
+        ],
         modules: [
           {
             name: "zypak",
