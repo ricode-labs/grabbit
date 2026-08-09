@@ -28,6 +28,12 @@ const config: ForgeConfig = {
           LSHandlerRank: "Alternate",
         },
       ],
+      CFBundleURLTypes: [
+        {
+          CFBundleURLName: "Grabbit Protocol",
+          CFBundleURLSchemes: ["grabbit"],
+        },
+      ],
     },
   },
   rebuildConfig: {},
