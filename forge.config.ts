@@ -8,6 +8,15 @@ import { FuseV1Options, FuseVersion } from "@electron/fuses"
 import { copy } from "fs-extra"
 import { join } from "node:path"
 
+const flatpakIcon = {
+  "16x16": "resources/icons/icon-16.png",
+  "32x32": "resources/icons/icon-32.png",
+  "64x64": "resources/icons/icon-64.png",
+  "128x128": "resources/icons/icon-128.png",
+  "256x256": "resources/icons/icon-256.png",
+  "512x512": "resources/icons/icon-512.png",
+} as unknown as string
+
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
@@ -45,7 +54,7 @@ const config: ForgeConfig = {
       options: {
         id: "io.github.ricodelabs.Grabbit",
         bin: "Grabbit",
-        icon: "resources/icons/icon-512.png",
+        icon: flatpakIcon,
         runtimeVersion: "25.08",
         files: [],
         finishArgs: [
