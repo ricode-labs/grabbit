@@ -81,6 +81,7 @@ const config: ForgeConfig = {
           "application/x-bittorrent",
           "application/metalink+xml",
           "application/metalink4+xml",
+          "x-scheme-handler/grabbit",
         ],
       },
     }),
