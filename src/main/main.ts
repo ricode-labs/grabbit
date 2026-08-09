@@ -58,7 +58,9 @@ if (!gotTheLock) {
     } catch (error) {
       console.error("Failed to start aria2", error)
     }
-    updateTrackers()
+    try {
+      updateTrackers()
+    } catch { /* empty */ }
     registerIpcHandlers()
     showWindow()
     createTray()
