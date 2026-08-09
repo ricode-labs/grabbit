@@ -19,6 +19,8 @@ jobs:
         include:
           - platform: linux-x64
             os: ubuntu-latest
+          - platform: linux-arm64
+            os: ubuntu-24.04-arm
           - platform: macos-arm64
             os: macos-latest
           - platform: windows-x64
@@ -186,22 +188,24 @@ jobs:
         with:
           pattern: grabbit-*
           path: release-assets
-          merge-multiple: true
 
       - name: Prepare release assets
         shell: bash
         run: |
           mkdir -p prepared-release-assets
 
-          flatpak=$(find release-assets -type f -name '*.flatpak' -print -quit)
+          flatpak_x64=$(find release-assets/grabbit-linux-x64 -type f -name '*.flatpak' -print -quit)
+          flatpak_arm64=$(find release-assets/grabbit-linux-arm64 -type f -name '*.flatpak' -print -quit)
           pkg=$(find release-assets -type f -name 'Grabbit-macos-arm64.pkg' -print -quit)
           setup=$(find release-assets -type f -name '*Setup.exe' -print -quit)
 
-          test -n "$flatpak"
+          test -n "$flatpak_x64"
+          test -n "$flatpak_arm64"
           test -n "$pkg"
           test -n "$setup"
 
-          cp "$flatpak" "prepared-release-assets/Grabbit-linux-x64.flatpak"
+          cp "$flatpak_x64" "prepared-release-assets/Grabbit-linux-x64.flatpak"
+          cp "$flatpak_arm64" "prepared-release-assets/Grabbit-linux-arm64.flatpak"
           cp "$pkg" "prepared-release-assets/Grabbit-macos-arm64.pkg"
           cp "$setup" "prepared-release-assets/Grabbit-windows-x64-setup.exe"
 

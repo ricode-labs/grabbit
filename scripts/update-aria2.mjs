@@ -16,6 +16,11 @@ const assets = [
     extract: (archivePath) => extract({ file: archivePath, cwd: targetDir }),
   },
   {
+    archiveName: "aria2-linux-arm64.tar.gz",
+    fileName: "aria2c-linux-arm64",
+    extract: (archivePath) => extract({ file: archivePath, cwd: targetDir }),
+  },
+  {
     archiveName: "aria2-macos-arm64.tar.gz",
     fileName: "aria2c-macos-arm64",
     extract: (archivePath) => extract({ file: archivePath, cwd: targetDir }),

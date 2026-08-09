@@ -9,6 +9,8 @@ export function getAria2Executable() {
   const arch = process.arch
   if (platform === "linux" && arch === "x64") {
     executableName = "aria2c-linux-x86_64"
+  } else if (platform === "linux" && arch === "arm64") {
+    executableName = "aria2c-linux-arm64"
   } else if (platform === "darwin" && arch === "arm64") {
     executableName = "aria2c-macos-arm64"
   } else if (platform === "win32" && arch === "x64") {
