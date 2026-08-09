@@ -3,7 +3,7 @@ import {
   btTrackerPath,
   dht6Path,
   dhtPath,
-  logPath,
+  // logPath,
   // netrcPath,
   serverStatPath,
   sessionPath,
@@ -41,7 +41,7 @@ async function basicOptions() {
     // The directory to store the downloaded file
     `--dir=${preferences.downloadDirectoryPath}`,
     // The file name of the log file
-    `--log=${logPath}`,
+    // `--log=${logPath}`,
     // Set the maximum number of parallel downloads for every queue item
     `--max-concurrent-downloads=5`,
     // Check file integrity by validating piece hashes or a hash of entire file

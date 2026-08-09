@@ -61,6 +61,7 @@ const config: ForgeConfig = {
           "--share=ipc",
           "--device=dri",
           "--filesystem=home",
+          "--filesystem=/var/tmp",
           "--env=TMPDIR=/var/tmp",
           "--share=network",
           "--talk-name=org.kde.StatusNotifierWatcher",

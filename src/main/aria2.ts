@@ -103,9 +103,11 @@ export async function startAria2() {
     undoPortMapping()
   })
 
-  aria2Process.stderr.on("data", (chunk) => {
-    console.error(`[aria2] ${chunk}`)
-  })
+  for (const stream of [aria2Process.stdout, aria2Process.stderr]) {
+    stream.on("data", (chunk) => {
+      console.log(`[aria2] ${chunk.toString().trimEnd()}`)
+    })
+  }
 
   try {
     portMapping(btPort)
