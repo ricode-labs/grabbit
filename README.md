@@ -10,18 +10,18 @@
 </p>
 
 <p align="center">
-  <img alt="Electron" src="https://img.shields.io/badge/Electron-43.2.0-FFB8C8?labelColor=FFF8F7&color=FF7D90" />
-  <img alt="React" src="https://img.shields.io/badge/React-19.2-FFB8C8?labelColor=FFF8F7&color=FF7D90" />
-  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-6.0-FFB8C8?labelColor=FFF8F7&color=FF7D90" />
-  <img alt="Vite" src="https://img.shields.io/badge/Vite-8.0-FFB8C8?labelColor=FFF8F7&color=FF7D90" />
-  <img alt="Tailwind CSS" src="https://img.shields.io/badge/Tailwind_CSS-4.2-FFB8C8?labelColor=FFF8F7&color=FF7D90" />
-  <img alt="shadcn" src="https://img.shields.io/badge/shadcn-4.6-FFB8C8?labelColor=FFF8F7&color=FF7D90" />
+  <img alt="Electron" src="https://img.shields.io/badge/Electron-42-FFB8C8?labelColor=FFF8F7&color=FF7D90" />
+  <img alt="React" src="https://img.shields.io/badge/React-19-FFB8C8?labelColor=FFF8F7&color=FF7D90" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-6-FFB8C8?labelColor=FFF8F7&color=FF7D90" />
+  <img alt="Vite" src="https://img.shields.io/badge/Vite-8-FFB8C8?labelColor=FFF8F7&color=FF7D90" />
+  <img alt="Tailwind CSS" src="https://img.shields.io/badge/Tailwind_CSS-4-FFB8C8?labelColor=FFF8F7&color=FF7D90" />
+  <img alt="shadcn" src="https://img.shields.io/badge/shadcn-4-FFB8C8?labelColor=FFF8F7&color=FF7D90" />
   <img alt="Platforms" src="https://img.shields.io/badge/platforms-Linux%20%7C%20macOS%20%7C%20Windows-FFB8C8?labelColor=FFF8F7&color=FF7D90" />
 </p>
 
 ## 功能
 
-- 支持 HTTP、HTTPS、FTP、SFTP、Magnet、`.torrent` 和 Metalink 下载
+- 支持 HTTP、HTTPS、FTP、Magnet、`.torrent` 和 Metalink 下载
 - 支持浅色/深色主题，以及中文、English、日本語
 - 自动更新 BitTorrent tracker，并支持 UPnP/NAT-PMP/PCP 端口映射
 
