@@ -63,6 +63,7 @@ const config: ForgeConfig = {
           "--filesystem=home",
           "--env=TMPDIR=/var/tmp",
           "--share=network",
+          "--talk-name=org.kde.StatusNotifierWatcher",
         ],
         modules: [
           {
