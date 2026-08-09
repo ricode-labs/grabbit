@@ -1,7 +1,7 @@
 {
   "name": "grabbit",
   "productName": "Grabbit",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "My Electron application description",
   "main": ".vite/build/main.js",
   "private": true,
