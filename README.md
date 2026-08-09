@@ -5,8 +5,12 @@
 </p>
 
 <p align="center">
-  <strong>基于 aria2 的跨平台下载管理器</strong><br />
-  好看、易用、功能强大。
+  <strong>A cross-platform download manager powered by aria2</strong><br />
+  Beautiful, easy to use, and powerful.
+</p>
+
+<p align="center">
+  <a href="./README.md">English</a> | <a href="./README.zh.md">简体中文</a> | <a href="./README.ja.md">日本語</a>
 </p>
 
 <p align="center">
@@ -19,44 +23,44 @@
   <img alt="Platforms" src="https://img.shields.io/badge/platforms-Linux%20%7C%20macOS%20%7C%20Windows-FFB8C8?labelColor=FFF8F7&color=FF7D90" />
 </p>
 
-## 功能
+## Features
 
-- 支持 HTTP、HTTPS、FTP、Magnet、`.torrent` 和 Metalink 下载
-- 支持浅色/深色主题，以及中文、English、日本語
-- 自动更新 BitTorrent tracker，并支持 UPnP/NAT-PMP/PCP 端口映射
+- Supports HTTP, HTTPS, FTP, Magnet, `.torrent`, and Metalink downloads
+- Supports light and dark themes, plus Chinese, English, and Japanese
+- Automatically updates BitTorrent trackers and supports UPnP/NAT-PMP/PCP port mapping
 
-## 浏览器插件
+## Browser Extension
 
-Grabbit 提供配套浏览器插件，用来减少“复制链接 -> 打开软件 -> 粘贴链接”的步骤以及提高下载的成功率。
+Grabbit provides a companion browser extension to reduce the steps of copying a link, opening the app, and pasting the link, while also improving download success rates.
 
-安装插件后，无须做任何配置，每当浏览器有下载，会自动发给Grabbit，无须任何手动操作。
+After installation, no configuration is required. Whenever the browser starts a download, it is automatically sent to Grabbit without any manual action.
 
-适合这些场景：
+It is useful when:
 
-- 不想反复复制链接。
-- 不仅要复制链接，还要复制Cookie等信息才能成功的下载。
+- You do not want to copy links repeatedly.
+- A download needs more than just the URL, such as cookies or other request information.
 
-Grabbit 插件会自动为你做这些事情。
+The Grabbit extension handles this automatically.
 
-## 支持平台
+## Supported Platforms
 
-当前打包配置包含以下平台和架构：
+The current packaging configuration includes these platforms and architectures:
 
 - Linux x64
 - macOS arm64
 - Windows x64
 
-## 下载安装
+## Download And Install
 
-安装包发布在 [GitHub Releases](https://github.com/ricode-labs/grabbit/releases) 页面。请根据系统下载对应文件：
+Installers are published on the [GitHub Releases](https://github.com/ricode-labs/grabbit/releases) page. Download the file that matches your system:
 
-- Linux x64：`Grabbit-linux-x64.flatpak`
-- macOS arm64：`Grabbit-macos-arm64.pkg`
-- Windows x64：`Grabbit-windows-x64-setup.exe`
+- Linux x64: `Grabbit-linux-x64.flatpak`
+- macOS arm64: `Grabbit-macos-arm64.pkg`
+- Windows x64: `Grabbit-windows-x64-setup.exe`
 
 ### Linux
 
-需要先安装 Flatpak，然后双击 `.flatpak` 文件，或在终端执行：
+Install Flatpak first, then double-click the `.flatpak` file, or run:
 
 ```bash
 flatpak install --user ./Grabbit-linux-x64.flatpak
@@ -64,20 +68,20 @@ flatpak install --user ./Grabbit-linux-x64.flatpak
 
 ### Windows
 
-下载并运行 `Grabbit-windows-x64-setup.exe`，按照安装程序提示完成安装。
+Download and run `Grabbit-windows-x64-setup.exe`, then follow the installer prompts.
 
 ### macOS
 
-macOS 安装包目前没有经过 Apple 签名和公证，系统可能提示“无法验证开发者”或“无法确认开发者身份”。首次安装时请按以下步骤操作：
+The macOS installer is currently not signed or notarized by Apple, so macOS may show a warning that it cannot verify the developer. For the first installation, follow these steps:
 
-1. 下载 `Grabbit-macos-arm64.pkg`，双击运行安装程序。
-2. 如果 macOS 阻止打开安装程序，点击提示中的“完成”或关闭提示。
-3. 打开“系统设置”->“隐私与安全性”。
-4. 在“安全性”区域找到关于 Grabbit 被阻止的提示，点击“仍要打开”。
-5. 根据系统提示输入密码或使用 Touch ID 确认，然后重新打开 `.pkg` 安装程序。
-6. 按照安装向导完成安装
+1. Download `Grabbit-macos-arm64.pkg` and double-click it to run the installer.
+2. If macOS blocks the installer, click "Done" or close the warning.
+3. Open "System Settings" -> "Privacy & Security".
+4. In the "Security" section, find the message saying Grabbit was blocked and click "Open Anyway".
+5. Enter your password or use Touch ID when prompted, then open the `.pkg` installer again.
+6. Follow the installer wizard to complete installation.
 
-也可以在 Finder 中按住 Control 键并点击安装包或 Grabbit，选择“打开”，然后在确认窗口中点击“打开”。
+You can also Control-click the installer or Grabbit in Finder, choose "Open", then click "Open" in the confirmation dialog.
 
 ## License
 
