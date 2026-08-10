@@ -80,17 +80,15 @@ export const DownloadDetail: React.FC<DownloadDetailProps> = ({
 
   const handleOpenFile = async () => {
     if (!filePath) return
-    const opened = await window.grabbit.openFile(filePath)
-    if (!opened) console.error("Failed to open download file:", filePath)
+    await window.grabbit.openFile(filePath)
   }
 
   const handleOpenFolder = async () => {
     if (folderPath === "-") return
-    const opened = isFolderDownload
-      ? await window.grabbit.openFolder(folderPath)
-      : await window.grabbit.showItem(filePath || folderPath)
-    if (!opened) {
-      console.error("Failed to open download folder:", folderPath)
+    if (isFolderDownload) {
+      await window.grabbit.openFolder(folderPath)
+    } else {
+      await window.grabbit.showItem(filePath || folderPath)
     }
   }
 

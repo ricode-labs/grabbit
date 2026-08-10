@@ -240,19 +240,16 @@ export function registerIpcHandlers() {
 
   ipcMain.handle("grabbit.getClipboardText", () => clipboard.readText())
 
-  ipcMain.handle(
-    "grabbit.showNotification",
-    (_event, message: string) => {
-      if (!Notification.isSupported()) return false
+  ipcMain.handle("grabbit.showNotification", (_event, message: string) => {
+    if (!Notification.isSupported()) return false
 
-      new Notification({
-        title: "Grabbit",
-        body: message,
-        icon: trayIconPath,
-      }).show()
-      return true
-    }
-  )
+    new Notification({
+      title: "Grabbit",
+      body: message,
+      icon: trayIconPath,
+    }).show()
+    return true
+  })
 
   // ipcMain.handle(
   //   "grabbit.getTorrentInfo",
@@ -300,46 +297,33 @@ export function registerIpcHandlers() {
   //   }
   // })
 
-  ipcMain.handle(
-    "grabbit.deleteFile",
-    async (_event, filePath: string) => {
-      if (await pathExists(filePath)) {
-        await shell.trashItem(filePath)
-      }
-
-      const aria2ControlFilePath = `${filePath}.aria2`
-      if (await pathExists(aria2ControlFilePath)) {
-        await shell.trashItem(aria2ControlFilePath)
-      }
-
-      return true
+  ipcMain.handle("grabbit.deleteFile", async (_event, filePath: string) => {
+    if (await pathExists(filePath)) {
+      await shell.trashItem(filePath)
     }
-  )
-
-  ipcMain.handle(
-    "grabbit.openFile",
-    async (_event, filePath: string) => {
-      if (!(await pathExists(filePath))) return false
-      return (await shell.openPath(filePath)) === ""
+    const aria2ControlFilePath = `${filePath}.aria2`
+    if (await pathExists(aria2ControlFilePath)) {
+      await shell.trashItem(aria2ControlFilePath)
     }
-  )
+  })
 
-  ipcMain.handle(
-    "grabbit.showItem",
-    async (_event, filePath: string) => {
-      if (!(await pathExists(filePath))) return false
+  ipcMain.handle("grabbit.openFile", async (_event, filePath: string) => {
+    if (await pathExists(filePath)) {
+      await shell.openPath(filePath)
+    }
+  })
+
+  ipcMain.handle("grabbit.showItem", async (_event, filePath: string) => {
+    if (await pathExists(filePath)) {
       shell.showItemInFolder(filePath)
-      return true
     }
-  )
+  })
 
-  ipcMain.handle(
-    "grabbit.openFolder",
-    async (_event, folderPath: string) => {
-      if (!(await pathExists(folderPath))) return false
-      return (await shell.openPath(folderPath)) === ""
+  ipcMain.handle("grabbit.openFolder", async (_event, folderPath: string) => {
+    if (await pathExists(folderPath)) {
+      await shell.openPath(folderPath)
     }
-  )
+  })
 
   ipcMain.handle("grabbit.getPreferences", async () => {
     return getPreferences()
