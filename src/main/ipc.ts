@@ -34,6 +34,8 @@ import { getPreferences, savePreferences } from "./preferences"
 import { updateTrayMenu } from "./tray"
 import { trayIconPath } from "./paths"
 
+const notifications = new Set<Notification>()
+
 export function registerIpcHandlers() {
   ipcMain.handle("aria2.addUri", async (_event, payload: AddUriPayload) => {
     return await callAria2<string>("aria2.addUri", [
@@ -248,8 +250,16 @@ export function registerIpcHandlers() {
         body: message,
         icon: trayIconPath,
       })
+      notifications.add(notification)
       notification.on("click", () => {
         showWindow()
+        notifications.delete(notification)
+      })
+      notification.on("close", () => {
+        notifications.delete(notification)
+      })
+      notification.on("failed", () => {
+        notifications.delete(notification)
       })
       notification.show()
     }
