@@ -1,4 +1,5 @@
-import type { Options, Preferences } from "../../shared/types"
+import type { Options } from "../../shared/aria2"
+import type { Preferences } from "../../shared/preferences"
 
 export interface AppSettings {
   maxDownloadSpeed: number

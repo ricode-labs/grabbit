@@ -1,33 +1,24 @@
 import React from "react"
 import { List, Settings, Trash2 } from "lucide-react"
 import { useUI } from "../context/useUI"
+import { useNavigationStore } from "../stores/useNavigationStore"
+import { useUpdateStore } from "../stores/useUpdateStore"
 import faviconUrl from "../assets/favicon.webp"
 import logoUrl from "../assets/logo.svg"
 import sidebarBgUrl from "../assets/sidebar-bg.webp"
 
 export type CategoryType = "downloading" | "completed" | "all" | "deleted"
 
-interface SidebarProps {
-  currentCategory: CategoryType
-  currentView: "list" | "detail" | "settings"
-  onCategoryChange: (category: CategoryType) => void
-  onSettingsClick: () => void
-  categoryUpdates: {
-    downloading: number
-    completed: number
-    all: number
-    deleted: number
-  }
-}
-
-export const Sidebar: React.FC<SidebarProps> = ({
-  currentCategory,
-  currentView,
-  onCategoryChange,
-  onSettingsClick,
-  categoryUpdates,
-}) => {
+export const Sidebar: React.FC = () => {
   const { t } = useUI()
+  const currentCategory = useNavigationStore((state) => state.currentCategory)
+  const currentView = useNavigationStore((state) => state.currentView)
+  const selectCategory = useNavigationStore((state) => state.selectCategory)
+  const showSettings = useNavigationStore((state) => state.showSettings)
+  const categoryUpdates = useNavigationStore((state) => state.categoryUpdates)
+  const hasUpdate = useUpdateStore((state) =>
+    Boolean(state.updateState?.available)
+  )
 
   const categories = [
     {
@@ -86,7 +77,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           return (
             <button
               key={category.id}
-              onClick={() => onCategoryChange(category.id)}
+              onClick={() => selectCategory(category.id)}
               className={`relative flex h-9 w-full items-center gap-3 rounded-[12px] border px-3 text-[13px] font-medium transition-all duration-200 ${
                 isActive ? activeStyle : inactiveStyle
               }`}
@@ -131,8 +122,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       <div className="px-4 pb-4">
         <button
-          onClick={onSettingsClick}
-          className={`flex h-9 w-full items-center gap-3 rounded-[12px] border px-3 text-[13px] font-medium transition-all duration-200 ${
+          onClick={showSettings}
+          className={`relative flex h-9 w-full items-center gap-3 rounded-[12px] border px-3 text-[13px] font-medium transition-all duration-200 ${
             currentView === "settings" ? activeStyle : inactiveStyle
           }`}
         >
@@ -142,6 +133,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             className="flex-shrink-0 text-[#8B6A5D]"
           />
           <span className="whitespace-nowrap">{t("settings")}</span>
+          {hasUpdate && (
+            <span className="ml-auto h-2.5 w-2.5 rounded-full bg-[#E85068] ring-2 ring-white" />
+          )}
         </button>
       </div>
     </aside>

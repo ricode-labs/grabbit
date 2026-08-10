@@ -2,16 +2,17 @@ import React from "react"
 import { DownloadItem } from "./DownloadItem"
 import { useUI } from "../context/useUI"
 import emptyUrl from "../assets/empty.webp"
+import type { Aria2Status, Aria2File } from "../../shared/aria2"
 
 export type CategoryType = "downloading" | "completed" | "all" | "deleted"
 
 interface DownloadListProps {
   downloads: {
-    active: any[]
-    waiting: any[]
-    stopped: any[]
+    active: DownloadTask[]
+    waiting: DownloadTask[]
+    stopped: DownloadTask[]
   }
-  historyTasks: any[]
+  historyTasks: DownloadTask[]
   category: CategoryType
   selectedGid: string | null
   searchTerm?: string
@@ -19,6 +20,11 @@ interface DownloadListProps {
   onResume: (gid: string) => void
   onRemove: (gid: string) => void
   onSelect: (gid: string) => void
+}
+
+type DownloadTask = Aria2Status & {
+  fileName?: string
+  files: Aria2File[]
 }
 
 export const DownloadList: React.FC<DownloadListProps> = ({

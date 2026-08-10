@@ -68,7 +68,8 @@
     "shadcn": "^4.0.0",
     "tailwind-merge": "^3.0.0",
     "tailwindcss": "^4.0.0",
-    "tw-animate-css": "^1.0.0"
+    "tw-animate-css": "^1.0.0",
+    "zustand": "^5.0.14"
   },
   "overrides": {
     "yauzl": "^3.0.0",

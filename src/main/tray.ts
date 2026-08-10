@@ -2,7 +2,7 @@ import { Menu, Tray } from "electron"
 import { showWindow, toggleDevTools } from "./window"
 import { app, type MenuItemConstructorOptions } from "electron/main"
 import { getPreferences } from "./preferences"
-import type { Language } from "../shared/types"
+import type { Language } from "../shared/preferences"
 import { trayIconPath } from "./paths"
 
 // save a reference to the Tray object globally to avoid garbage collection

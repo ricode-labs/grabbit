@@ -1,24 +1,12 @@
 import React from "react"
-import type { Aria2GlobalStat, Aria2Status } from "../../shared/types"
 import { formatSpeed } from "../utils/format"
 import { useUI } from "../context/useUI"
+import { useDownloadStore } from "../stores/useDownloadStore"
 
-type DownloadsState = {
-  active?: Aria2Status[]
-  waiting?: Aria2Status[]
-  stopped?: Aria2Status[]
-}
-
-interface StatusBarProps {
-  globalStat: Partial<Aria2GlobalStat>
-  downloads: DownloadsState
-}
-
-export const StatusBar: React.FC<StatusBarProps> = ({
-  globalStat,
-  downloads,
-}) => {
+export const StatusBar: React.FC = () => {
   const { t } = useUI()
+  const globalStat = useDownloadStore((state) => state.globalStat)
+  const downloads = useDownloadStore((state) => state.downloads)
   const downloadSpeed = parseInt(globalStat.downloadSpeed || "0")
   const uploadSpeed = parseInt(globalStat.uploadSpeed || "0")
   const liveTasks = [

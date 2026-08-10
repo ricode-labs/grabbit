@@ -141,6 +141,10 @@ export default {
   english: "English",
   reset: "リセット",
   saveSettings: "設定を保存",
+  currentVersion: "現在のバージョン",
+  checkForUpdates: "更新を確認",
+  updateAvailable: "新しいバージョンがあります",
+  latestVersionAlreadyInstalled: "すでに最新バージョンです",
 
   // Hints and messages
   zeroMeansUnlimited: "0 にすると無制限です",

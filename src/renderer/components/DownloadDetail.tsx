@@ -3,10 +3,16 @@ import { FileText, FolderOpen, Pin, Trash2, X } from "lucide-react"
 import { useUI } from "../context/useUI"
 import downloadedUrl from "../assets/downloaded.webp"
 import { CarrotProgress } from "./CarrotProgress"
+import type { Aria2Status } from "../../shared/aria2"
+
+type DownloadTask = Aria2Status & {
+  fileName?: string
+  url?: string
+}
 
 interface DownloadDetailProps {
-  task: any
-  historyTask?: any
+  task: DownloadTask | null
+  historyTask?: DownloadTask | null
   onClose: () => void
   onRemove: (gid: string) => Promise<void>
 }

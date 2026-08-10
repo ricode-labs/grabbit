@@ -1,6 +1,6 @@
 import { createContext } from "react"
 import type { TranslationKey } from "../i18n/translations"
-import type { Language, Theme } from "../../shared/types"
+import type { Language, Theme } from "../../shared/preferences"
 
 export interface UIContextType {
   theme: Theme

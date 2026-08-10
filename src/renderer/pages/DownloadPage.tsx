@@ -1,6 +1,5 @@
 import React, { useState } from "react"
 import { DownloadList } from "../components/DownloadList"
-import type { CategoryType } from "../components/DownloadList"
 import { DownloadDetail } from "../components/DownloadDetail"
 import { AddDownloadModal } from "../components/AddDownloadModal"
 import { DeleteConfirmModal } from "../components/DeleteConfirmModal"
@@ -14,58 +13,48 @@ import {
   X,
 } from "lucide-react"
 import { useUI } from "../context/useUI"
+import { useDownloadStore } from "../stores/useDownloadStore"
+import { useNavigationStore } from "../stores/useNavigationStore"
+import { usePreferencesStore } from "../stores/usePreferencesStore"
+import { useClipboardDownloadPrompt } from "../hooks/useClipboardDownloadPrompt"
+import { useDeleteDownloadTask } from "../hooks/useDeleteDownloadTask"
+import { NoticeModal } from "../components/ui/NoticeModal"
+import type { NoticeState } from "../types/app"
 import faviconUrl from "../assets/favicon.webp"
 
-interface DownloadPageProps {
-  downloads: any
-  historyTasks: any[]
-  aria2Status: any
-  settings: any
-  currentCategory: CategoryType
-  selectedTaskGid: string | null
-  deleteConfirmTask: any
-  initialModalOpen?: boolean
-  initialModalUrl?: string
-  onSelectTask: (gid: string) => void
-  onBackToList: () => void
-  onPause: (gid: string) => Promise<void>
-  onResume: (gid: string) => Promise<void>
-  onRemove: (gid: string) => Promise<void>
-  onAddDownload: (url: string, options: any) => Promise<void>
-  onDeleteConfirm: (deleteFile: boolean) => Promise<void>
-  onDeleteCancel: () => void
-  onModalClose?: () => void
-}
+const toolbarIconButtonClass =
+  "flex h-8 w-8 items-center justify-center rounded-full border border-[#F0DED8] bg-white/90 text-[#9A7C70] shadow-sm transition-all hover:border-[#FFC3CF] hover:text-[#FF5C78] disabled:cursor-not-allowed disabled:opacity-40"
+const disabledToolbarIconButtonClass =
+  "flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-full border border-[#F0DED8] bg-white/90 text-[#BCAAA1] opacity-60 shadow-sm"
 
-export const DownloadPage: React.FC<DownloadPageProps> = ({
-  downloads,
-  historyTasks,
-  aria2Status,
-  settings,
-  currentCategory,
-  selectedTaskGid,
-  deleteConfirmTask,
-  initialModalOpen = false,
-  initialModalUrl = "",
-  onSelectTask,
-  onBackToList,
-  onPause,
-  onResume,
-  onRemove,
-  onAddDownload,
-  onDeleteConfirm,
-  onDeleteCancel,
-  onModalClose,
-}) => {
+export const DownloadPage: React.FC = () => {
   const { t } = useUI()
-  const [showAddModal, setShowAddModal] = useState(initialModalOpen)
+  const currentCategory = useNavigationStore((state) => state.currentCategory)
+  const selectedTaskGid = useNavigationStore((state) => state.selectedTaskGid)
+  const selectTask = useNavigationStore((state) => state.selectTask)
+  const backToList = useNavigationStore((state) => state.backToList)
+  const downloads = useDownloadStore((state) => state.downloads)
+  const historyTasks = useDownloadStore((state) => state.historyTasks)
+  const aria2Status = useDownloadStore((state) => state.aria2Status)
+  const defaultDownloadDir = usePreferencesStore(
+    (state) => state.preferences.downloadDirectoryPath
+  )
+  const pauseDownload = useDownloadStore((state) => state.pauseDownload)
+  const resumeDownload = useDownloadStore((state) => state.resumeDownload)
+  const addDownload = useDownloadStore((state) => state.addDownload)
+  const refreshDownloads = useDownloadStore((state) => state.refreshDownloads)
+  const refreshHistory = useDownloadStore((state) => state.refreshHistory)
   const [lastUsedDownloadDir, setLastUsedDownloadDir] = useState<string>("")
   const [searchTerm, setSearchTerm] = useState("")
-
-  const handleCloseModal = () => {
-    setShowAddModal(false)
-    onModalClose?.()
-  }
+  const [notice, setNotice] = useState<NoticeState | null>(null)
+  const {
+    clipboardUrl,
+    isAddModalOpen,
+    openAddModal,
+    closeAddModal,
+    closeAndMarkClipboardUrl,
+    markClipboardUrlHandled,
+  } = useClipboardDownloadPrompt()
 
   const liveTasks = [
     ...downloads.active,
@@ -74,52 +63,83 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
   ]
   const currentTasks = (() => {
     if (currentCategory === "downloading") {
-      return liveTasks.filter((task: any) =>
+      return liveTasks.filter((task) =>
         ["active", "waiting", "paused"].includes(task.status)
       )
     }
     if (currentCategory === "completed") {
-      return historyTasks.filter((task: any) => task.status === "complete")
+      return historyTasks.filter((task) => task.status === "complete")
     }
     if (currentCategory === "deleted") {
       return historyTasks.filter(
-        (task: any) => task.status === "error" || task.status === "removed"
+        (task) => task.status === "error" || task.status === "removed"
       )
     }
     const seen = new Set<string>()
-    return [...liveTasks, ...historyTasks].filter((task: any) => {
+    return [...liveTasks, ...historyTasks].filter((task) => {
       if (!task.gid) return true
       if (seen.has(task.gid)) return false
       seen.add(task.gid)
       return true
     })
   })()
-  const pausableTasks = currentTasks.filter(
-    (task: any) => task.status === "active"
-  )
-  const resumableTasks = currentTasks.filter(
-    (task: any) => task.status === "paused"
-  )
+  const selectedTask = selectedTaskGid
+    ? liveTasks.find((task) => task.gid === selectedTaskGid) || null
+    : null
+  const selectedHistoryTask = selectedTaskGid
+    ? historyTasks.find((task) => task.gid === selectedTaskGid) || null
+    : null
+
+  const pausableTasks = currentTasks.filter((task) => task.status === "active")
+  const resumableTasks = currentTasks.filter((task) => task.status === "paused")
 
   const handlePauseVisible = async () => {
-    await Promise.all(pausableTasks.map((task: any) => onPause(task.gid)))
+    await Promise.all(pausableTasks.map((task) => pauseDownload(task.gid)))
   }
 
   const handleResumeVisible = async () => {
-    await Promise.all(resumableTasks.map((task: any) => onResume(task.gid)))
+    await Promise.all(resumableTasks.map((task) => resumeDownload(task.gid)))
   }
 
-  const selectedTask = selectedTaskGid
-    ? [...downloads.active, ...downloads.waiting, ...downloads.stopped].find(
-        (t: any) => t.gid === selectedTaskGid
-      )
-    : null
-  const selectedHistoryTask = selectedTaskGid
-    ? historyTasks.find((t: any) => t.gid === selectedTaskGid)
-    : null
   const showDetailDrawer = Boolean(
     selectedTaskGid && (selectedTask || selectedHistoryTask)
   )
+  const { deleteConfirmTask, requestRemove, confirmDelete, cancelDelete } =
+    useDeleteDownloadTask({
+      liveTasks,
+      historyTasks,
+      selectedTaskGid,
+      unknownLabel: t("unknown"),
+      onBackToList: backToList,
+      onRefresh: async () => {
+        await Promise.all([refreshDownloads(), refreshHistory()])
+      },
+      onError: (error) => {
+        setNotice({
+          title: t("noticeTitle"),
+          message: `${t("deleteTaskFailed")}: ${error}`,
+          variant: "error",
+        })
+      },
+    })
+
+  const handleAddDownload = async (
+    url: string,
+    options: Record<string, string>
+  ) => {
+    try {
+      await addDownload(url, options)
+      markClipboardUrlHandled(url)
+      closeAddModal()
+    } catch (error) {
+      console.error("Failed to add download:", error)
+      setNotice({
+        title: t("noticeTitle"),
+        message: `${t("failedToAddDownload")}: ${error}`,
+        variant: "error",
+      })
+    }
+  }
 
   return (
     <>
@@ -128,7 +148,7 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
           <div className="flex items-center gap-2">
             <div className="flex h-[32px] overflow-hidden rounded-[14px] border border-[#FFC3CF] bg-[#FFF1F4] text-[12px] font-semibold text-[#FF5C78] shadow-[0_8px_18px_rgba(255,124,148,0.16)]">
               <button
-                onClick={() => setShowAddModal(true)}
+                onClick={() => openAddModal()}
                 disabled={!aria2Status.connected}
                 className="flex items-center gap-1.5 px-3 transition-all hover:bg-[#FFE5EC] disabled:cursor-not-allowed disabled:opacity-50"
               >
@@ -136,7 +156,7 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
                 {t("addDownload")}
               </button>
               <button
-                onClick={() => setShowAddModal(true)}
+                onClick={() => openAddModal()}
                 disabled={!aria2Status.connected}
                 className="flex w-8 items-center justify-center border-l border-[#FFD3DD] transition-all hover:bg-[#FFE5EC] disabled:cursor-not-allowed disabled:opacity-50"
                 title={t("addDownload")}
@@ -147,7 +167,7 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
             <button
               onClick={handleResumeVisible}
               disabled={resumableTasks.length === 0}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-[#F0DED8] bg-white/90 text-[#9A7C70] shadow-sm transition-all hover:border-[#FFC3CF] hover:text-[#FF5C78] disabled:cursor-not-allowed disabled:opacity-40"
+              className={toolbarIconButtonClass}
               title={t("resume")}
             >
               <Play size={16} />
@@ -155,21 +175,21 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
             <button
               onClick={handlePauseVisible}
               disabled={pausableTasks.length === 0}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-[#F0DED8] bg-white/90 text-[#9A7C70] shadow-sm transition-all hover:border-[#FFC3CF] hover:text-[#FF5C78] disabled:cursor-not-allowed disabled:opacity-40"
+              className={toolbarIconButtonClass}
               title={t("pause")}
             >
               <Pause size={16} />
             </button>
             <button
               disabled
-              className="flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-full border border-[#F0DED8] bg-white/90 text-[#BCAAA1] opacity-60 shadow-sm"
+              className={disabledToolbarIconButtonClass}
               title={t("delete")}
             >
               <X size={16} />
             </button>
             <button
               disabled
-              className="flex h-8 w-8 cursor-not-allowed items-center justify-center rounded-full border border-[#F0DED8] bg-white/90 text-[#BCAAA1] opacity-60 shadow-sm"
+              className={disabledToolbarIconButtonClass}
               title={t("saveLocation")}
             >
               <FolderOpen size={16} />
@@ -206,10 +226,10 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
             category={currentCategory}
             selectedGid={selectedTaskGid}
             searchTerm={searchTerm}
-            onPause={onPause}
-            onResume={onResume}
-            onRemove={onRemove}
-            onSelect={onSelectTask}
+            onPause={pauseDownload}
+            onResume={resumeDownload}
+            onRemove={requestRemove}
+            onSelect={selectTask}
           />
         </div>
 
@@ -218,24 +238,21 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
             <DownloadDetail
               task={selectedTask}
               historyTask={selectedHistoryTask}
-              onClose={onBackToList}
-              onRemove={onRemove}
+              onClose={backToList}
+              onRemove={requestRemove}
             />
           </div>
         )}
       </div>
 
       {/* Modals */}
-      {showAddModal && (
+      {isAddModalOpen && (
         <AddDownloadModal
-          defaultDownloadDir={settings.defaultDownloadDir}
-          lastUsedDir={lastUsedDownloadDir || settings.defaultDownloadDir}
-          initialUrl={initialModalUrl}
-          onAdd={async (url, options) => {
-            await onAddDownload(url, options)
-            handleCloseModal()
-          }}
-          onClose={handleCloseModal}
+          defaultDownloadDir={defaultDownloadDir}
+          lastUsedDir={lastUsedDownloadDir || defaultDownloadDir}
+          initialUrl={clipboardUrl}
+          onAdd={handleAddDownload}
+          onClose={closeAndMarkClipboardUrl}
           onDirChange={setLastUsedDownloadDir}
         />
       )}
@@ -243,8 +260,19 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
       {deleteConfirmTask && (
         <DeleteConfirmModal
           task={deleteConfirmTask}
-          onConfirm={onDeleteConfirm}
-          onCancel={onDeleteCancel}
+          onConfirm={confirmDelete}
+          onCancel={cancelDelete}
+        />
+      )}
+
+      {notice && (
+        <NoticeModal
+          isOpen={true}
+          title={notice.title}
+          message={notice.message}
+          variant={notice.variant}
+          onClose={() => setNotice(null)}
+          onConfirm={() => setNotice(null)}
         />
       )}
     </>

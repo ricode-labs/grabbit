@@ -141,6 +141,10 @@ export default {
   english: "English",
   reset: "Reset",
   saveSettings: "Save Settings",
+  currentVersion: "Current version",
+  checkForUpdates: "Check for updates",
+  updateAvailable: "Update available",
+  latestVersionAlreadyInstalled: "You are already on the latest version",
 
   // Hints and messages
   zeroMeansUnlimited: "Set to 0 for unlimited",

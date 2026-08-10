@@ -1,40 +1,33 @@
-import React, { useState, useEffect } from "react"
+import React, { useEffect } from "react"
 import type { ReactNode } from "react"
 import { translations } from "../i18n/translations"
 import type { TranslationKey } from "../i18n/translations"
-import type { Language, Theme } from "../../shared/types"
+import type { Language, Theme } from "../../shared/preferences"
 import { UIContext } from "./ui-context"
+import { usePreferencesStore } from "../stores/usePreferencesStore"
 
 export const UIProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [theme, setThemeState] = useState<Theme>("light")
-  const [language, setLanguageState] = useState<Language>("zh")
+  const theme = usePreferencesStore((state) => state.preferences.theme)
+  const language = usePreferencesStore((state) => state.preferences.language)
+  const loadPreferences = usePreferencesStore((state) => state.loadPreferences)
+  const savePreferencesPatch = usePreferencesStore(
+    (state) => state.savePreferencesPatch
+  )
 
   useEffect(() => {
-    const loadPreferences = async () => {
-      try {
-        const preferences = await window.grabbit.getPreferences()
-        setThemeState(preferences.theme)
-        setLanguageState(preferences.language)
+    void loadPreferences()
+  }, [loadPreferences])
 
-        document.documentElement.classList.toggle(
-          "dark",
-          preferences.theme === "dark"
-        )
-      } catch (error) {
-        console.error("Failed to load preferences:", error)
-      }
-    }
-
-    loadPreferences()
-  }, [])
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark")
+  }, [theme])
 
   const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme)
-    document.documentElement.classList.toggle("dark", newTheme === "dark")
+    void savePreferencesPatch({ theme: newTheme })
   }
 
   const setLanguage = (newLanguage: Language) => {
-    setLanguageState(newLanguage)
+    void savePreferencesPatch({ language: newLanguage })
   }
 
   const t = (key: TranslationKey): string => {

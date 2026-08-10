@@ -18,6 +18,11 @@ import downloadingUrl from "../assets/downloading.webp"
 import errorUrl from "../assets/error.webp"
 import pausedUrl from "../assets/paused.webp"
 import pendingUrl from "../assets/pending.webp"
+import type { Aria2Status } from "../../shared/aria2"
+
+type DownloadTask = Aria2Status & {
+  fileName?: string
+}
 
 const getFileIconType = (fileName: string): string => {
   const extension = fileName.split(".").pop()?.toLowerCase() || ""
@@ -46,11 +51,11 @@ const getFileIconType = (fileName: string): string => {
   return aliases[extension] || extension || "empty"
 }
 
-const isFolderDownload = (download: any) =>
+const isFolderDownload = (download: DownloadTask) =>
   Boolean(download.bittorrent || download.infoHash || download.files?.length > 1)
 
 interface DownloadItemProps {
-  download: any
+  download: DownloadTask
   isSelected: boolean
   onPause: (gid: string) => void
   onResume: (gid: string) => void

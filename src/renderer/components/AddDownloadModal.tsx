@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from "react"
-import {
-  Clipboard,
-  FolderOpen,
-  Link as LinkIcon,
-  X,
-} from "lucide-react"
+import { Clipboard, FolderOpen, Link as LinkIcon, X } from "lucide-react"
 // import { extractFileNameFromUrl, formatBytes } from "../utils/format"
 import { useUI } from "../context/useUI"
 import { DialogWrapper } from "./ui/DialogWrapper"
@@ -24,9 +19,14 @@ interface AddDownloadModalProps {
   defaultDownloadDir: string
   lastUsedDir?: string
   initialUrl?: string
-  onAdd: (url: string, options: any) => void
+  onAdd: (url: string, options: Record<string, string>) => void | Promise<void>
   onClose: () => void
   onDirChange?: (dir: string) => void
+}
+
+const isDownloadableLink = (text: string): boolean => {
+  const text_trimmed = text.trim()
+  return /^(https?:\/\/|magnet:|ftp:\/\/)/.test(text_trimmed)
 }
 
 // interface DownloadMetadata {
@@ -59,6 +59,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   const [downloadDir, setDownloadDir] = useState(
     lastUsedDir || defaultDownloadDir
   )
+  const [isSubmitting, setIsSubmitting] = useState(false)
   // const [files, setFiles] = useState<FileNode[]>([])
   // const [showFileTree, setShowFileTree] = useState(false)
   const [torrentFile, setTorrentFile] = useState<string>("")
@@ -141,12 +142,6 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   //   diskSpace.available < (metadata?.totalLength || torrentSize)
   // )
 
-  // 检查是否为可下载的链接
-  const isDownloadableLink = (text: string): boolean => {
-    const text_trimmed = text.trim()
-    return /^(https?:\/\/|magnet:|ftp:\/\/)/.test(text_trimmed)
-  }
-
   // 加载文件树
   // const loadFileTree = async (torrentPath: string) => { ... }
 
@@ -215,13 +210,20 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
     // setDiskSpace(null)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (isSubmitting) return
+
     const source = inputMode === "link" ? url.trim() : torrentFile
     if (source) {
       const options = { dir: downloadDir }
 
-      onAdd(source, options)
+      setIsSubmitting(true)
+      try {
+        await onAdd(source, options)
+      } finally {
+        setIsSubmitting(false)
+      }
     }
   }
 
@@ -575,13 +577,14 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="rounded-[12px] border border-[#F0DED8] bg-white px-4 py-2 text-[13px] font-medium text-[#6B5448] transition-all hover:bg-[#FFF1F4]"
+              disabled={isSubmitting}
+              className="rounded-[12px] border border-[#F0DED8] bg-white px-4 py-2 text-[13px] font-medium text-[#6B5448] transition-all hover:bg-[#FFF1F4] disabled:cursor-wait disabled:opacity-60"
             >
               {t("cancel")}
             </button>
             <button
               type="submit"
-              disabled={!hasDownloadData}
+              disabled={!hasDownloadData || isSubmitting}
               className="rounded-[12px] bg-[#FF7D90] px-5 py-2 text-[13px] font-medium text-white transition-all hover:bg-[#FF5C78] disabled:cursor-not-allowed disabled:bg-[#E9DDD8] disabled:text-[#A89488]"
             >
               {t("startDownload")}

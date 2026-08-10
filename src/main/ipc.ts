@@ -1,5 +1,6 @@
-import { clipboard, Notification, shell } from "electron"
+import { app, clipboard, Notification, shell } from "electron"
 import { dialog, ipcMain } from "electron/main"
+import ky from "ky"
 import { callAria2 } from "./aria2"
 import type {
   AddMetalinkPayload,
@@ -20,8 +21,8 @@ import type {
   Options,
   ChangePositionPayload,
   TellRangePayload,
-  Preferences,
-} from "../shared/types"
+} from "../shared/aria2"
+import type { Preferences } from "../shared/preferences"
 import { pathExists, readFile } from "fs-extra"
 import {
   closeWindow,
@@ -32,6 +33,34 @@ import {
 import { getPreferences, savePreferences } from "./preferences"
 import { updateTrayMenu } from "./tray"
 import { trayIconPath } from "./paths"
+
+const latestReleaseUrl =
+  "https://api.github.com/repos/ricode-labs/grabbit/releases/latest"
+
+type GithubRelease = {
+  tag_name: string
+}
+
+function normalizeVersion(version: string) {
+  return version.replace(/^v/i, "").split("-")[0].split(".").map(Number)
+}
+
+function isNewerVersion(latest: string, current: string) {
+  const latestParts = normalizeVersion(latest)
+  const currentParts = normalizeVersion(current)
+
+  for (
+    let index = 0;
+    index < Math.max(latestParts.length, currentParts.length);
+    index++
+  ) {
+    const latestPart = latestParts[index] || 0
+    const currentPart = currentParts[index] || 0
+    if (latestPart !== currentPart) return latestPart > currentPart
+  }
+
+  return false
+}
 
 export function registerIpcHandlers() {
   ipcMain.handle("aria2.addUri", async (_event, payload: AddUriPayload) => {
@@ -326,6 +355,25 @@ export function registerIpcHandlers() {
 
   ipcMain.handle("grabbit.getPreferences", async () => {
     return getPreferences()
+  })
+
+  ipcMain.handle("grabbit.getVersion", () => app.getVersion())
+
+  ipcMain.handle("grabbit.checkUpdates", async () => {
+    const currentVersion = app.getVersion()
+    const release = await ky
+      .get(latestReleaseUrl, { timeout: 10000 })
+      .json<GithubRelease>()
+    const latestVersion = release.tag_name.replace(/^v/i, "")
+
+    return {
+      latestVersion,
+      available: isNewerVersion(latestVersion, currentVersion),
+    }
+  })
+
+  ipcMain.handle("grabbit.openExternal", async (_event, url: string) => {
+    await shell.openExternal(url)
   })
 
   ipcMain.handle(

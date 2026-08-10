@@ -22,6 +22,3 @@ export { CarrotProgress } from "./CarrotProgress"
 export { AddDownloadModal } from "./AddDownloadModal"
 export { DeleteConfirmModal } from "./DeleteConfirmModal"
 export { NoticeModal } from "./ui/NoticeModal"
-
-// Settings Component
-export { SettingsPage } from "./SettingsPage"

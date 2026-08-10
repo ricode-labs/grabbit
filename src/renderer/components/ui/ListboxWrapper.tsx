@@ -14,6 +14,7 @@ interface ListboxWrapperProps {
   options: string[]
   label?: string
   className?: string
+  disabled?: boolean
 }
 
 export const ListboxWrapper: React.FC<ListboxWrapperProps> = ({
@@ -22,10 +23,12 @@ export const ListboxWrapper: React.FC<ListboxWrapperProps> = ({
   options,
   label,
   className = "w-auto",
+  disabled = false,
 }) => {
   return (
     <Select
       value={value}
+      disabled={disabled}
       onValueChange={(nextValue) => nextValue && onChange(nextValue)}
     >
       <div className="relative">
@@ -35,6 +38,7 @@ export const ListboxWrapper: React.FC<ListboxWrapperProps> = ({
           </SelectLabel>
         )}
         <SelectTrigger
+          disabled={disabled}
           className={`${className} border-[#F0DED8] bg-white py-2 pr-2 pl-3 text-xs text-[#2D2522] focus-visible:border-[#FFC3CF] focus-visible:ring-[#FFE6EC]`}
         >
           <SelectValue>{value}</SelectValue>

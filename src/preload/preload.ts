@@ -7,9 +7,10 @@ import type {
   ChangeUriPayload,
   GidPayload,
   Options,
-  Preferences,
   TellRangePayload,
-} from "../shared/types"
+} from "../shared/aria2"
+import type { Preferences } from "../shared/preferences"
+import type { UpdateCheckResult } from "../renderer/types/app"
 
 contextBridge.exposeInMainWorld("grabbit", {
   platform: process.platform,
@@ -35,9 +36,11 @@ contextBridge.exposeInMainWorld("grabbit", {
   deleteFile: (filePath: string) =>
     ipcRenderer.invoke("grabbit.deleteFile", filePath),
 
-  openFile: (filePath: string) => ipcRenderer.invoke("grabbit.openFile", filePath),
+  openFile: (filePath: string) =>
+    ipcRenderer.invoke("grabbit.openFile", filePath),
 
-  showItem: (filePath: string) => ipcRenderer.invoke("grabbit.showItem", filePath),
+  showItem: (filePath: string) =>
+    ipcRenderer.invoke("grabbit.showItem", filePath),
 
   openFolder: (folderPath: string) =>
     ipcRenderer.invoke("grabbit.openFolder", folderPath),
@@ -49,6 +52,14 @@ contextBridge.exposeInMainWorld("grabbit", {
   closeWindow: () => ipcRenderer.invoke("grabbit.closeWindow"),
 
   getPreferences: () => ipcRenderer.invoke("grabbit.getPreferences"),
+
+  getVersion: (): Promise<string> => ipcRenderer.invoke("grabbit.getVersion"),
+
+  checkUpdates: (): Promise<UpdateCheckResult> =>
+    ipcRenderer.invoke("grabbit.checkUpdates"),
+
+  openExternal: (url: string) =>
+    ipcRenderer.invoke("grabbit.openExternal", url),
 
   savePreferences: (payload: Preferences) =>
     ipcRenderer.invoke("grabbit.savePreferences", payload),

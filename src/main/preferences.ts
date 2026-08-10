@@ -1,4 +1,4 @@
-import type { Language, Preferences } from "../shared/types"
+import type { Language, Preferences } from "../shared/preferences"
 import Store from "electron-store"
 import { downloadDirectoryPath } from "./paths"
 import { app, nativeTheme } from "electron/main"
@@ -31,7 +31,6 @@ function resolveLocaleLanguage(): Language {
 }
 
 export async function savePreferences(preferences: Preferences) {
-  store.store = preferences
   await callAria2("aria2.changeGlobalOption", [
     {
       dir: preferences.downloadDirectoryPath,
@@ -39,5 +38,6 @@ export async function savePreferences(preferences: Preferences) {
       "max-overall-upload-limit": preferences.maxOverallUploadLimit,
     },
   ])
+  store.store = preferences
   return store.store
 }
