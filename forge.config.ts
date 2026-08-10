@@ -41,8 +41,16 @@ const config: ForgeConfig = {
   rebuildConfig: {},
   hooks: {
     packageAfterCopy: async (_forgeConfig, buildPath) => {
-      const packagePath = "node_modules/node-portmapping"
-      await copy(join(process.cwd(), packagePath), join(buildPath, packagePath))
+      const packagePaths = [
+        "node_modules/node-portmapping",
+        "node_modules/registry-js",
+      ]
+
+      await Promise.all(
+        packagePaths.map((packagePath) => {
+          return copy(join(process.cwd(), packagePath), join(buildPath, packagePath))
+        })
+      )
     },
   },
   makers: [
