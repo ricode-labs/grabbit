@@ -10,6 +10,7 @@ import {
   registerFileAssociations,
   registerProtocolClient,
 } from "./protocol"
+import { appId } from "../../forge.config"
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -46,10 +47,10 @@ if (!gotTheLock) {
   })
 
   if (process.platform === "linux") {
-    app.setDesktopName("io.github.ricodelabs.Grabbit")
+    app.setDesktopName(appId)
   }
   if (process.platform === "win32") {
-    app.setAppUserModelId("io.github.ricodelabs.Grabbit")
+    app.setAppUserModelId(appId)
     // app.setToastActivatorCLSID("{84D5F65A-7C6D-4B4A-A739-639A8C47F93D}")
   }
 

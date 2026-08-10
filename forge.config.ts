@@ -8,10 +8,12 @@ import { FuseV1Options, FuseVersion } from "@electron/fuses"
 import { copy } from "fs-extra"
 import { join } from "node:path"
 
+export const appId = "io.github.ricodelabs.Grabbit"
+
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
-    appBundleId: "io.github.ricodelabs.Grabbit",
+    appBundleId: appId,
     icon: "resources/icons/icon",
     extraResource: ["resources/aria2", "resources/icons"],
     extendInfo: {
@@ -59,7 +61,7 @@ const config: ForgeConfig = {
     }),
     new MakerFlatpak({
       options: {
-        id: "io.github.ricodelabs.Grabbit",
+        id: appId,
         bin: "Grabbit",
         icon: {
           "16x16": "resources/icons/icon-16.png",

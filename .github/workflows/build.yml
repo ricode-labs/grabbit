@@ -13,6 +13,8 @@ jobs:
   build:
     name: Build ${{ matrix.platform }} installer
     runs-on: ${{ matrix.os }}
+    env:
+      APP_ID: io.github.ricodelabs.Grabbit
     strategy:
       fail-fast: false
       matrix:
@@ -77,7 +79,7 @@ jobs:
           pkgbuild \
             --component "$app" \
             --install-location /Applications \
-            --identifier io.github.ricodelabs.Grabbit \
+            --identifier "$APP_ID" \
             --version "$version" \
             out/make/pkg/Grabbit-macos-arm64.pkg
 
@@ -89,7 +91,7 @@ jobs:
           test -n "$package"
           flatpak install --user --noninteractive "$package"
 
-          dbus-run-session -- xvfb-run -a flatpak run io.github.ricodelabs.Grabbit >/tmp/grabbit.log 2>&1 &
+          dbus-run-session -- xvfb-run -a flatpak run "$APP_ID" >/tmp/grabbit.log 2>&1 &
           app_pid=$!
           for _ in {1..20}; do
             pgrep -f '[a]ria2' >/dev/null && break
@@ -99,7 +101,7 @@ jobs:
 
           kill "$app_pid" 2>/dev/null || true
           pkill -f '[a]ria2' 2>/dev/null || true
-          flatpak uninstall --user --noninteractive io.github.ricodelabs.Grabbit || true
+          flatpak uninstall --user --noninteractive "$APP_ID" || true
 
       - name: Install and run macOS installer
         if: runner.os == 'macOS'
