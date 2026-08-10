@@ -11,9 +11,11 @@ import { join } from "node:path"
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    appBundleId: "io.github.ricodelabs.Grabbit",
     icon: "resources/icons/icon",
     extraResource: ["resources/aria2", "resources/icons"],
     extendInfo: {
+      NSPrincipalClass: "AtomApplication",
       CFBundleDocumentTypes: [
         {
           CFBundleTypeName: "BitTorrent File",

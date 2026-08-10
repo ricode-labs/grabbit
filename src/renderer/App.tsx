@@ -74,10 +74,10 @@ interface GrabbitAPI {
   selectTorrentFile: () => Promise<string | null>
   // getTorrentInfo: (torrentPath: string) => Promise<any>
   getClipboardText: () => Promise<string>
-  showDownloadCompleteNotification: (message: string) => Promise<boolean>
-  deleteDownloadFile: (filePath: string) => Promise<boolean>
-  openDownloadFile: (filePath: string) => Promise<boolean>
-  openDownloadFolder: (folderPath: string) => Promise<boolean>
+   showNotification: (message: string) => Promise<boolean>
+   deleteDownloadFile: (filePath: string) => Promise<boolean>
+   openFile: (filePath: string) => Promise<boolean>
+   openFolder: (folderPath: string) => Promise<boolean>
   getPreferences: () => Promise<Preferences>
   minimizeWindow: () => Promise<void>
   maximizeWindow: () => Promise<void>
@@ -177,7 +177,7 @@ const App: React.FC = () => {
             task.files?.[0]?.path?.split("/").pop() ||
             task.fileName ||
             t("unknown")
-          return window.grabbit.showDownloadCompleteNotification(
+          return window.grabbit.showNotification(
             `${fileName} ${t("downloadCompleteNotification")}`
           )
         })

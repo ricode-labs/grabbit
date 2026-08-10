@@ -241,7 +241,7 @@ export function registerIpcHandlers() {
   ipcMain.handle("grabbit.getClipboardText", () => clipboard.readText())
 
   ipcMain.handle(
-    "grabbit.showDownloadCompleteNotification",
+    "grabbit.showNotification",
     (_event, message: string) => {
       if (!Notification.isSupported()) return false
 
@@ -317,7 +317,7 @@ export function registerIpcHandlers() {
   )
 
   ipcMain.handle(
-    "grabbit.openDownloadFile",
+    "grabbit.openFile",
     async (_event, filePath: string) => {
       if (!(await pathExists(filePath))) return false
       shell.showItemInFolder(filePath)
@@ -326,7 +326,7 @@ export function registerIpcHandlers() {
   )
 
   ipcMain.handle(
-    "grabbit.openDownloadFolder",
+    "grabbit.openFolder",
     async (_event, folderPath: string) => {
       if (!(await pathExists(folderPath))) return false
       return (await shell.openPath(folderPath)) === ""
