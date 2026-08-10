@@ -139,7 +139,7 @@ function getLaunchLinks(argv: string[]): LaunchLink[] {
   })
 }
 
-// Hand launch links to aria2.
+// Read launch links and submit protocol URLs, torrent files, or metalink files to aria2.
 async function addLaunchLinks(launchLinks: LaunchLink[]) {
   return await Promise.allSettled(
     launchLinks.map(async (launchLink) => {
@@ -165,6 +165,7 @@ async function addLaunchLinks(launchLinks: LaunchLink[]) {
   )
 }
 
+// Queue launch arguments until aria2 is available, then process them and show the window.
 export function handleLaunchArgs(argv: string[]) {
   pendingLaunchArgs.push(...argv)
   if (aria2Process) {
