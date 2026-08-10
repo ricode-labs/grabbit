@@ -10,7 +10,8 @@ import {
   registerFileAssociations,
   registerProtocolClient,
 } from "./protocol"
-import { appId } from "../../forge.config"
+
+declare const __APP_ID__: string
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -47,10 +48,10 @@ if (!gotTheLock) {
   })
 
   if (process.platform === "linux") {
-    app.setDesktopName(appId)
+    app.setDesktopName(__APP_ID__)
   }
   if (process.platform === "win32") {
-    app.setAppUserModelId(appId)
+    app.setAppUserModelId(__APP_ID__)
     // app.setToastActivatorCLSID("{84D5F65A-7C6D-4B4A-A739-639A8C47F93D}")
   }
 
