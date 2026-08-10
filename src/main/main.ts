@@ -64,11 +64,7 @@ if (!gotTheLock) {
     } catch (error) {
       console.error("Failed to start aria2", error)
     }
-    try {
-      updateTrackers()
-    } catch {
-      /* empty */
-    }
+    updateTrackers()
     registerIpcHandlers()
     createTray()
     // Windows/Linux cold start: files and protocol URLs arrive in process.argv.
