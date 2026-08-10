@@ -1,7 +1,7 @@
 {
   "name": "grabbit",
   "productName": "Grabbit",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "A cross-platform download manager powered by aria2. Beautiful, easy to use, and powerful",
   "main": ".vite/build/main.js",
   "private": true,
