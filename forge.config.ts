@@ -81,6 +81,7 @@ const config: ForgeConfig = {
           "--filesystem=/tmp",
           "--share=network",
           "--talk-name=org.kde.StatusNotifierWatcher",
+          "--talk-name=org.freedesktop.Notifications",
         ],
         modules: [
           {
