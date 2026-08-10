@@ -1,8 +1,8 @@
 {
   "name": "grabbit",
   "productName": "Grabbit",
-  "version": "1.1.1",
-  "description": "My Electron application description",
+  "version": "1.2.0",
+  "description": "A cross-platform download manager powered by aria2. Beautiful, easy to use, and powerful",
   "main": ".vite/build/main.js",
   "private": true,
   "scripts": {
