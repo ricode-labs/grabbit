@@ -10,8 +10,7 @@ import {
   registerFileAssociations,
   registerProtocolClient,
 } from "./protocol"
-
-declare const __APP_ID__: string
+import { appId } from "../shared/constants"
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -48,10 +47,10 @@ if (!gotTheLock) {
   })
 
   if (process.platform === "linux") {
-    app.setDesktopName(__APP_ID__)
+    app.setDesktopName(appId)
   }
   if (process.platform === "win32") {
-    app.setAppUserModelId(__APP_ID__)
+    app.setAppUserModelId(appId)
     // app.setToastActivatorCLSID("{84D5F65A-7C6D-4B4A-A739-639A8C47F93D}")
   }
 

@@ -7,8 +7,7 @@ import { AutoUnpackNativesPlugin } from "@electron-forge/plugin-auto-unpack-nati
 import { FuseV1Options, FuseVersion } from "@electron/fuses"
 import { copy } from "fs-extra"
 import { join } from "node:path"
-
-export const appId = "io.github.ricodelabs.Grabbit"
+import { appId } from "./src/shared/constants"
 
 const config: ForgeConfig = {
   packagerConfig: {
