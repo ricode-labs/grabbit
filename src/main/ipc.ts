@@ -241,14 +241,13 @@ export function registerIpcHandlers() {
   ipcMain.handle("grabbit.getClipboardText", () => clipboard.readText())
 
   ipcMain.handle("grabbit.showNotification", (_event, message: string) => {
-    if (!Notification.isSupported()) return false
-
-    new Notification({
-      title: "Grabbit",
-      body: message,
-      icon: trayIconPath,
-    }).show()
-    return true
+    if (Notification.isSupported()) {
+      new Notification({
+        title: "Grabbit",
+        body: message,
+        icon: trayIconPath,
+      }).show()
+    }
   })
 
   // ipcMain.handle(
