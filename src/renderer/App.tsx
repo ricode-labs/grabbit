@@ -74,10 +74,11 @@ interface GrabbitAPI {
   selectTorrentFile: () => Promise<string | null>
   // getTorrentInfo: (torrentPath: string) => Promise<any>
   getClipboardText: () => Promise<string>
-   showNotification: (message: string) => Promise<boolean>
-   deleteFile: (filePath: string) => Promise<boolean>
-   openFile: (filePath: string) => Promise<boolean>
-   openFolder: (folderPath: string) => Promise<boolean>
+  showNotification: (message: string) => Promise<boolean>
+  deleteFile: (filePath: string) => Promise<boolean>
+  openFile: (filePath: string) => Promise<boolean>
+  showItem: (filePath: string) => Promise<boolean>
+  openFolder: (folderPath: string) => Promise<boolean>
   getPreferences: () => Promise<Preferences>
   minimizeWindow: () => Promise<void>
   maximizeWindow: () => Promise<void>

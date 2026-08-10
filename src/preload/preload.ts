@@ -37,6 +37,8 @@ contextBridge.exposeInMainWorld("grabbit", {
 
   openFile: (filePath: string) => ipcRenderer.invoke("grabbit.openFile", filePath),
 
+  showItem: (filePath: string) => ipcRenderer.invoke("grabbit.showItem", filePath),
+
   openFolder: (folderPath: string) =>
     ipcRenderer.invoke("grabbit.openFolder", folderPath),
 

@@ -320,6 +320,14 @@ export function registerIpcHandlers() {
     "grabbit.openFile",
     async (_event, filePath: string) => {
       if (!(await pathExists(filePath))) return false
+      return (await shell.openPath(filePath)) === ""
+    }
+  )
+
+  ipcMain.handle(
+    "grabbit.showItem",
+    async (_event, filePath: string) => {
+      if (!(await pathExists(filePath))) return false
       shell.showItemInFolder(filePath)
       return true
     }
