@@ -1,4 +1,4 @@
-import { Menu, nativeImage, Tray } from "electron"
+import { Menu, Tray } from "electron"
 import { showWindow, toggleDevTools } from "./window"
 import { app, type MenuItemConstructorOptions } from "electron/main"
 import { getPreferences } from "./preferences"
@@ -21,9 +21,8 @@ const trayTranslations: Record<Language, { toggleDevTools: string }> = {
 }
 
 export function createTray() {
-  const image = nativeImage.createFromPath(trayIconPath)
   // image.setTemplateImage(process.platform === "darwin")
-  tray = new Tray(image)
+  tray = new Tray(trayIconPath)
   tray.setToolTip("Grabbit")
   updateTrayMenu()
 
