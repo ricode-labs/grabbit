@@ -5,7 +5,11 @@ import { registerIpcHandlers } from "./ipc"
 import { updateTrackers } from "./aria2.conf"
 import { createTray } from "./tray"
 import { showWindow } from "./window"
-import { addLaunchLinks, registerProtocolClient } from "./protocol"
+import {
+  addLaunchLinks,
+  registerFileAssociations,
+  registerProtocolClient,
+} from "./protocol"
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
@@ -16,6 +20,7 @@ const gotTheLock = app.requestSingleInstanceLock()
 if (!gotTheLock) {
   app.quit()
 } else {
+  registerFileAssociations()
   registerProtocolClient()
 
   app.on("second-instance", (_event, argv) => {
@@ -63,7 +68,9 @@ if (!gotTheLock) {
     }
     try {
       updateTrackers()
-    } catch { /* empty */ }
+    } catch {
+      /* empty */
+    }
     registerIpcHandlers()
     showWindow()
     createTray()

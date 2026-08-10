@@ -1,25 +1,36 @@
 import { app } from "electron/main"
 import { resolve } from "node:path"
+import { fileURLToPath } from "node:url"
 import { callAria2 } from "./aria2"
 import { readFile } from "fs-extra"
+import { createKey, HKEY, RegistryValueType, setValue } from "registry-js"
 
 const appProtocol = "grabbit"
 
 export type LaunchLink =
-  | {
-      kind: "url"
-      payload: GrabbitProtocolPayload
-    }
-  | {
-      kind: "torrent" | "metalink"
-      value: string
-    }
+  GrabbitLaunchLink | TorrentLaunchLink | MetalinkLaunchLink
 
-type GrabbitProtocolPayload = {
+type GrabbitLaunchLink = {
+  kind: "url"
+  payload: GrabbitPayload
+}
+
+type TorrentLaunchLink = {
+  kind: "torrent"
+  value: string
+}
+
+type MetalinkLaunchLink = {
+  kind: "metalink"
+  value: string
+}
+
+type GrabbitPayload = {
   url: string
   header: string[]
 }
 
+// Register the custom `grabbit://` URL scheme with the OS.
 export function registerProtocolClient() {
   if (process.defaultApp) {
     if (process.argv.length >= 2) {
@@ -32,53 +43,133 @@ export function registerProtocolClient() {
   }
 }
 
-function getLaunchLinks(argv: string[]): LaunchLink[] {
-  const launchLinks: LaunchLink[] = []
-  const appPrefix = `${appProtocol}://`
-  const filePrefix = "file://"
-  for (const value of argv) {
-    if (value.startsWith(appPrefix)) {
-      const payload = new URL(value).searchParams.get("payload")
-      if (payload) {
-        launchLinks.push({ kind: "url", payload: JSON.parse(payload) })
-      }
-    } else if (value.startsWith(filePrefix)) {
-      if (value.endsWith(".torrent")) {
-        launchLinks.push({
-          kind: "torrent",
-          value: value.slice(filePrefix.length),
-        })
-      } else if (value.endsWith(".metalink") || value.endsWith(".meta4")) {
-        launchLinks.push({
-          kind: "metalink",
-          value: value.slice(filePrefix.length),
-        })
-      }
+// Register Windows file associations for torrent and metalink files.
+export function registerFileAssociations() {
+  if (process.platform !== "win32") return
+
+  const executablePath = app.getPath("exe")
+  const registrations = [
+    {
+      extension: ".torrent",
+      progId: "Grabbit.torrent",
+      contentType: "application/x-bittorrent",
+    },
+    {
+      extension: ".metalink",
+      progId: "Grabbit.metalink",
+      contentType: "application/metalink+xml",
+    },
+    {
+      extension: ".meta4",
+      progId: "Grabbit.meta4",
+      contentType: "application/metalink4+xml",
+    },
+  ]
+
+  const setRegistryValue = (
+    subkey: string,
+    valueName: string,
+    value: string
+  ) => {
+    if (!createKey(HKEY.HKEY_CURRENT_USER, subkey)) {
+      throw new Error(`Failed to create registry key: ${subkey}`)
+    }
+    if (
+      !setValue(
+        HKEY.HKEY_CURRENT_USER,
+        subkey,
+        valueName,
+        RegistryValueType.REG_SZ,
+        value
+      )
+    ) {
+      throw new Error(`Failed to set registry value: ${subkey}\\${valueName}`)
     }
   }
-  return launchLinks
+
+  for (const registration of registrations) {
+    const classKey = `Software\\Classes\\${registration.extension}`
+    const progIdKey = `Software\\Classes\\${registration.progId}`
+    const openCommand = `"${executablePath}" %*`
+
+    setRegistryValue(classKey, "", registration.progId)
+    setRegistryValue(classKey, "Content Type", registration.contentType)
+    setRegistryValue(progIdKey, "", `Grabbit ${registration.extension} file`)
+    setRegistryValue(`${progIdKey}\\DefaultIcon`, "", `${executablePath},0`)
+    setRegistryValue(`${progIdKey}\\shell\\open\\command`, "", openCommand)
+  }
 }
 
+// Parse a `grabbit://` launch argument into a URL launch link.
+function parseProtocolLaunchLink(value: string): GrabbitLaunchLink | null {
+  if (value.startsWith(`${appProtocol}://`)) {
+    const payload = new URL(value).searchParams.get("payload")
+    if (!payload) return null
+    return { kind: "url", payload: JSON.parse(payload) }
+  }
+  return null
+}
+
+// Convert a file URL into a local path when needed.
+function normalizeFileLaunchPath(value: string) {
+  if (value.startsWith("file://")) {
+    return fileURLToPath(value)
+  }
+  return value
+}
+
+// Parse local torrent and metalink paths into launch links.
+function parseFileLaunchLink(value: string): LaunchLink | null {
+  const filePath = normalizeFileLaunchPath(value)
+  if (filePath.endsWith(".torrent")) {
+    return { kind: "torrent", value: filePath }
+  }
+  if (filePath.endsWith(".metalink") || filePath.endsWith(".meta4")) {
+    return { kind: "metalink", value: filePath }
+  }
+  return null
+}
+
+// Parse launch arguments from URL schemes and file paths.
+function getLaunchLinks(argv: string[]): LaunchLink[] {
+  return argv.flatMap((value) => {
+    return parseProtocolLaunchLink(value) ?? parseFileLaunchLink(value) ?? []
+  })
+}
+
+// Hand a `grabbit://` launch link to aria2.
+async function handleProtocolLaunchLink(launchLink: GrabbitLaunchLink) {
+  const { url, header } = launchLink.payload
+  return await callAria2<string>("aria2.addUri", [[url], { header }])
+}
+
+// Hand a torrent file launch link to aria2.
+async function handleTorrentLaunchLink(launchLink: TorrentLaunchLink) {
+  const file = await readFile(launchLink.value)
+  return await callAria2<string>("aria2.addTorrent", [file.toString("base64")])
+}
+
+// Hand a metalink file launch link to aria2.
+async function handleMetalinkLaunchLink(launchLink: MetalinkLaunchLink) {
+  const file = await readFile(launchLink.value)
+  return await callAria2<string>("aria2.addMetalink", [file.toString("base64")])
+}
+
+// Route each launch link to the matching handler.
+async function handleLaunchLink(launchLink: LaunchLink) {
+  if (launchLink.kind === "url") {
+    return await handleProtocolLaunchLink(launchLink)
+  }
+  if (launchLink.kind === "torrent") {
+    return await handleTorrentLaunchLink(launchLink)
+  }
+  if (launchLink.kind === "metalink") {
+    return await handleMetalinkLaunchLink(launchLink)
+  }
+}
+
+// Open any launch links passed to the app and hand them to aria2.
 export async function addLaunchLinks(argv: string[]) {
   const launchLinks = getLaunchLinks(argv)
-  return await Promise.allSettled(
-    launchLinks.map(async (launchLink) => {
-      if (launchLink.kind === "url") {
-        const { url, header } = launchLink.payload
-        return await callAria2<string>("aria2.addUri", [[url], { header }])
-      }
-      if (launchLink.kind === "torrent") {
-        const file = await readFile(launchLink.value)
-        return await callAria2<string>("aria2.addTorrent", [
-          file.toString("base64"),
-        ])
-      }
-      if (launchLink.kind === "metalink") {
-        const file = await readFile(launchLink.value)
-        return await callAria2<string>("aria2.addMetalink", [
-          file.toString("base64"),
-        ])
-      }
-    })
-  )
+  return await Promise.allSettled(launchLinks.map(handleLaunchLink))
 }

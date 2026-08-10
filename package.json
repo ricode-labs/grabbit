@@ -64,6 +64,7 @@
     "parse-torrent": "^11.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "registry-js": "^1.0.0",
     "shadcn": "^4.0.0",
     "tailwind-merge": "^3.0.0",
     "tailwindcss": "^4.0.0",
@@ -74,6 +75,8 @@
     "@electron/rebuild": "^4.0.0"
   },
   "allowScripts": {
-    "node-portmapping": true
+    "node-portmapping": true,
+    "registry-js": true,
+    "electron-winstaller": true
   }
 }
