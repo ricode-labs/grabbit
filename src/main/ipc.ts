@@ -28,6 +28,7 @@ import {
   getMainWindow,
   maximizeWindow,
   minimizeWindow,
+  showWindow,
 } from "./window"
 import { getPreferences, savePreferences } from "./preferences"
 import { updateTrayMenu } from "./tray"
@@ -242,11 +243,15 @@ export function registerIpcHandlers() {
 
   ipcMain.handle("grabbit.showNotification", (_event, message: string) => {
     if (Notification.isSupported()) {
-      new Notification({
+      const notification = new Notification({
         title: "Grabbit",
         body: message,
         icon: trayIconPath,
-      }).show()
+      })
+      notification.on("click", () => {
+        showWindow()
+      })
+      notification.show()
     }
   })
 
