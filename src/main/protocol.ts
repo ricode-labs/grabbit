@@ -139,47 +139,37 @@ function getLaunchLinks(argv: string[]): LaunchLink[] {
   })
 }
 
-// Hand a `grabbit://` launch link to aria2.
-async function handleProtocolLaunchLink(launchLink: GrabbitLaunchLink) {
-  const { url, header } = launchLink.payload
-  return await callAria2<string>("aria2.addUri", [[url], { header }])
-}
-
-// Hand a torrent file launch link to aria2.
-async function handleTorrentLaunchLink(launchLink: TorrentLaunchLink) {
-  const file = await readFile(launchLink.value)
-  return await callAria2<string>("aria2.addTorrent", [file.toString("base64")])
-}
-
-// Hand a metalink file launch link to aria2.
-async function handleMetalinkLaunchLink(launchLink: MetalinkLaunchLink) {
-  const file = await readFile(launchLink.value)
-  return await callAria2<string>("aria2.addMetalink", [file.toString("base64")])
-}
-
-// Route each launch link to the matching handler.
-async function handleLaunchLink(launchLink: LaunchLink) {
-  if (launchLink.kind === "url") {
-    return await handleProtocolLaunchLink(launchLink)
-  }
-  if (launchLink.kind === "torrent") {
-    return await handleTorrentLaunchLink(launchLink)
-  }
-  if (launchLink.kind === "metalink") {
-    return await handleMetalinkLaunchLink(launchLink)
-  }
-}
-
 // Hand launch links to aria2.
 async function addLaunchLinks(launchLinks: LaunchLink[]) {
-  return await Promise.allSettled(launchLinks.map(handleLaunchLink))
+  return await Promise.allSettled(
+    launchLinks.map(async (launchLink) => {
+      if (launchLink.kind === "url") {
+        const { url, header } = launchLink.payload
+        return await callAria2<string>("aria2.addUri", [[url], { header }])
+      }
+
+      if (launchLink.kind === "torrent") {
+        const file = await readFile(launchLink.value)
+        return await callAria2<string>(
+          "aria2.addTorrent",
+          [file.toString("base64")]
+        )
+      }
+
+      const file = await readFile(launchLink.value)
+      return await callAria2<string>(
+        "aria2.addMetalink",
+        [file.toString("base64")]
+      )
+    })
+  )
 }
 
-export function handleLaunchArgs(argv: string[] = []) {
+export function handleLaunchArgs(argv: string[]) {
   pendingLaunchArgs.push(...argv)
   if (aria2Process) {
     showWindow()
     addLaunchLinks(getLaunchLinks(pendingLaunchArgs))
     pendingLaunchArgs = []
-  }  
+  }
 }

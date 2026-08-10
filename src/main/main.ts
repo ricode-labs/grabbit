@@ -68,7 +68,6 @@ if (!gotTheLock) {
       /* empty */
     }
     registerIpcHandlers()
-    showWindow()
     createTray()
     // Windows/Linux cold start: files and protocol URLs arrive in process.argv.
     handleLaunchArgs(process.argv)
