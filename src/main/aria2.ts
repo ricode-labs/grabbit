@@ -5,7 +5,7 @@ import type { JsonRpcFailure, JsonRpcSuccess } from "./types"
 import { aria2StartupArgs } from "./aria2.conf"
 import { createServer } from "node:net"
 import { createMapping, type Mapping, type Protocol } from "node-portmapping"
-let aria2Process: ChildProcessWithoutNullStreams | null = null
+export let aria2Process: ChildProcessWithoutNullStreams | null = null
 let btPortMappings: Mapping[] = []
 let rpcPort: number | null = null
 let rpcSecret: string | null = null

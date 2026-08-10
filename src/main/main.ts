@@ -6,7 +6,7 @@ import { updateTrackers } from "./aria2.conf"
 import { createTray } from "./tray"
 import { showWindow } from "./window"
 import {
-  addLaunchLinks,
+  handleLaunchArgs,
   registerFileAssociations,
   registerProtocolClient,
 } from "./protocol"
@@ -25,26 +25,19 @@ if (!gotTheLock) {
 
   app.on("second-instance", (_event, argv) => {
     // Windows/Linux hot start: a second app instance passes file/protocol args here.
-    addLaunchLinks(argv)
-    showWindow()
+    handleLaunchArgs(argv)
   })
 
   app.on("open-url", (event, url) => {
     event.preventDefault()
     // macOS cold/hot start: the OS delivers registered protocol URLs here.
-    addLaunchLinks([url])
-    if (app.isReady()) {
-      showWindow()
-    }
+    handleLaunchArgs([url])
   })
 
   app.on("open-file", (event, filePath) => {
     event.preventDefault()
     // macOS cold/hot start: the OS delivers associated local files here.
-    addLaunchLinks([filePath])
-    if (app.isReady()) {
-      showWindow()
-    }
+    handleLaunchArgs([filePath])
   })
 
   app.on("before-quit", async () => {
@@ -78,7 +71,7 @@ if (!gotTheLock) {
     showWindow()
     createTray()
     // Windows/Linux cold start: files and protocol URLs arrive in process.argv.
-    addLaunchLinks(process.argv)
+    handleLaunchArgs(process.argv)
 
     app.on("activate", () => {
       showWindow()

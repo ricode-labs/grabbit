@@ -1,11 +1,13 @@
 import { app } from "electron/main"
 import { resolve } from "node:path"
 import { fileURLToPath } from "node:url"
-import { callAria2 } from "./aria2"
+import { aria2Process, callAria2 } from "./aria2"
 import { readFile } from "fs-extra"
 import { createKey, HKEY, RegistryValueType, setValue } from "registry-js"
+import { showWindow } from "./window"
 
 const appProtocol = "grabbit"
+let pendingLaunchArgs: string[] = []
 
 export type LaunchLink =
   GrabbitLaunchLink | TorrentLaunchLink | MetalinkLaunchLink
@@ -168,8 +170,16 @@ async function handleLaunchLink(launchLink: LaunchLink) {
   }
 }
 
-// Open any launch links passed to the app and hand them to aria2.
-export async function addLaunchLinks(argv: string[]) {
-  const launchLinks = getLaunchLinks(argv)
+// Hand launch links to aria2.
+async function addLaunchLinks(launchLinks: LaunchLink[]) {
   return await Promise.allSettled(launchLinks.map(handleLaunchLink))
+}
+
+export function handleLaunchArgs(argv: string[] = []) {
+  pendingLaunchArgs.push(...argv)
+  if (aria2Process) {
+    showWindow()
+    addLaunchLinks(getLaunchLinks(pendingLaunchArgs))
+    pendingLaunchArgs = []
+  }  
 }
