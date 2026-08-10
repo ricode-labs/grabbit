@@ -22,6 +22,7 @@ export const DownloadDetail: React.FC<DownloadDetailProps> = ({
   const torrentName = task?.bittorrent?.info?.name || historyTask?.bittorrent?.info?.name
   const dir = task?.dir || historyTask?.dir || "-"
   const isMultiFileTorrent = Boolean(torrentName && files.length > 1)
+  const isFolderDownload = files.length > 1
   const fileName =
     torrentName ||
     files[0]?.path?.split("/").pop() ||
@@ -85,8 +86,12 @@ export const DownloadDetail: React.FC<DownloadDetailProps> = ({
 
   const handleOpenFolder = async () => {
     if (folderPath === "-") return
-    const opened = await window.grabbit.openFolder(folderPath)
-    if (!opened) console.error("Failed to open download folder:", folderPath)
+    const opened = isFolderDownload
+      ? await window.grabbit.openFolder(folderPath)
+      : await window.grabbit.showItem(filePath || folderPath)
+    if (!opened) {
+      console.error("Failed to open download folder:", folderPath)
+    }
   }
 
   return (
@@ -160,15 +165,17 @@ export const DownloadDetail: React.FC<DownloadDetailProps> = ({
           />
         </main>
 
-        <footer className="grid h-[70px] shrink-0 grid-cols-3 gap-3 border-t border-[#F4E3DE] px-5 py-4">
-          <button
-            onClick={handleOpenFile}
-            disabled={!filePath}
-            className="flex items-center justify-center gap-2 rounded-[12px] border border-[#F0DED8] bg-white/82 text-[13px] font-medium text-[#6B5448] hover:bg-[#FFF1F4] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <FileText size={16} />
-            {t("openFile")}
-          </button>
+        <footer className={`grid h-[70px] shrink-0 gap-3 border-t border-[#F4E3DE] px-5 py-4 ${isFolderDownload ? "grid-cols-2" : "grid-cols-3"}`}>
+          {!isFolderDownload ? (
+            <button
+              onClick={handleOpenFile}
+              disabled={!filePath}
+              className="flex items-center justify-center gap-2 rounded-[12px] border border-[#F0DED8] bg-white/82 text-[13px] font-medium text-[#6B5448] hover:bg-[#FFF1F4] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <FileText size={16} />
+              {t("openFile")}
+            </button>
+          ) : null}
           <button
             onClick={handleOpenFolder}
             disabled={folderPath === "-"}
