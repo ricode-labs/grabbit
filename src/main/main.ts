@@ -24,12 +24,14 @@ if (!gotTheLock) {
   registerProtocolClient()
 
   app.on("second-instance", (_event, argv) => {
+    // Windows/Linux hot start: a second app instance passes file/protocol args here.
     addLaunchLinks(argv)
     showWindow()
   })
 
   app.on("open-url", (event, url) => {
     event.preventDefault()
+    // macOS cold/hot start: the OS delivers registered protocol URLs here.
     addLaunchLinks([url])
     if (app.isReady()) {
       showWindow()
@@ -38,6 +40,7 @@ if (!gotTheLock) {
 
   app.on("open-file", (event, filePath) => {
     event.preventDefault()
+    // macOS cold/hot start: the OS delivers associated local files here.
     addLaunchLinks([filePath])
     if (app.isReady()) {
       showWindow()
@@ -74,6 +77,7 @@ if (!gotTheLock) {
     registerIpcHandlers()
     showWindow()
     createTray()
+    // Windows/Linux cold start: files and protocol URLs arrive in process.argv.
     addLaunchLinks(process.argv)
 
     app.on("activate", () => {
