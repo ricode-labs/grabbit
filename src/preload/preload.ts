@@ -32,8 +32,8 @@ contextBridge.exposeInMainWorld("grabbit", {
   // getMagnetInfo: (url: string) =>
   //   ipcRenderer.invoke("grabbit.getMagnetInfo", url),
 
-  deleteDownloadFile: (filePath: string) =>
-    ipcRenderer.invoke("grabbit.deleteDownloadFile", filePath),
+  deleteFile: (filePath: string) =>
+    ipcRenderer.invoke("grabbit.deleteFile", filePath),
 
   openFile: (filePath: string) => ipcRenderer.invoke("grabbit.openFile", filePath),
 

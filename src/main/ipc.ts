@@ -301,7 +301,7 @@ export function registerIpcHandlers() {
   // })
 
   ipcMain.handle(
-    "grabbit.deleteDownloadFile",
+    "grabbit.deleteFile",
     async (_event, filePath: string) => {
       if (await pathExists(filePath)) {
         await shell.trashItem(filePath)

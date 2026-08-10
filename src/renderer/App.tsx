@@ -75,7 +75,7 @@ interface GrabbitAPI {
   // getTorrentInfo: (torrentPath: string) => Promise<any>
   getClipboardText: () => Promise<string>
    showNotification: (message: string) => Promise<boolean>
-   deleteDownloadFile: (filePath: string) => Promise<boolean>
+   deleteFile: (filePath: string) => Promise<boolean>
    openFile: (filePath: string) => Promise<boolean>
    openFolder: (folderPath: string) => Promise<boolean>
   getPreferences: () => Promise<Preferences>
@@ -372,7 +372,7 @@ const App: React.FC = () => {
 
       // aria2 不再管理任务后再删除本地文件，避免 .aria2 控制文件被重新写出。
       if (deleteFile && deleteConfirmTask.filePath) {
-        await window.grabbit.deleteDownloadFile(deleteConfirmTask.filePath)
+        await window.grabbit.deleteFile(deleteConfirmTask.filePath)
       }
 
       await refreshDownloads()
