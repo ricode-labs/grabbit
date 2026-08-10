@@ -50,7 +50,7 @@ if (!gotTheLock) {
   }
   if (process.platform === "win32") {
     app.setAppUserModelId("io.github.ricodelabs.Grabbit")
-    app.setToastActivatorCLSID("{84D5F65A-7C6D-4B4A-A739-639A8C47F93D}")
+    // app.setToastActivatorCLSID("{84D5F65A-7C6D-4B4A-A739-639A8C47F93D}")
   }
 
   // This method will be called when Electron has finished
