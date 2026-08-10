@@ -29,6 +29,7 @@ import {
   getMainWindow,
   maximizeWindow,
   minimizeWindow,
+  showWindow,
 } from "./window"
 import { getPreferences, savePreferences } from "./preferences"
 import { updateTrayMenu } from "./tray"
@@ -61,6 +62,8 @@ function isNewerVersion(latest: string, current: string) {
 
   return false
 }
+
+const notifications = new Set<Notification>()
 
 export function registerIpcHandlers() {
   ipcMain.handle("aria2.addUri", async (_event, payload: AddUriPayload) => {
@@ -271,11 +274,23 @@ export function registerIpcHandlers() {
 
   ipcMain.handle("grabbit.showNotification", (_event, message: string) => {
     if (Notification.isSupported()) {
-      new Notification({
+      const notification = new Notification({
         title: "Grabbit",
         body: message,
         icon: trayIconPath,
-      }).show()
+      })
+      notifications.add(notification)
+      notification.on("click", () => {
+        showWindow()
+        notifications.delete(notification)
+      })
+      notification.on("close", () => {
+        notifications.delete(notification)
+      })
+      notification.on("failed", () => {
+        notifications.delete(notification)
+      })
+      notification.show()
     }
   })
 

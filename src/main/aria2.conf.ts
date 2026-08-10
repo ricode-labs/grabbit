@@ -16,14 +16,18 @@ const preferences = getPreferences()
 
 // update trackers
 export async function updateTrackers() {
-  const text = await ky
-    .get(
-      "https://cdn.jsdelivr.net/gh/ngosang/trackerslist@master/trackers_all.txt"
-    )
-    .text()
-  const trackers = text.split("\n").join(",")
-  await outputFile(btTrackerPath, trackers, "utf8")
-  await callAria2("aria2.changeGlobalOption", [{ "bt-tracker": trackers }])
+  try {
+    const text = await ky
+      .get(
+        "https://cdn.jsdelivr.net/gh/ngosang/trackerslist@master/trackers_all.txt"
+      )
+      .text()
+    const trackers = text.split("\n").join(",")
+    await outputFile(btTrackerPath, trackers, "utf8")
+    await callAria2("aria2.changeGlobalOption", [{ "bt-tracker": trackers }])
+  } catch {
+    /* empty */
+  }
 }
 
 // read trackers
