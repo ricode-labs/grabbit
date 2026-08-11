@@ -52,7 +52,9 @@ const getFileIconType = (fileName: string): string => {
 }
 
 const isFolderDownload = (download: DownloadTask) =>
-  Boolean(download.bittorrent || download.infoHash || download.files?.length > 1)
+  Boolean(
+    download.bittorrent || download.infoHash || download.files?.length > 1
+  )
 
 interface DownloadItemProps {
   download: DownloadTask
@@ -77,6 +79,14 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
     download.files?.[0]?.path?.split("/").pop() ||
     download.fileName ||
     t("unknown")
+  const files = download.files ?? []
+  const torrentName = download.bittorrent?.info?.name
+  const filePath = files[0]?.path
+  const isMultiFileTorrent = Boolean(torrentName && files.length > 1)
+  const folderPath =
+    isMultiFileTorrent && download.dir
+      ? `${download.dir}/${torrentName}`
+      : download.dir
   const completedLength = Number(download.completedLength || 0)
   const totalLength = Number(download.totalLength || 0)
   const speed = Number(download.downloadSpeed || 0)
@@ -124,12 +134,29 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
   }
 
   const remainingTime = formatRemainingTime()
-  const fileIconType = isFolderDownload(download) ? "folder" : getFileIconType(fileName)
+  const fileIconType = isFolderDownload(download)
+    ? "folder"
+    : getFileIconType(fileName)
+  const canOpenLocation = Boolean(folderPath || filePath)
   const rowState = isSelected
     ? "bg-[#FFF1F4] ring-1 ring-[#FFB9C6]"
     : "bg-white/35 hover:bg-[#FFFBF8]"
   const actionButtonClass =
-    "flex h-7 w-7 items-center justify-center rounded-full text-[#8B6A5D] transition-colors hover:bg-[#FFF1F4] hover:text-[#FF5C78]"
+    "flex h-7 w-7 items-center justify-center rounded-full text-[#8B6A5D] transition-colors hover:bg-[#FFF1F4] hover:text-[#FF5C78] disabled:cursor-not-allowed disabled:opacity-40"
+
+  const handleOpenLocation = async (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    event.stopPropagation()
+    if (!canOpenLocation) return
+
+    if (files.length > 1 && folderPath) {
+      await window.grabbit.openFolder(folderPath)
+      return
+    }
+
+    await window.grabbit.showItem(filePath || folderPath || "")
+  }
 
   return (
     <div
@@ -231,7 +258,8 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
 
         {isComplete && (
           <button
-            onClick={(e) => e.stopPropagation()}
+            onClick={handleOpenLocation}
+            disabled={!canOpenLocation}
             className={actionButtonClass}
             title={t("saveLocation")}
           >
@@ -251,9 +279,12 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
         </button>
 
         <button
-          onClick={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation()
+            onSelect(download.gid)
+          }}
           className="flex h-7 w-7 items-center justify-center rounded-full text-[#8B6A5D] transition-colors hover:bg-[#F7F0EA]"
-          title={fileName}
+          title={t("downloadDetail")}
         >
           <MoreHorizontal size={17} />
         </button>

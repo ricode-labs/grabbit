@@ -39,14 +39,15 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
       isOpen={true}
       onClose={onCancel}
       title={t("confirmDelete")}
-      className="max-w-sm"
+      className="w-[min(420px,calc(100vw-2rem))] max-w-none"
+      contentClassName="flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto p-4"
     >
-      <div className="mb-4 flex items-center gap-3">
-        <div className="rounded-[14px] bg-[#FFE8EA] p-2.5">
+      <div className="mb-4 flex min-w-0 items-center gap-3">
+        <div className="shrink-0 rounded-[14px] bg-[#FFE8EA] p-2.5">
           <AlertTriangle size={24} className="text-[#E85C61]" />
         </div>
-        <div>
-          <p className="text-[#6B5448]">
+        <div className="min-w-0">
+          <p className="break-words text-[#6B5448]">
             {t("confirmDeleteTask")}{" "}
             <span className="font-semibold text-[#2D2522]">
               {task.fileName}
@@ -57,10 +58,8 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
       </div>
 
       <div className="mt-4 mb-6 space-y-3">
-        <div className="rounded-[14px] border border-[#F8EAE4] bg-white/70 p-4">
-          <p className="mb-2 text-sm text-[#8B6A5D]">
-            {t("fileLocation")}
-          </p>
+        <div className="min-w-0 rounded-[14px] border border-[#F8EAE4] bg-white/70 p-4">
+          <p className="mb-2 text-sm text-[#8B6A5D]">{t("fileLocation")}</p>
           <p className="font-mono text-sm break-all text-[#2D2522]">
             {task.filePath || "-"}
           </p>
@@ -72,23 +71,21 @@ export const DeleteConfirmModal: React.FC<DeleteConfirmModalProps> = ({
             onChange={setDeleteFile}
             accent="red"
           />
-          <span className="font-medium text-[#E85C61]">
-            {t("deleteFile")}
-          </span>
+          <span className="font-medium text-[#E85C61]">{t("deleteFile")}</span>
         </label>
       </div>
 
-      <div className="mt-6 flex items-center gap-3">
+      <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
         <button
           onClick={handleConfirm}
           disabled={isDeleting}
-          className="flex-1 rounded-[12px] bg-[#E85C61] px-4 py-3 font-semibold text-white transition-all duration-200 hover:bg-[#D94D54] hover:shadow-lg hover:shadow-[#E85C61]/20 disabled:cursor-not-allowed disabled:opacity-60"
+          className="min-w-0 flex-1 rounded-[12px] bg-[#E85C61] px-4 py-3 font-semibold text-white transition-all duration-200 hover:bg-[#D94D54] hover:shadow-lg hover:shadow-[#E85C61]/20 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {t("confirmDeleteBtn")}
         </button>
         <button
           onClick={onCancel}
-          className="flex-1 rounded-[12px] border border-[#F0DED8] bg-white px-4 py-3 font-semibold text-[#6B5448] transition-all duration-200 hover:bg-[#FFF1F4]"
+          className="min-w-0 flex-1 rounded-[12px] border border-[#F0DED8] bg-white px-4 py-3 font-semibold text-[#6B5448] transition-all duration-200 hover:bg-[#FFF1F4]"
         >
           {t("cancel")}
         </button>
