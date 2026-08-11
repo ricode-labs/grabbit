@@ -1,6 +1,24 @@
 import { create } from "zustand"
 import type { CategoryUpdates, PageCategory, ViewType } from "../types/app"
 
+const completedUnreadStorageKey = "grabbit.hasUnreadCompletedTasks"
+
+const loadCompletedUnread = () => {
+  try {
+    return localStorage.getItem(completedUnreadStorageKey) === "true"
+  } catch {
+    return false
+  }
+}
+
+const saveCompletedUnread = (hasUnread: boolean) => {
+  try {
+    localStorage.setItem(completedUnreadStorageKey, String(hasUnread))
+  } catch (error) {
+    console.error("Failed to save completed unread state:", error)
+  }
+}
+
 type NavigationStore = {
   currentCategory: PageCategory
   currentView: ViewType
@@ -19,12 +37,16 @@ export const useNavigationStore = create<NavigationStore>((set) => ({
   selectedTaskGid: null,
   categoryUpdates: {
     downloading: 0,
-    completed: 0,
+    completed: loadCompletedUnread() ? 1 : 0,
     all: 0,
     deleted: 0,
   },
 
   selectCategory: (category) => {
+    if (category === "completed") {
+      saveCompletedUnread(false)
+    }
+
     set((state) => ({
       currentCategory: category,
       currentView: "list",
@@ -49,10 +71,17 @@ export const useNavigationStore = create<NavigationStore>((set) => ({
   },
 
   incrementCategoryUpdate: (category, amount = 1) => {
+    if (category === "completed" && amount > 0) {
+      saveCompletedUnread(true)
+    }
+
     set((state) => ({
       categoryUpdates: {
         ...state.categoryUpdates,
-        [category]: state.categoryUpdates[category] + amount,
+        [category]:
+          category === "completed"
+            ? 1
+            : state.categoryUpdates[category] + amount,
       },
     }))
   },

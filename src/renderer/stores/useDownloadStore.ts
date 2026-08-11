@@ -23,6 +23,7 @@ export type DownloadStore = {
 }
 
 let previousCompletedIds: Set<string> | null = null
+let historyBaselineRefreshesRemaining = 2
 
 export const useDownloadStore = create<DownloadStore>((set) => ({
   downloads: {
@@ -84,8 +85,9 @@ export const useDownloadStore = create<DownloadStore>((set) => ({
           .filter((task) => task.status === "complete" && task.gid)
           .map((task) => task.gid)
       )
+      const shouldSeedBaseline = historyBaselineRefreshesRemaining > 0
       const newlyCompletedTasks =
-        previousCompletedIds === null
+        previousCompletedIds === null || shouldSeedBaseline
           ? []
           : historyTasks.filter(
               (task) =>
@@ -93,6 +95,10 @@ export const useDownloadStore = create<DownloadStore>((set) => ({
                 task.gid &&
                 !previousCompletedIds?.has(task.gid)
             )
+
+      if (shouldSeedBaseline) {
+        historyBaselineRefreshesRemaining -= 1
+      }
 
       previousCompletedIds = completedIds
       set((state) => ({

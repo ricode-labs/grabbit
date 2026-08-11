@@ -25,25 +25,25 @@ export const Sidebar: React.FC = () => {
       id: "downloading" as CategoryType,
       label: t("downloading"),
       icon: null,
-      count: categoryUpdates.downloading,
+      hasBadge: categoryUpdates.downloading > 0,
     },
     {
       id: "completed" as CategoryType,
       label: t("completed"),
       icon: null,
-      count: categoryUpdates.completed,
+      hasBadge: categoryUpdates.completed > 0,
     },
     {
       id: "all" as CategoryType,
       label: t("allTasks"),
       icon: List,
-      count: categoryUpdates.all,
+      hasBadge: categoryUpdates.all > 0,
     },
     {
       id: "deleted" as CategoryType,
       label: t("trash"),
       icon: Trash2,
-      count: categoryUpdates.deleted,
+      hasBadge: categoryUpdates.deleted > 0,
     },
   ]
 
@@ -98,16 +98,8 @@ export const Sidebar: React.FC = () => {
               <span className="min-w-0 flex-1 text-left whitespace-nowrap">
                 {category.label}
               </span>
-              {category.count > 0 && (
-                <span
-                  className={`ml-auto flex min-w-[20px] justify-center rounded-full px-1.5 py-0.5 text-[11px] font-semibold ${
-                    isActive
-                      ? "bg-[#FF89A0] text-white"
-                      : "bg-[#F3ECE7] text-[#9B857A]"
-                  } animate-in duration-200 zoom-in-50`}
-                >
-                  {category.count}
-                </span>
+              {category.hasBadge && (
+                <span className="ml-auto h-2.5 w-2.5 animate-in rounded-full bg-[#E85068] ring-2 ring-white duration-200 zoom-in-50" />
               )}
             </button>
           )

@@ -81,7 +81,10 @@ const App: React.FC = () => {
         void refreshHistory()
           .then(notifyCompletedTasks)
           .catch((error) => {
-            console.error("Failed to show download completion notification:", error)
+            console.error(
+              "Failed to show download completion notification:",
+              error
+            )
           })
         void refreshGlobalStat()
       }, 1000)
