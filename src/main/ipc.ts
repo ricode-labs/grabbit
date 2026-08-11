@@ -35,34 +35,6 @@ import { getPreferences, savePreferences } from "./preferences"
 import { updateTrayMenu } from "./tray"
 import { trayIconPath } from "./paths"
 
-const latestReleaseUrl =
-  "https://api.github.com/repos/ricode-labs/grabbit/releases/latest"
-
-type GithubRelease = {
-  tag_name: string
-}
-
-function normalizeVersion(version: string) {
-  return version.replace(/^v/i, "").split("-")[0].split(".").map(Number)
-}
-
-function isNewerVersion(latest: string, current: string) {
-  const latestParts = normalizeVersion(latest)
-  const currentParts = normalizeVersion(current)
-
-  for (
-    let index = 0;
-    index < Math.max(latestParts.length, currentParts.length);
-    index++
-  ) {
-    const latestPart = latestParts[index] || 0
-    const currentPart = currentParts[index] || 0
-    if (latestPart !== currentPart) return latestPart > currentPart
-  }
-
-  return false
-}
-
 const notifications = new Set<Notification>()
 
 export function registerIpcHandlers() {
@@ -375,15 +347,26 @@ export function registerIpcHandlers() {
   ipcMain.handle("grabbit.getVersion", () => app.getVersion())
 
   ipcMain.handle("grabbit.checkUpdates", async () => {
-    const currentVersion = app.getVersion()
+    const [currentMajor, currentMinor, currentPatch] = app
+      .getVersion()
+      .split(".")
+      .map(Number)
     const release = await ky
-      .get(latestReleaseUrl, { timeout: 10000 })
-      .json<GithubRelease>()
-    const latestVersion = release.tag_name.replace(/^v/i, "")
+      .get("https://api.github.com/repos/ricode-labs/grabbit/releases/latest")
+      .json<{ tag_name: string }>()
+    const latestVersion = release.tag_name.slice(1)
+    const [latestMajor, latestMinor, latestPatch] = latestVersion
+      .split(".")
+      .map(Number)
 
     return {
       latestVersion,
-      available: isNewerVersion(latestVersion, currentVersion),
+      available:
+        latestMajor > currentMajor ||
+        (latestMajor === currentMajor && latestMinor > currentMinor) ||
+        (latestMajor === currentMajor &&
+          latestMinor === currentMinor &&
+          latestPatch > currentPatch),
     }
   })
 

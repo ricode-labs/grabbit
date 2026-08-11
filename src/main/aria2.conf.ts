@@ -162,7 +162,7 @@ function advancedOptions() {
     "--save-session-interval=10",
     // Stop application when process PID is not running
     `--stop-with-process=${process.pid}`,
-    // Save the session file forcibly when aria2 exits
+    // Save download with --save-session option even if the download is completed or removed
     "--force-save=true",
   ]
 }
