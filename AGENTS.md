@@ -27,5 +27,6 @@
 
 ## Tests And CI
 - There is no npm test script in this repo. For code changes, run at least `npm run typecheck`; add `npm run lint` when touching lint-sensitive code.
+- After making code changes, perform a code review of the changed diff before reporting completion; call out findings or explicitly state that no issues were found, along with the verification performed.
 - Release CI triggers on tags matching `v*` or manual dispatch, builds installers for linux-x64, macos-arm64, and windows-x64, then smoke-tests by launching the app and checking the matching `aria2c-*` process starts.
 - Publish releases through GitHub Actions, not local installer builds. `gh` is installed locally and can be used for GitHub operations such as inspecting runs, releases, and dispatching workflows.
