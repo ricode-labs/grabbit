@@ -67,12 +67,17 @@ const App: React.FC = () => {
 
       if (!mounted) return undefined
 
-      const [, newlyCompletedTasks] = await Promise.all([
-        refreshDownloads(),
-        refreshHistory(),
-        refreshGlobalStat(),
-      ])
-      await notifyCompletedTasks(newlyCompletedTasks)
+      await refreshHistory()
+      await Promise.all([refreshDownloads(), refreshGlobalStat()])
+
+      // aria2 restores the session asynchronously. Refresh a few times before
+      // enabling notifications so restored tasks are treated as the baseline.
+      for (let attempt = 0; attempt < 5 && mounted; attempt += 1) {
+        await new Promise((resolve) => window.setTimeout(resolve, 500))
+        await refreshHistory()
+        await refreshDownloads()
+      }
+      if (!mounted) return undefined
 
       const interval = window.setInterval(() => {
         if (!mounted) return

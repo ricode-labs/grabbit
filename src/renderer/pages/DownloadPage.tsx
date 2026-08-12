@@ -56,11 +56,19 @@ export const DownloadPage: React.FC = () => {
     markClipboardUrlHandled,
   } = useClipboardDownloadPrompt()
 
-  const liveTasks = [
+  const rawLiveTasks = [
     ...downloads.active,
     ...downloads.waiting,
     ...downloads.stopped,
   ]
+  const terminalHistoryGids = new Set(
+    historyTasks
+      .filter((task) => ["complete", "error", "removed"].includes(task.status))
+      .map((task) => task.gid)
+  )
+  const liveTasks = rawLiveTasks.filter(
+    (task) => !terminalHistoryGids.has(task.gid)
+  )
   const currentTasks = (() => {
     if (currentCategory === "downloading") {
       return liveTasks.filter((task) =>
@@ -76,18 +84,29 @@ export const DownloadPage: React.FC = () => {
       )
     }
     const seen = new Set<string>()
-    return [...liveTasks, ...historyTasks].filter((task) => {
-      if (!task.gid) return true
-      if (seen.has(task.gid)) return false
-      seen.add(task.gid)
-      return true
-    })
+    const terminalHistoryTasks = historyTasks.filter(
+      (task) =>
+        task.status === "complete" ||
+        task.status === "error" ||
+        task.status === "removed"
+    )
+    return [...terminalHistoryTasks, ...liveTasks, ...historyTasks].filter(
+      (task) => {
+        if (!task.gid) return true
+        if (seen.has(task.gid)) return false
+        seen.add(task.gid)
+        return true
+      }
+    )
   })()
-  const selectedTask = selectedTaskGid
-    ? liveTasks.find((task) => task.gid === selectedTaskGid) || null
-    : null
   const selectedHistoryTask = selectedTaskGid
     ? historyTasks.find((task) => task.gid === selectedTaskGid) || null
+    : null
+  const selectedTask = selectedTaskGid
+    ? selectedHistoryTask &&
+      ["complete", "error", "removed"].includes(selectedHistoryTask.status)
+      ? null
+      : liveTasks.find((task) => task.gid === selectedTaskGid) || null
     : null
 
   const pausableTasks = currentTasks.filter((task) => task.status === "active")

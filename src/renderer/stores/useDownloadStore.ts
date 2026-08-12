@@ -7,6 +7,9 @@ import type {
 import type { Aria2GlobalStat } from "../../shared/aria2"
 import type { Aria2Status } from "../../shared/aria2"
 
+const seenCompletedStorageKey = "grabbit.seenCompletedTaskIds"
+const maxSeenCompletedIds = 500
+
 export type DownloadStore = {
   downloads: DownloadsData
   historyTasks: Aria2Status[]
@@ -23,7 +26,37 @@ export type DownloadStore = {
 }
 
 let previousCompletedIds: Set<string> | null = null
-let historyBaselineRefreshesRemaining = 2
+
+const loadSeenCompletedIds = () => {
+  try {
+    const rawIds = localStorage.getItem(seenCompletedStorageKey)
+    if (!rawIds) return { ids: new Set<string>(), hasStoredIds: false }
+
+    const parsed = JSON.parse(rawIds)
+    if (!Array.isArray(parsed)) {
+      return { ids: new Set<string>(), hasStoredIds: false }
+    }
+
+    return {
+      ids: new Set(parsed.filter((id): id is string => typeof id === "string")),
+      hasStoredIds: true,
+    }
+  } catch (error) {
+    console.error("Failed to load seen completed tasks:", error)
+    return { ids: new Set<string>(), hasStoredIds: false }
+  }
+}
+
+const saveSeenCompletedIds = (ids: string[]) => {
+  try {
+    localStorage.setItem(
+      seenCompletedStorageKey,
+      JSON.stringify(ids.slice(0, maxSeenCompletedIds))
+    )
+  } catch (error) {
+    console.error("Failed to save seen completed tasks:", error)
+  }
+}
 
 export const useDownloadStore = create<DownloadStore>((set) => ({
   downloads: {
@@ -80,30 +113,32 @@ export const useDownloadStore = create<DownloadStore>((set) => ({
         offset: 0,
         num: 100,
       })
-      const completedIds = new Set(
-        historyTasks
-          .filter((task) => task.status === "complete" && task.gid)
-          .map((task) => task.gid)
-      )
-      const shouldSeedBaseline = historyBaselineRefreshesRemaining > 0
-      const newlyCompletedTasks =
-        previousCompletedIds === null || shouldSeedBaseline
-          ? []
-          : historyTasks.filter(
-              (task) =>
-                task.status === "complete" &&
-                task.gid &&
-                !previousCompletedIds?.has(task.gid)
-            )
+      const latestHistoryTasks = [...historyTasks].reverse()
+      const completedIds = latestHistoryTasks
+        .filter((task) => task.status === "complete" && task.gid)
+        .map((task) => task.gid)
+      const { ids: storedCompletedIds, hasStoredIds } = loadSeenCompletedIds()
+      const knownCompletedIds = previousCompletedIds ?? storedCompletedIds
+      const shouldSeedBaseline = previousCompletedIds === null && !hasStoredIds
+      const newlyCompletedTasks = shouldSeedBaseline
+        ? []
+        : latestHistoryTasks.filter(
+            (task) =>
+              task.status === "complete" &&
+              task.gid &&
+              !knownCompletedIds.has(task.gid)
+          )
+      const currentCompletedIds = completedIds.slice(0, maxSeenCompletedIds)
 
-      if (shouldSeedBaseline) {
-        historyBaselineRefreshesRemaining -= 1
+      if (latestHistoryTasks.length > 0 || currentCompletedIds.length > 0) {
+        previousCompletedIds = new Set(currentCompletedIds)
+        saveSeenCompletedIds(currentCompletedIds)
+      } else if (previousCompletedIds === null) {
+        previousCompletedIds = storedCompletedIds
       }
-
-      previousCompletedIds = completedIds
       set((state) => ({
-        downloads: { ...state.downloads, stopped: historyTasks },
-        historyTasks,
+        downloads: { ...state.downloads, stopped: latestHistoryTasks },
+        historyTasks: latestHistoryTasks,
         isHistoryLoaded: true,
       }))
       return newlyCompletedTasks

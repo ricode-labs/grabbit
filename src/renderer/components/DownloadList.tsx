@@ -41,11 +41,19 @@ export const DownloadList: React.FC<DownloadListProps> = ({
   const { t } = useUI()
 
   // 合并 aria2 任务和历史任务
-  const allTasks = [
+  const rawAllTasks = [
     ...downloads.active,
     ...downloads.waiting,
     ...downloads.stopped,
   ]
+  const terminalHistoryGids = new Set(
+    historyTasks
+      .filter((task) => ["complete", "error", "removed"].includes(task.status))
+      .map((task) => task.gid)
+  )
+  const allTasks = rawAllTasks.filter(
+    (task) => !terminalHistoryGids.has(task.gid)
+  )
 
   // 根据分类过滤任务
   const filterTasksByCategory = () => {
@@ -60,12 +68,20 @@ export const DownloadList: React.FC<DownloadListProps> = ({
       return historyTasks.filter((task) => task.status === "complete")
     } else if (category === "all") {
       const seen = new Set<string>()
-      return [...allTasks, ...historyTasks].filter((task) => {
-        if (!task.gid) return true
-        if (seen.has(task.gid)) return false
-        seen.add(task.gid)
-        return true
-      })
+      const terminalHistoryTasks = historyTasks.filter(
+        (task) =>
+          task.status === "complete" ||
+          task.status === "error" ||
+          task.status === "removed"
+      )
+      return [...terminalHistoryTasks, ...allTasks, ...historyTasks].filter(
+        (task) => {
+          if (!task.gid) return true
+          if (seen.has(task.gid)) return false
+          seen.add(task.gid)
+          return true
+        }
+      )
     } else if (category === "deleted") {
       return historyTasks.filter(
         (task) => task.status === "error" || task.status === "removed"
@@ -118,11 +134,16 @@ export const DownloadList: React.FC<DownloadListProps> = ({
     <div className="h-full overflow-hidden rounded-[14px] border border-[#F6D7D3] bg-white/82 shadow-[0_10px_28px_rgba(107,84,72,0.06)]">
       <div className="h-full overflow-y-auto">
         {filteredTasks.map((task) => {
-          // 如果是历史任务（已完成或失败），从 allTasks 中查找对应的实时状态
+          // 历史终态任务优先使用历史数据，避免被恢复期间的 live 状态覆盖
           const liveTask = task.gid
             ? allTasks.find((t) => t.gid === task.gid)
             : null
-          const displayTask = liveTask || task
+          const displayTask =
+            task.status === "complete" ||
+            task.status === "error" ||
+            task.status === "removed"
+              ? task
+              : liveTask || task
 
           return (
             <DownloadItem

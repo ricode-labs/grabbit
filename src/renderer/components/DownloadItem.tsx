@@ -173,9 +173,9 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
       </div>
 
       <div className="min-w-0">
-        <div className="mb-1 flex items-center gap-2">
-          <TooltipWrapper content={fileName} className="min-w-0">
-            <h3 className="truncate text-[13px] leading-tight font-semibold text-[#2D2522]">
+        <div className="mb-1 flex min-w-0 items-center gap-2">
+          <TooltipWrapper content={fileName} className="min-w-0 flex-1">
+            <h3 className="w-full truncate text-[13px] leading-tight font-semibold text-[#2D2522]">
               {fileName}
             </h3>
           </TooltipWrapper>
