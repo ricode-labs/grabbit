@@ -13,20 +13,20 @@
   }
 
   .btn-sm {
-    @apply px-3 py-1.5 text-sm rounded-md transition-colors;
+    @apply rounded-md px-3 py-1.5 text-sm transition-colors;
   }
 }
 
 :root {
   color-scheme: light;
-  --grabbit-bg: #FFFBF7;
-  --grabbit-panel: #FFF8F7;
-  --grabbit-pink: #FFC7D4;
-  --grabbit-pink-strong: #FF7D90;
-  --grabbit-orange: #F7A94A;
-  --grabbit-green: #79C96B;
-  --grabbit-taupe: #BDB0A6;
-  --grabbit-brown: #6B5448;
+  --grabbit-bg: #fffbf7;
+  --grabbit-panel: #fff8f7;
+  --grabbit-pink: #ffc7d4;
+  --grabbit-pink-strong: #ff7d90;
+  --grabbit-orange: #f7a94a;
+  --grabbit-green: #79c96b;
+  --grabbit-taupe: #bdb0a6;
+  --grabbit-brown: #6b5448;
 }
 
 html,
@@ -39,19 +39,103 @@ body,
 body {
   margin: 0;
   background: transparent;
-  color: #2D2522;
-  font-family: Inter, ui-rounded, "SF Pro Rounded", "Microsoft YaHei UI", "Microsoft YaHei", system-ui, sans-serif;
+  color: #2d2522;
+  font-family:
+    Inter, ui-rounded, "SF Pro Rounded", "Microsoft YaHei UI",
+    "Microsoft YaHei", system-ui, sans-serif;
   letter-spacing: 0;
-  transition: background-color 200ms, color 200ms;
+  transition:
+    background-color 200ms,
+    color 200ms;
 }
 
 html.dark {
-  color-scheme: light;
+  color-scheme: dark;
+  --grabbit-bg: #151312;
+  --grabbit-panel: #211d1b;
+  --grabbit-pink: #8f3a4c;
+  --grabbit-pink-strong: #ff7d90;
+  --grabbit-orange: #e7a84e;
+  --grabbit-green: #8bcf7d;
+  --grabbit-taupe: #8d7b70;
+  --grabbit-brown: #e9ded8;
 }
 
 html.dark body {
   background: transparent;
-  color: #2D2522;
+  color: #f4ede8;
+}
+
+html.dark .app-window,
+html.dark [class*="bg-[#FFF8F7]"],
+html.dark [class*="bg-[#FFFBF8]"],
+html.dark [class*="bg-[#FFFBF7]"] {
+  background-color: #171412 !important;
+  color: #f4ede8;
+}
+
+html.dark [class*="bg-white"],
+html.dark [class*="bg-[#FFF1F4]"],
+html.dark [class*="bg-[#FFF0F3]"],
+html.dark [class*="bg-[#FFECEE]"],
+html.dark [class*="bg-[#FFE8EA]"],
+html.dark [class*="bg-[#FFE5EC]"],
+html.dark [class*="bg-[#FFE4E4]"],
+html.dark [class*="bg-[#FFF3DA]"],
+html.dark [class*="bg-[#F4ECE7]"],
+html.dark [class*="bg-[#E9F6DE]"] {
+  background-color: #26211f !important;
+}
+
+html.dark [class*="hover:bg-[#FFFBF8]"]:hover,
+html.dark [class*="hover:bg-[#FFF1F4]"]:hover,
+html.dark [class*="hover:bg-[#FFE8EA]"]:hover,
+html.dark [class*="hover:bg-[#FFE5EC]"]:hover,
+html.dark [class*="hover:bg-[#FFE4E4]"]:hover,
+html.dark [class*="hover:bg-[#F7F0EA]"]:hover {
+  background-color: #312925 !important;
+}
+
+html.dark [class*="text-[#2D2522]"],
+html.dark [class*="text-[#4E4038]"] {
+  color: #f4ede8 !important;
+}
+
+html.dark [class*="text-[#6B5448]"],
+html.dark [class*="text-[#7A6257]"],
+html.dark [class*="text-[#7F6A5F]"],
+html.dark [class*="text-[#8B6A5D]"],
+html.dark [class*="text-[#9A7C70]"],
+html.dark [class*="text-[#9A8276]"],
+html.dark [class*="text-[#A89488]"],
+html.dark [class*="text-[#B7A59C]"],
+html.dark [class*="text-[#BCAAA1]"],
+html.dark [class*="text-[#BDAAA0]"] {
+  color: #cdbdb3 !important;
+}
+
+html.dark [class*="border-[#F"],
+html.dark [class*="border-[#FFD"],
+html.dark [class*="border-[#FFC"] {
+  border-color: #3a302c !important;
+}
+
+html.dark [class*="ring-[#FFB9C6]"],
+html.dark [class*="ring-[#FFE6EC]"] {
+  --tw-ring-color: rgba(255, 125, 144, 0.32) !important;
+}
+
+html.dark input,
+html.dark textarea,
+html.dark select {
+  background-color: #211d1b !important;
+  border-color: #3a302c !important;
+  color: #f4ede8 !important;
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #8d7b70 !important;
 }
 
 * {
@@ -60,7 +144,7 @@ html.dark body {
 }
 
 .app-window {
-  border: 1px solid #F1DDD4;
+  border: 1px solid #f1ddd4;
   border-radius: 22px;
   box-shadow: 0 18px 50px rgba(107, 84, 72, 0.12);
 }
@@ -97,23 +181,23 @@ html.dark body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #FFF8F7;
+  background: #fff8f7;
 }
 
 ::-webkit-scrollbar-thumb {
   border-radius: 999px;
-  background: #F2CFC8;
+  background: #f2cfc8;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #FFC7D4;
+  background: #ffc7d4;
 }
 
 * {
-  scrollbar-color: #F2CFC8 #FFF8F7;
+  scrollbar-color: #f2cfc8 #fff8f7;
   scrollbar-width: thin;
 }
 
 html.dark * {
-  scrollbar-color: #F2CFC8 #FFF8F7;
+  scrollbar-color: #5a4a43 #171412;
 }
