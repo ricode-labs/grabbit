@@ -83,8 +83,10 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   } | null>(null)
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(false)
   // const [metadataError, setMetadataError] = useState("")
-  // const [diskSpace, setDiskSpace] = useState<DiskSpaceInfo | null>(null)
-  // const [isCheckingSpace, setIsCheckingSpace] = useState(false)
+  const [availableDiskSpace, setAvailableDiskSpace] = useState<number | null>(
+    null
+  )
+  const [isCheckingSpace, setIsCheckingSpace] = useState(false)
 
   const isUsingDefaultDir = downloadDir === defaultDownloadDir
   const hasDownloadData = Boolean(url.trim() || torrentFile)
@@ -131,6 +133,29 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
       window.clearTimeout(timeoutId)
     }
   }, [shouldLoadMetadata, trimmedUrl])
+
+  useEffect(() => {
+    if (!shouldLoadMetadata || !downloadDir) return
+
+    let cancelled = false
+    const checkSpace = async () => {
+      setIsCheckingSpace(true)
+      try {
+        const available = await window.grabbit.getDiskSpace(downloadDir)
+        if (!cancelled) setAvailableDiskSpace(available)
+      } catch {
+        if (!cancelled) setAvailableDiskSpace(null)
+      } finally {
+        if (!cancelled) setIsCheckingSpace(false)
+      }
+    }
+
+    checkSpace()
+
+    return () => {
+      cancelled = true
+    }
+  }, [downloadDir, shouldLoadMetadata])
 
   // useEffect(() => { ... }, [inputMode, url])
 
@@ -243,7 +268,8 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
     setMetadata(null)
     setIsLoadingMetadata(false)
     // setMetadataError("")
-    // setDiskSpace(null)
+    setAvailableDiskSpace(null)
+    setIsCheckingSpace(false)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -441,47 +467,23 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                   <FolderOpen size={15} className="shrink-0 text-[#8B6A5D]" />
                 </button>
 
-                {/* {(isCheckingSpace || hasInsufficientSpace) && (
-                  <div className="mt-3 rounded-[14px] border border-[#F4E3DE] bg-[#FFF8F7] p-3">
-                    <div className="flex items-center justify-between gap-3 text-[12px]">
-                      <span className="text-[#6B5448]">
-                        {t("availableSpace")}
-                      </span>
-                      <span className="text-[#2D2522]">
-                        {isCheckingSpace
-                          ? t("checking")
-                          : diskSpace
-                            ? formatBytes(diskSpace.available)
-                            : "-"}
-                      </span>
-                    </div>
-                    {hasInsufficientSpace && (
-                      <div className="mt-2 flex items-start gap-2 rounded-[12px] border border-[#FFD8DD] bg-[#FFF0F3] p-2 text-[12px] text-[#E85C61]">
-                        <AlertTriangle size={14} className="mt-0.5 shrink-0" />
-                        <div className="min-w-0">
-                          <p className="font-medium">
-                            {t("insufficientSpace")}
-                          </p>
-                          <p className="mt-0.5 text-[#C95A64]">
-                            {t("insufficientSpaceDetail")
-                              .replace(
-                                "{required}",
-                                formatBytes(
-                                  metadata?.totalLength || torrentSize || 0
-                                )
-                              )
-                              .replace(
-                                "{available}",
-                                diskSpace
-                                  ? formatBytes(diskSpace.available)
-                                  : "-"
-                              )}
-                          </p>
-                        </div>
+                {shouldLoadMetadata &&
+                  (isCheckingSpace || availableDiskSpace !== null) && (
+                    <div className="mt-3 rounded-[14px] border border-[#F4E3DE] bg-[#FFF8F7] p-3">
+                      <div className="flex items-center justify-between gap-3 text-[12px]">
+                        <span className="text-[#6B5448]">
+                          {t("availableSpace")}
+                        </span>
+                        <span className="text-[#2D2522]">
+                          {isCheckingSpace
+                            ? t("checking")
+                            : availableDiskSpace === null
+                              ? "-"
+                              : formatBytes(availableDiskSpace)}
+                        </span>
                       </div>
-                    )}
-                  </div>
-                )} */}
+                    </div>
+                  )}
               </section>
 
               {/* {showFileTree && files.length > 0 && (
