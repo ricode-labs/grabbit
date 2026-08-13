@@ -276,18 +276,18 @@ export function registerIpcHandlers() {
   //   }
   // )
 
-  // ipcMain.handle("grabbit.getHttpInfo", async (_event, url: string) => {
-  //   const response = await ky.head(url)
-  //   const contentDisposition = response.headers.get("content-disposition")
-  //   let filename
-  //   if (contentDisposition) {
-  //     filename = parseContentDisposition(contentDisposition).parameters.filename
-  //   } else {
-  //     const parsed = new URL(response.url || url)
-  //     filename = basename(parsed.pathname) || parsed.hostname
-  //   }
-  //   return { filename }
-  // })
+  ipcMain.handle("grabbit.getHttpInfo", async (_event, url: string) => {
+    const response = await ky.head(url)
+    const contentDisposition = response.headers.get("content-disposition")
+    let filename
+    if (contentDisposition) {
+      filename = parseContentDisposition(contentDisposition).parameters.filename
+    } else {
+      const parsed = new URL(response.url || url)
+      filename = basename(parsed.pathname) || parsed.hostname
+    }
+    return { filename }
+  })
 
   // ipcMain.handle("grabbit.getMagnetInfo", async (_event, url: string) => {
   //   const filename = (await parseTorrent(url)).name
