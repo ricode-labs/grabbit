@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { Clipboard, FolderOpen, Link as LinkIcon, X } from "lucide-react"
-// import { extractFileNameFromUrl, formatBytes } from "../utils/format"
+import type { HttpInfo } from "../../shared/aria2"
+import { formatBytes } from "../utils/format"
 import { useUI } from "../context/useUI"
 import { DialogWrapper } from "./ui/DialogWrapper"
 // import { CheckboxWrapper } from "./ui/CheckboxWrapper"
@@ -27,6 +28,15 @@ interface AddDownloadModalProps {
 const isDownloadableLink = (text: string): boolean => {
   const text_trimmed = text.trim()
   return /^(https?:\/\/|magnet:|ftp:\/\/)/.test(text_trimmed)
+}
+
+const isHttpLink = (text: string): boolean => /^https?:\/\//.test(text.trim())
+
+const formatContentLength = (contentLength: string | null): string => {
+  if (!contentLength) return "-"
+
+  const bytes = Number(contentLength)
+  return Number.isFinite(bytes) ? formatBytes(bytes) : contentLength
 }
 
 // interface DownloadMetadata {
@@ -67,14 +77,20 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   // const [torrentName, setTorrentName] = useState("")
   // const [createFolder, setCreateFolder] = useState(true)
   // const [torrentSize, setTorrentSize] = useState(0)
-  // const [metadata, setMetadata] = useState<DownloadMetadata | null>(null)
-  // const [isLoadingMetadata, setIsLoadingMetadata] = useState(false)
+  const [metadata, setMetadata] = useState<{
+    url: string
+    info: HttpInfo
+  } | null>(null)
+  const [isLoadingMetadata, setIsLoadingMetadata] = useState(false)
   // const [metadataError, setMetadataError] = useState("")
   // const [diskSpace, setDiskSpace] = useState<DiskSpaceInfo | null>(null)
   // const [isCheckingSpace, setIsCheckingSpace] = useState(false)
 
   const isUsingDefaultDir = downloadDir === defaultDownloadDir
   const hasDownloadData = Boolean(url.trim() || torrentFile)
+  const trimmedUrl = url.trim()
+  const shouldLoadMetadata = inputMode === "link" && isHttpLink(trimmedUrl)
+  const currentMetadata = metadata?.url === trimmedUrl ? metadata.info : null
 
   // 初始化时读取剪切板
   useEffect(() => {
@@ -94,8 +110,27 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
     loadClipboard()
   }, [initialUrl])
 
-  // 当 URL 改变时自动提取文件名
-  // useEffect(() => { ... }, [url])
+  useEffect(() => {
+    if (!shouldLoadMetadata) return
+
+    let cancelled = false
+    const timeoutId = window.setTimeout(async () => {
+      setIsLoadingMetadata(true)
+      try {
+        const info = await window.grabbit.getHttpInfo(trimmedUrl)
+        if (!cancelled) setMetadata({ url: trimmedUrl, info })
+      } catch {
+        if (!cancelled) setMetadata(null)
+      } finally {
+        if (!cancelled) setIsLoadingMetadata(false)
+      }
+    }, 300)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(timeoutId)
+    }
+  }, [shouldLoadMetadata, trimmedUrl])
 
   // useEffect(() => { ... }, [inputMode, url])
 
@@ -205,7 +240,8 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
     // setTorrentName("")
     // setCreateFolder(true)
     // setTorrentSize(0)
-    // setMetadata(null)
+    setMetadata(null)
+    setIsLoadingMetadata(false)
     // setMetadataError("")
     // setDiskSpace(null)
   }
@@ -308,56 +344,33 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                     className="w-full resize-none rounded-[12px] border border-[#F0DED8] bg-[#FFFCFB] px-3 py-2.5 text-[13px] text-[#2D2522] placeholder:text-[#B7A59C] focus:border-[#FFC3CF] focus:ring-4 focus:ring-[#FFE6EC] focus:outline-none"
                   />
 
-                  {/* {(metadata || isLoadingMetadata || metadataError) && (
-                    <div className="mt-3 rounded-[14px] border border-[#F4E3DE] bg-[#FFF8F7] p-3">
-                      <div className="mb-2 flex items-center gap-2 text-[12px] font-medium text-[#6B5448]">
-                        <FileSearch size={14} />
-                        {t("metadata")}
-                        {isLoadingMetadata && (
-                          <Loader2
-                            size={14}
-                            className="animate-spin text-[#FF5C78]"
-                          />
+                  {shouldLoadMetadata &&
+                    (currentMetadata || isLoadingMetadata) && (
+                      <div className="mt-3 rounded-[14px] border border-[#F4E3DE] bg-[#FFF8F7] p-3">
+                        {currentMetadata ? (
+                          <div className="space-y-2 text-[12px] text-[#7A6257]">
+                            <div className="flex items-start justify-between gap-3">
+                              <span>{t("fileName")}</span>
+                              <span className="max-w-[72%] text-right break-words text-[#2D2522]">
+                                {currentMetadata.filename}
+                              </span>
+                            </div>
+                            <div className="flex items-start justify-between gap-3">
+                              <span>{t("fileSize")}</span>
+                              <span className="text-right text-[#2D2522]">
+                                {formatContentLength(
+                                  currentMetadata.contentLength
+                                )}
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-[12px] text-[#A89488]">
+                            {t("loadingFileInfo")}
+                          </div>
                         )}
                       </div>
-                      {metadata ? (
-                        <div className="space-y-2 text-[12px] text-[#7A6257]">
-                          <div className="flex items-start justify-between gap-3">
-                            <span>{t("fileName")}</span>
-                            <span className="max-w-[72%] text-right break-words text-[#2D2522]">
-                              {metadata.fileName}
-                            </span>
-                          </div>
-                          <div className="flex items-start justify-between gap-3">
-                            <span>{t("fileSize")}</span>
-                            <span className="text-right text-[#2D2522]">
-                              {metadata.totalLength
-                                ? formatBytes(metadata.totalLength)
-                                : "-"}
-                            </span>
-                          </div>
-                          <div className="flex items-start justify-between gap-3">
-                            <span>{t("contentType")}</span>
-                            <span className="max-w-[72%] text-right break-words text-[#2D2522]">
-                              {metadata.contentType || "-"}
-                            </span>
-                          </div>
-                          <div className="flex items-start justify-between gap-3">
-                            <span>{t("supportsResume")}</span>
-                            <span className="text-right text-[#2D2522]">
-                              {metadata.acceptRanges
-                                ? t("supported")
-                                : t("unknown")}
-                            </span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="text-[12px] text-[#A89488]">
-                          {metadataError || t("loadingFileInfo")}
-                        </div>
-                      )}
-                    </div>
-                  )} */}
+                    )}
                 </section>
               )}
 
