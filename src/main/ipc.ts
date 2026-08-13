@@ -36,6 +36,7 @@ import {
 import { getPreferences, savePreferences } from "./preferences"
 import { updateTrayMenu } from "./tray"
 import { trayIconPath } from "./paths"
+import { statfs } from "node:fs/promises"
 import { basename } from "node:path"
 
 const notifications = new Set<Notification>()
@@ -291,9 +292,11 @@ export function registerIpcHandlers() {
         if (contentDisposition) {
           filename = parse(contentDisposition).parameters.filename
         } else {
-         url = response.url
+          url = response.url
         }
-      } catch { /* empty */ }
+      } catch {
+        /* empty */
+      }
       const parsed = new URL(url)
       filename = basename(parsed.pathname) || parsed.hostname
       return { filename, contentLength }
@@ -305,23 +308,10 @@ export function registerIpcHandlers() {
   //   return filename
   // })
 
-  // ipcMain.handle("electronAPI.getDiskSpace", async (_event, dir: string) => {
-  //   try {
-  //     const stats = await fs.statfs(dir)
-  //     return {
-  //       success: true,
-  //       available: stats.bavail * stats.bsize,
-  //       total: stats.blocks * stats.bsize,
-  //       path: dir,
-  //     }
-  //   } catch (error) {
-  //     return {
-  //       success: false,
-  //       error:
-  //         error instanceof Error ? error.message : "Failed to get disk space",
-  //     }
-  //   }
-  // })
+  ipcMain.handle("grabbit.getDiskSpace", async (_event, dir: string) => {
+    const stats = await statfs(dir)
+    return stats.bavail * stats.bsize
+  })
 
   ipcMain.handle("grabbit.deleteFile", async (_event, filePath: string) => {
     if (await pathExists(filePath)) {

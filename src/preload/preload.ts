@@ -33,6 +33,9 @@ contextBridge.exposeInMainWorld("grabbit", {
 
   // getMagnetInfo: (url: string) =>
   //   ipcRenderer.invoke("grabbit.getMagnetInfo", url),
+  //
+  getDiskSpace: (dir: string): Promise<number> =>
+    ipcRenderer.invoke("grabbit.getDiskSpace", dir),
 
   deleteFile: (filePath: string) =>
     ipcRenderer.invoke("grabbit.deleteFile", filePath),
@@ -65,11 +68,6 @@ contextBridge.exposeInMainWorld("grabbit", {
   savePreferences: (payload: Preferences) =>
     ipcRenderer.invoke("grabbit.savePreferences", payload),
 })
-
-// contextBridge.exposeInMainWorld("electronAPI", {
-//   getDiskSpace: (dir: string) =>
-//     ipcRenderer.invoke("electronAPI.getDiskSpace", dir),
-// })
 
 contextBridge.exposeInMainWorld("aria2", {
   // This method adds a new download

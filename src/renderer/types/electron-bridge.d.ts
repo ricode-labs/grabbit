@@ -64,6 +64,7 @@ interface GrabbitAPI {
   selectTorrentFile: () => Promise<string | null>
   getClipboardText: () => Promise<string>
   getHttpInfo: (url: string) => Promise<HttpInfo>
+  getDiskSpace: (dir: string) => Promise<number>
   showNotification: (message: string) => Promise<void>
   deleteFile: (filePath: string) => Promise<void>
   openFile: (filePath: string) => Promise<void>
