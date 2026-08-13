@@ -1,5 +1,6 @@
 import { app, clipboard, Notification, shell } from "electron"
 import { dialog, ipcMain } from "electron/main"
+import { parse } from "content-disposition"
 import ky from "ky"
 import { callAria2 } from "./aria2"
 import type {
@@ -20,6 +21,7 @@ import type {
   Ok,
   Options,
   ChangePositionPayload,
+  HttpInfo,
   TellRangePayload,
 } from "../shared/aria2"
 import type { Preferences } from "../shared/preferences"
@@ -34,6 +36,7 @@ import {
 import { getPreferences, savePreferences } from "./preferences"
 import { updateTrayMenu } from "./tray"
 import { trayIconPath } from "./paths"
+import { basename } from "node:path"
 
 const notifications = new Set<Notification>()
 
@@ -276,18 +279,26 @@ export function registerIpcHandlers() {
   //   }
   // )
 
-  ipcMain.handle("grabbit.getHttpInfo", async (_event, url: string) => {
-    const response = await ky.head(url)
-    const contentDisposition = response.headers.get("content-disposition")
-    let filename
-    if (contentDisposition) {
-      filename = parseContentDisposition(contentDisposition).parameters.filename
-    } else {
-      const parsed = new URL(response.url || url)
+  ipcMain.handle(
+    "grabbit.getHttpInfo",
+    async (_event, url: string): Promise<HttpInfo> => {
+      let filename: string
+      let contentLength: string | null = null
+      try {
+        const response = await ky.head(url)
+        const contentDisposition = response.headers.get("content-disposition")
+        contentLength = response.headers.get("content-length")
+        if (contentDisposition) {
+          filename = parse(contentDisposition).parameters.filename
+        } else {
+         url = response.url
+        }
+      } catch { /* empty */ }
+      const parsed = new URL(url)
       filename = basename(parsed.pathname) || parsed.hostname
+      return { filename, contentLength }
     }
-    return { filename }
-  })
+  )
 
   // ipcMain.handle("grabbit.getMagnetInfo", async (_event, url: string) => {
   //   const filename = (await parseTorrent(url)).name

@@ -6,6 +6,7 @@ import type {
   ChangeOptionPayload,
   ChangeUriPayload,
   GidPayload,
+  HttpInfo,
   Options,
   TellRangePayload,
 } from "../shared/aria2"
@@ -27,7 +28,7 @@ contextBridge.exposeInMainWorld("grabbit", {
   // getTorrentInfo: (torrentPath: string) =>
   //   ipcRenderer.invoke("grabbit.getTorrentInfo", torrentPath),
 
-  getHttpInfo: (url: string) =>
+  getHttpInfo: (url: string): Promise<HttpInfo> =>
     ipcRenderer.invoke("grabbit.getHttpInfo", url),
 
   // getMagnetInfo: (url: string) =>

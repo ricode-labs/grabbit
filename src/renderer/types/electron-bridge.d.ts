@@ -14,6 +14,7 @@ import type {
   ChangePositionPayload,
   ChangeUriPayload,
   GidPayload,
+  HttpInfo,
   Ok,
   Options,
   TellRangePayload,
@@ -62,6 +63,7 @@ interface GrabbitAPI {
   selectFolder: () => Promise<string | null>
   selectTorrentFile: () => Promise<string | null>
   getClipboardText: () => Promise<string>
+  getHttpInfo: (url: string) => Promise<HttpInfo>
   showNotification: (message: string) => Promise<void>
   deleteFile: (filePath: string) => Promise<void>
   openFile: (filePath: string) => Promise<void>

@@ -130,3 +130,8 @@ export type Aria2Version = {
 export type Aria2SessionInfo = {
   sessionId: string
 }
+
+export type HttpInfo = {
+  filename: string
+  contentLength: string | null
+}
