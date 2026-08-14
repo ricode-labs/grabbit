@@ -135,3 +135,7 @@ export type HttpInfo = {
   filename: string
   contentLength: string | null
 }
+
+export type TorrentInfo = {
+  
+}

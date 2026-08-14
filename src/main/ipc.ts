@@ -37,7 +37,8 @@ import { getPreferences, savePreferences } from "./preferences"
 import { updateTrayMenu } from "./tray"
 import { trayIconPath } from "./paths"
 import { statfs } from "node:fs/promises"
-import { basename } from "node:path"
+import { basename, extname } from "node:path"
+import parseTorrent from "parse-torrent"
 
 const notifications = new Set<Notification>()
 
@@ -270,15 +271,15 @@ export function registerIpcHandlers() {
     }
   })
 
-  // ipcMain.handle(
-  //   "grabbit.getTorrentInfo",
-  //   async (_event, torrentPath: string) => {
-  //     const torrent = await parseTorrent(await readFile(torrentPath))
-  //     const filename =
-  //       torrent.name || basename(torrentPath, extname(torrentPath))
-  //     return { filename }
-  //   }
-  // )
+  ipcMain.handle(
+    "grabbit.getTorrentInfo",
+    async (_event, torrentPath: string) => {
+      const torrent = await parseTorrent(await readFile(torrentPath))
+      const filename =
+        torrent.name || basename(torrentPath, extname(torrentPath))
+      return { filename }
+    }
+  )
 
   ipcMain.handle(
     "grabbit.getHttpInfo",
