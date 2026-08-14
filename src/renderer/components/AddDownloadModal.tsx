@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react"
 import { Clipboard, FolderOpen, Link as LinkIcon, X } from "lucide-react"
-import type { HttpInfo } from "../../shared/aria2"
+import type { HttpInfo, TorrentInfo } from "../../shared/aria2"
 import { formatBytes } from "../utils/format"
 import { useUI } from "../context/useUI"
 import { DialogWrapper } from "./ui/DialogWrapper"
-// import { CheckboxWrapper } from "./ui/CheckboxWrapper"
+import { CheckboxWrapper } from "./ui/CheckboxWrapper"
 // import { TooltipWrapper } from "./ui/TooltipWrapper"
 
 // interface FileNode {
@@ -70,13 +70,10 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
     lastUsedDir || defaultDownloadDir
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
-  // const [files, setFiles] = useState<FileNode[]>([])
-  // const [showFileTree, setShowFileTree] = useState(false)
   const [torrentFile, setTorrentFile] = useState<string>("")
-  // const [isMultiFile, setIsMultiFile] = useState(false)
-  // const [torrentName, setTorrentName] = useState("")
-  // const [createFolder, setCreateFolder] = useState(true)
-  // const [torrentSize, setTorrentSize] = useState(0)
+  const [torrentInfo, setTorrentInfo] = useState<TorrentInfo | null>(null)
+  const [selectedTorrentFiles, setSelectedTorrentFiles] = useState<number[]>([])
+  const [isLoadingTorrentInfo, setIsLoadingTorrentInfo] = useState(false)
   const [metadata, setMetadata] = useState<{
     url: string
     info: HttpInfo
@@ -89,7 +86,10 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   const [isCheckingSpace, setIsCheckingSpace] = useState(false)
 
   const isUsingDefaultDir = downloadDir === defaultDownloadDir
-  const hasDownloadData = Boolean(url.trim() || torrentFile)
+  const hasDownloadData =
+    inputMode === "file"
+      ? Boolean(torrentFile && torrentInfo && selectedTorrentFiles.length > 0)
+      : Boolean(url.trim())
   const trimmedUrl = url.trim()
   const shouldLoadMetadata = inputMode === "link" && isHttpLink(trimmedUrl)
   const currentMetadata = metadata?.url === trimmedUrl ? metadata.info : null
@@ -135,7 +135,33 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   }, [shouldLoadMetadata, trimmedUrl])
 
   useEffect(() => {
-    if (!shouldLoadMetadata || !downloadDir) return
+    if (!torrentFile) return
+
+    let cancelled = false
+    window.grabbit
+      .getTorrentInfo(torrentFile)
+      .then((info) => {
+        if (cancelled) return
+        setTorrentInfo(info)
+        setSelectedTorrentFiles(info.files.map((file) => file.index))
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setTorrentInfo(null)
+          setSelectedTorrentFiles([])
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingTorrentInfo(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [torrentFile])
+
+  useEffect(() => {
+    if ((!shouldLoadMetadata && !torrentInfo) || !downloadDir) return
 
     let cancelled = false
     const checkSpace = async () => {
@@ -155,7 +181,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
     return () => {
       cancelled = true
     }
-  }, [downloadDir, shouldLoadMetadata])
+  }, [downloadDir, shouldLoadMetadata, torrentInfo])
 
   // useEffect(() => { ... }, [inputMode, url])
 
@@ -238,6 +264,9 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
     try {
       const filePath = await window.grabbit.selectTorrentFile()
       if (filePath) {
+        setTorrentInfo(null)
+        setSelectedTorrentFiles([])
+        setIsLoadingTorrentInfo(true)
         setTorrentFile(filePath)
         // 从文件路径提取文件名
         // const name = filePath.split(/[\\/]/).pop() || ""
@@ -267,7 +296,9 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
     // setTorrentSize(0)
     setMetadata(null)
     setIsLoadingMetadata(false)
-    // setMetadataError("")
+    setTorrentInfo(null)
+    setSelectedTorrentFiles([])
+    setIsLoadingTorrentInfo(false)
     setAvailableDiskSpace(null)
     setIsCheckingSpace(false)
   }
@@ -278,7 +309,10 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
 
     const source = inputMode === "link" ? url.trim() : torrentFile
     if (source) {
-      const options = { dir: downloadDir }
+      const options: Record<string, string> = { dir: downloadDir }
+      if (inputMode === "file") {
+        options["select-file"] = selectedTorrentFiles.join(",")
+      }
 
       setIsSubmitting(true)
       try {
@@ -289,11 +323,19 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
     }
   }
 
-  // 获取选中的文件索引列表
-  // const getSelectedFileIndices = (): string[] => { ... }
-
-  // 渲染文件树节点
-  // const renderFileNode = (file: FileNode, index: number, parentIndex?: number) => { ... }
+  const selectedTorrentSize =
+    torrentInfo?.files
+      .filter((file) => selectedTorrentFiles.includes(file.index))
+      .reduce((total, file) => total + file.length, 0) || 0
+  const expectedDownloadSize =
+    inputMode === "file"
+      ? selectedTorrentSize
+      : Number(metadata?.info.contentLength || 0)
+  const hasInsufficientSpace = Boolean(
+    availableDiskSpace !== null &&
+    expectedDownloadSize > 0 &&
+    availableDiskSpace < expectedDownloadSize
+  )
 
   return (
     <DialogWrapper
@@ -413,26 +455,83 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                   >
                     {torrentFile || t("selectTorrentFile")}
                   </button>
-                  {/* {torrentName && (
+                  {(isLoadingTorrentInfo || torrentInfo) && (
                     <div className="mt-3 rounded-[14px] border border-[#F4E3DE] bg-[#FFF8F7] p-3 text-[12px] text-[#7A6257]">
-                      <div className="flex items-center justify-between gap-3">
-                        <span>{t("torrentName")}</span>
-                        <span className="max-w-[72%] text-right break-words text-[#2D2522]">
-                          {torrentName}
-                        </span>
-                      </div>
-                      <div className="mt-2 flex items-center justify-between gap-3">
-                        <span>{t("totalSize")}</span>
-                        <span className="text-right text-[#2D2522]">
-                          {torrentSize ? formatBytes(torrentSize) : "-"}
-                        </span>
-                      </div>
+                      {isLoadingTorrentInfo ? (
+                        <div>{t("loadingFileInfo")}</div>
+                      ) : torrentInfo ? (
+                        <>
+                          <div className="flex items-start justify-between gap-3">
+                            <span>{t("torrentName")}</span>
+                            <span className="max-w-[72%] text-right break-words text-[#2D2522]">
+                              {torrentInfo.filename}
+                            </span>
+                          </div>
+                          <div className="mt-2 flex items-center justify-between gap-3">
+                            <span>{t("totalSize")}</span>
+                            <span className="text-[#2D2522]">
+                              {formatBytes(torrentInfo.totalLength)}
+                            </span>
+                          </div>
+                        </>
+                      ) : null}
                     </div>
-                  )} */}
+                  )}
                 </section>
               )}
 
-              {/* 文件名功能已注释：不再让 renderer 传 out 给 aria2。 */}
+              {inputMode === "file" && torrentInfo && (
+                <section className="rounded-[14px] border border-[#F8EAE4] bg-white/70 p-3">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <label className="text-[13px] font-medium text-[#6B5448]">
+                      {t("selectFiles")}
+                    </label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelectedTorrentFiles(
+                            torrentInfo.files.map((file) => file.index)
+                          )
+                        }
+                        className="rounded-full bg-[#FFF1F4] px-2.5 py-1 text-[11px] font-medium text-[#FF5C78]"
+                      >
+                        {t("selectAll")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTorrentFiles([])}
+                        className="rounded-full bg-[#FFF1F4] px-2.5 py-1 text-[11px] font-medium text-[#FF5C78]"
+                      >
+                        {t("deselectAll")}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="max-h-40 space-y-1 overflow-y-auto rounded-[12px] border border-[#F0DED8] bg-[#FFFCFB] p-2">
+                    {torrentInfo.files.map((file) => (
+                      <CheckboxWrapper
+                        key={file.index}
+                        checked={selectedTorrentFiles.includes(file.index)}
+                        onChange={(checked) =>
+                          setSelectedTorrentFiles((current) =>
+                            checked
+                              ? [...current, file.index]
+                              : current.filter((index) => index !== file.index)
+                          )
+                        }
+                        label={`${file.path} (${formatBytes(file.length)})`}
+                        className="min-w-0 py-1"
+                      />
+                    ))}
+                  </div>
+                  <div className="mt-2 flex justify-between text-[12px] text-[#7A6257]">
+                    <span>{t("selectedSize")}</span>
+                    <span className="text-[#2D2522]">
+                      {formatBytes(selectedTorrentSize)}
+                    </span>
+                  </div>
+                </section>
+              )}
 
               <section className="rounded-[14px] border border-[#F8EAE4] bg-white/70 p-3">
                 <div className="mb-2 flex items-center justify-between gap-3">
@@ -467,7 +566,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                   <FolderOpen size={15} className="shrink-0 text-[#8B6A5D]" />
                 </button>
 
-                {shouldLoadMetadata &&
+                {(shouldLoadMetadata || torrentInfo) &&
                   (isCheckingSpace || availableDiskSpace !== null) && (
                     <div className="mt-3 rounded-[14px] border border-[#F4E3DE] bg-[#FFF8F7] p-3">
                       <div className="flex items-center justify-between gap-3 text-[12px]">
@@ -482,6 +581,11 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                               : formatBytes(availableDiskSpace)}
                         </span>
                       </div>
+                      {hasInsufficientSpace && (
+                        <div className="mt-2 text-[11px] text-[#E85C61]">
+                          {t("insufficientSpace")}
+                        </div>
+                      )}
                     </div>
                   )}
               </section>

@@ -23,6 +23,7 @@ import type {
   ChangePositionPayload,
   HttpInfo,
   TellRangePayload,
+  TorrentInfo,
 } from "../shared/aria2"
 import type { Preferences } from "../shared/preferences"
 import { pathExists, readFile } from "fs-extra"
@@ -277,7 +278,24 @@ export function registerIpcHandlers() {
       const torrent = await parseTorrent(await readFile(torrentPath))
       const filename =
         torrent.name || basename(torrentPath, extname(torrentPath))
-      return { filename }
+      const files = torrent.files?.length
+        ? torrent.files.map((file, index) => ({
+            index: index + 1,
+            path: file.path,
+            length: file.length,
+          }))
+        : [
+            {
+              index: 1,
+              path: filename,
+              length: torrent.length || 0,
+            },
+          ]
+      return {
+        filename,
+        files,
+        totalLength: files.reduce((total, file) => total + file.length, 0),
+      } satisfies TorrentInfo
     }
   )
 

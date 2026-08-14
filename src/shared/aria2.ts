@@ -137,5 +137,13 @@ export type HttpInfo = {
 }
 
 export type TorrentInfo = {
-  
+  filename: string
+  files: TorrentFileInfo[]
+  totalLength: number
+}
+
+export type TorrentFileInfo = {
+  index: number
+  path: string
+  length: number
 }

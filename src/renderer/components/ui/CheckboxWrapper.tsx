@@ -41,9 +41,7 @@ export const CheckboxWrapper: React.FC<CheckboxWrapperProps> = ({
           }
         }}
         className={`relative inline-flex h-4 w-4 shrink-0 cursor-pointer rounded border transition-all ${
-          checked
-            ? accentClasses[accent]
-            : "border-[#F0DED8] bg-white"
+          checked ? accentClasses[accent] : "border-[#F0DED8] bg-white"
         } focus-visible:ring-2 focus-visible:ring-[#FFE6EC] focus-visible:ring-offset-0 focus-visible:outline-none`}
       >
         {checked && (
@@ -55,7 +53,7 @@ export const CheckboxWrapper: React.FC<CheckboxWrapperProps> = ({
       </div>
       {label && (
         <span
-          className="cursor-pointer text-sm font-medium text-[#2D2522]"
+          className="min-w-0 cursor-pointer text-sm font-medium break-words text-[#2D2522]"
           onClick={handleClick}
         >
           {label}

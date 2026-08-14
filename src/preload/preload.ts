@@ -9,6 +9,7 @@ import type {
   HttpInfo,
   Options,
   TellRangePayload,
+  TorrentInfo,
 } from "../shared/aria2"
 import type { Preferences } from "../shared/preferences"
 import type { UpdateCheckResult } from "../renderer/types/app"
@@ -25,8 +26,8 @@ contextBridge.exposeInMainWorld("grabbit", {
   showNotification: (message: string) =>
     ipcRenderer.invoke("grabbit.showNotification", message),
 
-  // getTorrentInfo: (torrentPath: string) =>
-  //   ipcRenderer.invoke("grabbit.getTorrentInfo", torrentPath),
+  getTorrentInfo: (torrentPath: string): Promise<TorrentInfo> =>
+    ipcRenderer.invoke("grabbit.getTorrentInfo", torrentPath),
 
   getHttpInfo: (url: string): Promise<HttpInfo> =>
     ipcRenderer.invoke("grabbit.getHttpInfo", url),

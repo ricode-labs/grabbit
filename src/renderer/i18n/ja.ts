@@ -79,6 +79,8 @@ export default {
   normal: "正常",
   fileTree: "ファイルツリー",
   itemCount: "{count} 件",
+  torrentInfo: "Torrent 情報",
+  selectedSize: "選択サイズ",
 
   // Download item actions
   pause: "一時停止",

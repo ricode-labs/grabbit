@@ -18,6 +18,7 @@ import type {
   Ok,
   Options,
   TellRangePayload,
+  TorrentInfo,
 } from "../../shared/aria2"
 import type { Preferences } from "../../shared/preferences"
 import type { UpdateCheckResult } from "./app"
@@ -64,6 +65,7 @@ interface GrabbitAPI {
   selectTorrentFile: () => Promise<string | null>
   getClipboardText: () => Promise<string>
   getHttpInfo: (url: string) => Promise<HttpInfo>
+  getTorrentInfo: (torrentPath: string) => Promise<TorrentInfo>
   getDiskSpace: (dir: string) => Promise<number>
   showNotification: (message: string) => Promise<void>
   deleteFile: (filePath: string) => Promise<void>

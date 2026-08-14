@@ -78,6 +78,8 @@ export default {
   normal: "正常",
   fileTree: "文件树",
   itemCount: "{count} 项",
+  torrentInfo: "种子信息",
+  selectedSize: "已选大小",
 
   // Download item actions
   pause: "暂停",

@@ -79,6 +79,8 @@ export default {
   normal: "Available",
   fileTree: "File Tree",
   itemCount: "{count} items",
+  torrentInfo: "Torrent Information",
+  selectedSize: "Selected Size",
 
   // Download item actions
   pause: "Pause",
