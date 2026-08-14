@@ -32,6 +32,15 @@ const isDownloadableLink = (text: string): boolean => {
 
 const isHttpLink = (text: string): boolean => /^https?:\/\//.test(text.trim())
 
+const isMagnetLink = (text: string): boolean => /^magnet:/i.test(text.trim())
+
+const getSavedTorrentPath = (dir: string, infoHash: string) => {
+  const separator = dir.includes("\\") ? "\\" : "/"
+  const normalizedDir =
+    dir.endsWith("/") || dir.endsWith("\\") ? dir : `${dir}${separator}`
+  return `${normalizedDir}${infoHash}.torrent`
+}
+
 const formatContentLength = (contentLength: string | null): string => {
   if (!contentLength) return "-"
 
@@ -74,6 +83,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   const [torrentInfo, setTorrentInfo] = useState<TorrentInfo | null>(null)
   const [selectedTorrentFiles, setSelectedTorrentFiles] = useState<number[]>([])
   const [isLoadingTorrentInfo, setIsLoadingTorrentInfo] = useState(false)
+  const [isLoadingMagnetMetadata, setIsLoadingMagnetMetadata] = useState(false)
   const [metadata, setMetadata] = useState<{
     url: string
     info: HttpInfo
@@ -93,6 +103,56 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   const trimmedUrl = url.trim()
   const shouldLoadMetadata = inputMode === "link" && isHttpLink(trimmedUrl)
   const currentMetadata = metadata?.url === trimmedUrl ? metadata.info : null
+
+  const loadTorrentInfo = async (torrentPath: string) => {
+    const info = await window.grabbit.getTorrentInfo(torrentPath)
+    setTorrentInfo(info)
+    setSelectedTorrentFiles(info.files.map((file) => file.index))
+    return info
+  }
+
+  const loadSavedTorrentInfo = async (dir: string, infoHash: string) => {
+    const torrentPath = getSavedTorrentPath(dir, infoHash)
+    const info = await loadTorrentInfo(torrentPath)
+    return { torrentPath, info }
+  }
+
+  const waitForMagnetMetadata = async (magnetUrl: string) => {
+    const gid = await window.aria2.addUri({
+      uris: [magnetUrl],
+      options: { dir: downloadDir },
+    })
+    const startedAt = Date.now()
+    const timeoutMs = 5 * 60 * 1000
+
+    while (Date.now() - startedAt < timeoutMs) {
+      const status = await window.aria2.tellStatus({ gid })
+      if (status.status === "complete" && status.infoHash) {
+        try {
+          const result = await loadSavedTorrentInfo(
+            downloadDir,
+            status.infoHash
+          )
+          try {
+            await window.aria2.removeDownloadResult({ gid })
+          } catch {
+            /* cleanup is best-effort; the saved .torrent is enough to continue */
+          }
+          return result
+        } catch {
+          /* aria2 can expose infoHash before the .torrent file is flushed */
+        }
+      }
+
+      if (status.status === "error" || status.status === "removed") {
+        throw new Error(status.errorMessage || status.status)
+      }
+
+      await new Promise((resolve) => window.setTimeout(resolve, 1000))
+    }
+
+    throw new Error(t("metadataUnavailable"))
+  }
 
   // 初始化时读取剪切板
   useEffect(() => {
@@ -299,6 +359,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
     setTorrentInfo(null)
     setSelectedTorrentFiles([])
     setIsLoadingTorrentInfo(false)
+    setIsLoadingMagnetMetadata(false)
     setAvailableDiskSpace(null)
     setIsCheckingSpace(false)
   }
@@ -309,6 +370,22 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
 
     const source = inputMode === "link" ? url.trim() : torrentFile
     if (source) {
+      if (inputMode === "link" && isMagnetLink(source)) {
+        setIsSubmitting(true)
+        setIsLoadingMagnetMetadata(true)
+        try {
+          const result = await waitForMagnetMetadata(source)
+          setInputMode("file")
+          setTorrentFile(result.torrentPath)
+          setTorrentInfo(result.info)
+          setUrl("")
+        } finally {
+          setIsLoadingMagnetMetadata(false)
+          setIsSubmitting(false)
+        }
+        return
+      }
+
       const options: Record<string, string> = { dir: downloadDir }
       if (inputMode === "file") {
         options["select-file"] = selectedTorrentFiles.join(",")
@@ -439,6 +516,11 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                         )}
                       </div>
                     )}
+                  {isLoadingMagnetMetadata && (
+                    <div className="mt-3 rounded-[14px] border border-[#F4E3DE] bg-[#FFF8F7] p-3 text-[12px] text-[#A89488]">
+                      {t("loadingFileInfo")}
+                    </div>
+                  )}
                 </section>
               )}
 
