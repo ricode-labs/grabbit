@@ -40,12 +40,18 @@ export const DownloadList: React.FC<DownloadListProps> = ({
 }) => {
   const { t } = useUI()
 
-  // 合并 aria2 任务和历史任务
-  const rawAllTasks = [
-    ...downloads.active,
-    ...downloads.waiting,
-    ...downloads.stopped,
-  ]
+  const hasTaskFileInfo = (task: DownloadTask) =>
+    Boolean(
+      task.fileName?.trim() ||
+      task.bittorrent?.info?.name?.trim() ||
+      task.files?.some((file) => file.path?.trim())
+    )
+
+  // aria2 restores session tasks asynchronously; hide incomplete live entries.
+  const liveTasks = [...downloads.active, ...downloads.waiting].filter(
+    hasTaskFileInfo
+  )
+  const rawAllTasks = [...liveTasks, ...downloads.stopped]
   const terminalHistoryGids = new Set(
     historyTasks
       .filter((task) => ["complete", "error", "removed"].includes(task.status))
