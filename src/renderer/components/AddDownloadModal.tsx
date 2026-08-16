@@ -420,7 +420,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
       onClose={onClose}
       title=""
       showCloseButton={false}
-      className="flex h-[calc(100vh-48px)] max-h-[552px] w-[min(620px,calc(100vw-2rem))] max-w-none flex-col rounded-[18px] !border-[#F8EAE4] !bg-[#FFFBF8] sm:max-w-none dark:!border-[#3a302c] dark:!bg-[#211d1b]"
+      className="flex h-[calc(100vh-48px)] max-h-[552px] w-[min(620px,calc(100vw-2rem))] max-w-none flex-col rounded-[18px] sm:max-w-none"
       contentClassName="flex min-h-0 flex-1 flex-col overflow-hidden p-0"
     >
       <div className="flex h-full flex-col">

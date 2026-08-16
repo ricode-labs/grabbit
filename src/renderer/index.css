@@ -69,9 +69,16 @@ html.dark body {
 html.dark .app-window,
 html.dark [class*="bg-[#FFF8F7]"],
 html.dark [class*="bg-[#FFFBF8]"],
-html.dark [class*="bg-[#FFFBF7]"] {
+html.dark [class*="bg-[#FFFBF7]"],
+html.dark [class*="bg-[#FFFCFB]"],
+html.dark [class*="bg-[#FFFDFC]"] {
   background-color: #171412 !important;
   color: #f4ede8;
+}
+
+html.dark [class*="bg-[#FFFCFB]"],
+html.dark [class*="bg-[#FFFDFC]"] {
+  background-color: #211d1b !important;
 }
 
 html.dark [class*="bg-white"],

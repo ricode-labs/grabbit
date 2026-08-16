@@ -32,8 +32,8 @@ export const DialogWrapper: React.FC<DialogWrapperProps> = ({
   const { theme } = useUI()
   const surfaceClassName =
     theme === "dark"
-      ? "border-[#3a302c] bg-[#211d1b] text-[#f4ede8] shadow-[0_18px_42px_rgba(0,0,0,0.28)]"
-      : "border-[#F8EAE4] bg-[#FFFBF8] text-[#2D2522] shadow-[0_18px_42px_rgba(107,84,72,0.10)]"
+      ? "!border-[#3a302c] !bg-[#211d1b] text-[#f4ede8] shadow-[0_18px_42px_rgba(0,0,0,0.28)]"
+      : "!border-[#F8EAE4] !bg-[#FFFBF8] text-[#2D2522] shadow-[0_18px_42px_rgba(107,84,72,0.10)]"
 
   // 当弹窗打开时，禁止 body 滚动
   useEffect(() => {
@@ -50,7 +50,7 @@ export const DialogWrapper: React.FC<DialogWrapperProps> = ({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        className={`flex max-h-[calc(100vh-48px)] w-full flex-col gap-0 overflow-hidden rounded-[18px] border p-0 ${surfaceClassName} ${className}`}
+        className={`flex max-h-[calc(100vh-48px)] w-full flex-col gap-0 overflow-hidden rounded-[18px] border p-0 ${className} ${surfaceClassName}`}
         showCloseButton={showCloseButton}
       >
         {(title || showCloseButton) && (
