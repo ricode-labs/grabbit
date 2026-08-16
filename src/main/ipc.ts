@@ -37,11 +37,50 @@ import {
 import { getPreferences, savePreferences } from "./preferences"
 import { updateTrayMenu } from "./tray"
 import { trayIconPath } from "./paths"
-import { statfs } from "node:fs/promises"
-import { basename, extname } from "node:path"
+import { stat, statfs, unlink } from "node:fs/promises"
+import { basename, extname, relative, resolve, sep } from "node:path"
 import parseTorrent from "parse-torrent"
 
 const notifications = new Set<Notification>()
+
+const cleanupUnselectedFilesFromTask = async (gid: string) => {
+  try {
+    const task = await callAria2<Aria2Status>("aria2.tellStatus", [gid])
+    const taskDir = resolve(task.dir)
+    const unselectedFiles = (task.files ?? []).filter(
+      (file) => file.selected === "false" && file.completedLength === "0"
+    )
+    if (unselectedFiles.length === 0) return
+
+    for (const file of unselectedFiles) {
+      const filePath = resolve(taskDir, file.path)
+      const relativePath = relative(taskDir, filePath)
+      if (
+        !relativePath ||
+        relativePath.startsWith(`..${sep}`) ||
+        relativePath === ".."
+      ) {
+        continue
+      }
+
+      try {
+        const fileStat = await stat(filePath)
+        if (fileStat.isFile() && fileStat.size === 0) {
+          await unlink(filePath)
+        }
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+          console.warn(
+            `Failed to remove torrent placeholder: ${filePath}`,
+            error
+          )
+        }
+      }
+    }
+  } catch (error) {
+    console.warn("Failed to inspect torrent files after adding", error)
+  }
+}
 
 export function registerIpcHandlers() {
   ipcMain.handle("aria2.addUri", async (_event, payload: AddUriPayload) => {
@@ -55,11 +94,17 @@ export function registerIpcHandlers() {
     "aria2.addTorrent",
     async (_event, payload: AddTorrentPayload) => {
       const file = await readFile(payload.torrentPath)
-      return callAria2<string>("aria2.addTorrent", [
+      const gid = await callAria2<string>("aria2.addTorrent", [
         file.toString("base64"),
         [],
         payload.options,
       ])
+      setImmediate(() => {
+        cleanupUnselectedFilesFromTask(gid).catch((error) => {
+          console.warn("Unexpected torrent placeholder cleanup failure", error)
+        })
+      })
+      return gid
     }
   )
 
