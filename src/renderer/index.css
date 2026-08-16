@@ -138,6 +138,17 @@ html.dark textarea::placeholder {
   color: #8d7b70 !important;
 }
 
+html.dark .app-window {
+  border-color: #3a302c;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+}
+
+html.dark [data-slot="dialog-content"] {
+  background-color: #211d1b !important;
+  color: #f4ede8 !important;
+  --tw-ring-color: #3a302c !important;
+}
+
 * {
   box-sizing: border-box;
   letter-spacing: 0;
