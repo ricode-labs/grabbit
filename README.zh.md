@@ -25,9 +25,19 @@
 
 ## 功能
 
-- 支持 HTTP、HTTPS、FTP、Magnet、`.torrent` 和 Metalink 下载
-- 支持浅色/深色主题，以及中文、English、日本語
+<p align="center">
+  <img src="./docs/screenshots/capture-zh.png" alt="Grabbit 中文界面截图" width="800" />
+</p>
+
+- 支持 HTTP、HTTPS、FTP、BitTorrent、Magnet、`.torrent` 和 Metalink 下载
+- 支持直接添加链接、导入 `.torrent`/Metalink 文件，以及从系统打开关联文件和 `grabbit://` 链接
+- 支持预览种子元数据，并在开始下载前选择单个文件
+- 支持暂停、继续、移除、清理下载结果，并显示实时进度和速度统计
+- 按状态管理任务，包括下载中、已完成、全部和已删除视图
+- 可配置下载目录、全局下载/上传速度限制、主题和语言
+- 支持浅色/深色主题，以及 English、简体中文、日本語
 - 自动更新 BitTorrent tracker，并支持 UPnP/NAT-PMP/PCP 端口映射
+- 下载完成时显示桌面通知
 
 ## 浏览器插件
 
@@ -47,6 +57,7 @@ Grabbit 插件会自动为你做这些事情。
 当前打包配置包含以下平台和架构：
 
 - Linux x64
+- Linux arm64
 - macOS arm64
 - Windows x64
 
@@ -55,6 +66,7 @@ Grabbit 插件会自动为你做这些事情。
 安装包发布在 [GitHub Releases](https://github.com/ricode-labs/grabbit/releases) 页面。请根据系统下载对应文件：
 
 - Linux x64：`Grabbit-linux-x64.flatpak`
+- Linux arm64：`Grabbit-linux-arm64.flatpak`
 - macOS arm64：`Grabbit-macos-arm64.pkg`
 - Windows x64：`Grabbit-windows-x64-setup.exe`
 

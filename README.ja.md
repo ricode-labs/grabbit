@@ -25,9 +25,19 @@
 
 ## 機能
 
-- HTTP、HTTPS、FTP、Magnet、`.torrent`、Metalink のダウンロードに対応
-- ライト/ダークテーマと、中国語、English、日本語に対応
+<p align="center">
+  <img src="./docs/screenshots/capture-ja.png" alt="Grabbit app screenshot in Japanese" width="800" />
+</p>
+
+- HTTP、HTTPS、FTP、BitTorrent、Magnet、`.torrent`、Metalink のダウンロードに対応
+- リンクの直接追加、`.torrent`/Metalink ファイルの取り込み、システムからの関連ファイルと `grabbit://` リンクの起動に対応
+- Torrent メタデータをプレビューし、ダウンロード前に個別ファイルを選択可能
+- 一時停止、再開、削除、ダウンロード結果のクリアに対応し、進捗と速度をリアルタイムに表示
+- ダウンロード中、完了、すべて、削除済みの各ビューでタスクを整理
+- ダウンロード先、全体のダウンロード/アップロード速度制限、テーマ、言語を設定可能
+- ライト/ダークテーマと、English、简体中文、日本語に対応
 - BitTorrent tracker を自動更新し、UPnP/NAT-PMP/PCP のポートマッピングに対応
+- ダウンロード完了時にデスクトップ通知を表示
 
 ## ブラウザー拡張機能
 
@@ -47,6 +57,7 @@ Grabbit の拡張機能がこれらを自動的に処理します。
 現在のパッケージ設定には、次のプラットフォームとアーキテクチャが含まれています。
 
 - Linux x64
+- Linux arm64
 - macOS arm64
 - Windows x64
 
@@ -55,6 +66,7 @@ Grabbit の拡張機能がこれらを自動的に処理します。
 インストーラーは [GitHub Releases](https://github.com/ricode-labs/grabbit/releases) ページで公開されています。お使いのシステムに合ったファイルをダウンロードしてください。
 
 - Linux x64: `Grabbit-linux-x64.flatpak`
+- Linux arm64: `Grabbit-linux-arm64.flatpak`
 - macOS arm64: `Grabbit-macos-arm64.pkg`
 - Windows x64: `Grabbit-windows-x64-setup.exe`
 

@@ -25,9 +25,19 @@
 
 ## Features
 
-- Supports HTTP, HTTPS, FTP, Magnet, `.torrent`, and Metalink downloads
-- Supports light and dark themes, plus Chinese, English, and Japanese
+<p align="center">
+  <img src="./docs/screenshots/capture-english.png" alt="Grabbit app screenshot in English" width="800" />
+</p>
+
+- Download from HTTP, HTTPS, FTP, BitTorrent, Magnet, `.torrent`, and Metalink sources
+- Add links directly, import `.torrent`/Metalink files, or open supported files and `grabbit://` links from the system
+- Preview torrent metadata and choose individual files before starting a download
+- Pause, resume, remove, and clear download results, with live progress and speed stats
+- Keep tasks organized by status, including active, completed, all, and deleted views
+- Configure the download directory, global download/upload speed limits, theme, and language
+- Supports light and dark themes, plus English, Simplified Chinese, and Japanese
 - Automatically updates BitTorrent trackers and supports UPnP/NAT-PMP/PCP port mapping
+- Shows desktop notifications when downloads complete
 
 ## Browser Extension
 
@@ -47,6 +57,7 @@ The Grabbit extension handles this automatically.
 The current packaging configuration includes these platforms and architectures:
 
 - Linux x64
+- Linux arm64
 - macOS arm64
 - Windows x64
 
@@ -55,6 +66,7 @@ The current packaging configuration includes these platforms and architectures:
 Installers are published on the [GitHub Releases](https://github.com/ricode-labs/grabbit/releases) page. Download the file that matches your system:
 
 - Linux x64: `Grabbit-linux-x64.flatpak`
+- Linux arm64: `Grabbit-linux-arm64.flatpak`
 - macOS arm64: `Grabbit-macos-arm64.pkg`
 - Windows x64: `Grabbit-windows-x64-setup.exe`
 
