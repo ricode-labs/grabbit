@@ -37,8 +37,8 @@ import {
 import { getPreferences, savePreferences } from "./preferences"
 import { updateTrayMenu } from "./tray"
 import { trayIconPath } from "./paths"
-import { stat, statfs, unlink } from "node:fs/promises"
-import { basename, extname, resolve } from "node:path"
+import { rmdir, stat, statfs, unlink } from "node:fs/promises"
+import { basename, extname, relative, resolve, sep } from "node:path"
 import parseTorrent from "parse-torrent"
 
 const notifications = new Set<Notification>()
@@ -50,12 +50,46 @@ const cleanupUnselectedFilesFromTask = async (gid: string) => {
     const unselectedFiles = task.files.filter(
       (file) => file.selected === "false"
     )
+
+    const removeEmptyParentDirectories = async (filePath: string) => {
+      let current = resolve(filePath, "..")
+
+      while (current !== taskDir) {
+        const relativePath = relative(taskDir, current)
+        if (
+          !relativePath ||
+          relativePath.startsWith(`..${sep}`) ||
+          relativePath === ".."
+        ) {
+          break
+        }
+
+        try {
+          await rmdir(current)
+        } catch (error) {
+          const code = (error as NodeJS.ErrnoException).code
+          if (code === "ENOENT") {
+            current = resolve(current, "..")
+            continue
+          }
+          if (code === "ENOTEMPTY") {
+            break
+          }
+          console.warn("Failed to remove empty torrent directory", current, error)
+          break
+        }
+
+        current = resolve(current, "..")
+      }
+    }
+
     for (const file of unselectedFiles) {
       const filePath = resolve(taskDir, file.path)
       try {
         const fileStat = await stat(filePath)
         if (fileStat.isFile()) {
           await unlink(filePath)
+          await removeEmptyParentDirectories(filePath)
         }
       } catch (error) {
         if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
