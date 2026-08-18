@@ -82,7 +82,6 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   const [torrentFile, setTorrentFile] = useState<string>("")
   const [torrentInfo, setTorrentInfo] = useState<TorrentInfo | null>(null)
   const [selectedTorrentFiles, setSelectedTorrentFiles] = useState<number[]>([])
-  const [isLoadingTorrentInfo, setIsLoadingTorrentInfo] = useState(false)
   const [isLoadingMagnetMetadata, setIsLoadingMagnetMetadata] = useState(false)
   const [metadata, setMetadata] = useState<{
     url: string
@@ -211,9 +210,6 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
           setSelectedTorrentFiles([])
         }
       })
-      .finally(() => {
-        if (!cancelled) setIsLoadingTorrentInfo(false)
-      })
 
     return () => {
       cancelled = true
@@ -326,7 +322,6 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
       if (filePath) {
         setTorrentInfo(null)
         setSelectedTorrentFiles([])
-        setIsLoadingTorrentInfo(true)
         setTorrentFile(filePath)
         // 从文件路径提取文件名
         // const name = filePath.split(/[\\/]/).pop() || ""
@@ -358,7 +353,6 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
     setIsLoadingMetadata(false)
     setTorrentInfo(null)
     setSelectedTorrentFiles([])
-    setIsLoadingTorrentInfo(false)
     setIsLoadingMagnetMetadata(false)
     setAvailableDiskSpace(null)
     setIsCheckingSpace(false)
@@ -537,28 +531,6 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
                   >
                     {torrentFile || t("selectTorrentFile")}
                   </button>
-                  {(isLoadingTorrentInfo || torrentInfo) && (
-                    <div className="mt-3 rounded-[14px] border border-[#F4E3DE] bg-[#FFF8F7] p-3 text-[12px] text-[#7A6257]">
-                      {isLoadingTorrentInfo ? (
-                        <div>{t("loadingFileInfo")}</div>
-                      ) : torrentInfo ? (
-                        <>
-                          <div className="flex items-start justify-between gap-3">
-                            <span>{t("torrentName")}</span>
-                            <span className="max-w-[72%] text-right break-words text-[#2D2522]">
-                              {torrentInfo.filename}
-                            </span>
-                          </div>
-                          <div className="mt-2 flex items-center justify-between gap-3">
-                            <span>{t("totalSize")}</span>
-                            <span className="text-[#2D2522]">
-                              {formatBytes(torrentInfo.totalLength)}
-                            </span>
-                          </div>
-                        </>
-                      ) : null}
-                    </div>
-                  )}
                 </section>
               )}
 
