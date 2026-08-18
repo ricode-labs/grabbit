@@ -1,13 +1,157 @@
 import React from "react"
-import { FileText, FolderOpen, Pin, Trash2, X } from "lucide-react"
+import { FileText, FolderOpen, Trash2, X } from "lucide-react"
 import { useUI } from "../context/useUI"
 import downloadedUrl from "../assets/downloaded.webp"
-import { CarrotProgress } from "./CarrotProgress"
+import { TooltipWrapper } from "./ui/TooltipWrapper"
 import type { Aria2Status } from "../../shared/aria2"
 
 type DownloadTask = Aria2Status & {
   fileName?: string
   url?: string
+}
+
+const formatFileProgress = (completedLength: string, length: string) => {
+  const completed = Number(completedLength || 0)
+  const total = Number(length || 0)
+  if (total <= 0) return "0%"
+
+  return `${Math.min((completed / total) * 100, 100).toFixed(1)}%`
+}
+
+const splitTorrentPath = (filePath: string) =>
+  filePath.split(/[\\/]+/).filter(Boolean)
+
+type TorrentTreeNode = {
+  kind: "folder" | "file"
+  name: string
+  progress?: string
+  children?: TorrentTreeNode[]
+}
+
+const getTorrentTreeRoot = (
+  files: Array<{ path: string }>,
+  dir: string,
+  torrentName?: string
+) => {
+  const firstSegments = files
+    .map((file) => {
+      const relative =
+        dir !== "-" && file.path.startsWith(dir)
+          ? file.path.slice(dir.length).replace(/^[/\\]+/, "")
+          : file.path
+      return splitTorrentPath(relative)[0]
+    })
+    .filter(Boolean)
+
+  if (torrentName && firstSegments.every((segment) => segment === torrentName)) {
+    return torrentName
+  }
+
+  if (
+    firstSegments.length > 1 &&
+    firstSegments.every((segment) => segment === firstSegments[0])
+  ) {
+    return firstSegments[0]
+  }
+
+  return null
+}
+
+const buildTorrentFileTree = (
+  files: Array<{ path: string; completedLength: string; length: string }>,
+  dir: string,
+  torrentName?: string
+) => {
+  const rootName = getTorrentTreeRoot(files, dir, torrentName)
+  const rootNodes: TorrentTreeNode[] = []
+
+  for (const file of files) {
+    const relativePath =
+      dir !== "-" && file.path.startsWith(dir)
+        ? file.path.slice(dir.length).replace(/^[/\\]+/, "")
+        : file.path
+    const segments = splitTorrentPath(relativePath)
+    const displaySegments =
+      rootName && segments[0] === rootName ? segments.slice(1) : segments
+
+    if (displaySegments.length === 0) continue
+
+    let siblings = rootNodes
+    for (let index = 0; index < displaySegments.length; index += 1) {
+      const name = displaySegments[index]
+      const isLeaf = index === displaySegments.length - 1
+
+      if (isLeaf) {
+        siblings.push({
+          kind: "file",
+          name,
+          progress: formatFileProgress(file.completedLength, file.length),
+        })
+        continue
+      }
+
+      let folder = siblings.find(
+        (node): node is TorrentTreeNode & { children: TorrentTreeNode[] } =>
+          node.kind === "folder" && node.name === name
+      )
+
+      if (!folder) {
+        folder = { kind: "folder", name, children: [] }
+        siblings.push(folder)
+      }
+
+      siblings = folder.children
+    }
+  }
+
+  return rootNodes
+}
+
+const renderTorrentTreeNode = (
+  node: TorrentTreeNode,
+  key: React.Key,
+  depth: number
+) => {
+  if (node.kind === "folder") {
+    return (
+      <div key={key} className="py-0.5">
+        <div
+          className="flex items-center gap-2 px-3 py-1.5 text-[13px] font-medium text-[#6B5448]"
+          style={{ paddingLeft: 12 + depth * 16 }}
+        >
+          <FolderOpen size={14} className="shrink-0" />
+          <TooltipWrapper content={node.name} className="min-w-0 flex-1">
+            <span className="block min-w-0 truncate">{node.name}</span>
+          </TooltipWrapper>
+        </div>
+        <div>
+          {node.children?.map((child, index) =>
+            renderTorrentTreeNode(child, `${key}-${index}`, depth + 1)
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      key={key}
+      className="grid min-h-[38px] grid-cols-[minmax(0,1fr)_54px] items-center gap-3 px-3 py-1.5"
+      style={{ paddingLeft: 12 + depth * 16 }}
+    >
+      <div className="flex min-w-0 items-center gap-2">
+        <FileText size={14} className="shrink-0 text-[#8B6A5D]" />
+        <TooltipWrapper content={node.name} className="min-w-0 flex-1">
+          <span className="block min-w-0 truncate text-[13px] leading-relaxed text-[#2D2522]">
+            {node.name}
+          </span>
+        </TooltipWrapper>
+      </div>
+      <span className="text-right text-[13px] font-semibold text-[#FF5C78]">
+        {node.progress}
+      </span>
+    </div>
+  )
 }
 
 interface DownloadDetailProps {
@@ -27,6 +171,12 @@ export const DownloadDetail: React.FC<DownloadDetailProps> = ({
   const files = task?.files?.length ? task.files : (historyTask?.files ?? [])
   const torrentName = task?.bittorrent?.info?.name || historyTask?.bittorrent?.info?.name
   const dir = task?.dir || historyTask?.dir || "-"
+  const isTorrentTask = Boolean(
+    task?.bittorrent ||
+      historyTask?.bittorrent ||
+      task?.infoHash ||
+      historyTask?.infoHash
+  )
   const isMultiFileTorrent = Boolean(torrentName && files.length > 1)
   const isFolderDownload = files.length > 1
   const fileName =
@@ -34,31 +184,33 @@ export const DownloadDetail: React.FC<DownloadDetailProps> = ({
     files[0]?.path?.split("/").pop() ||
     historyTask?.fileName ||
     t("unknown")
-  const infoHash = task?.infoHash || historyTask?.infoHash
-  const magnetUrl = infoHash
-    ? `magnet:?xt=urn:btih:${infoHash}&dn=${encodeURIComponent(fileName)}`
-    : ""
-  const url = files[0]?.uris?.[0]?.uri || historyTask?.url || magnetUrl
+  const url = files[0]?.uris?.[0]?.uri || historyTask?.url || ""
   const filePath = files[0]?.path
+  const torrentRootName = isTorrentTask
+    ? getTorrentTreeRoot(files, dir, torrentName)
+    : null
   const folderPath =
-    isMultiFileTorrent && dir !== "-" ? `${dir}/${torrentName}` : dir
+    isTorrentTask && torrentRootName && dir !== "-"
+      ? `${dir}/${torrentRootName}`
+      : isMultiFileTorrent && dir !== "-"
+        ? `${dir}/${torrentName}`
+        : dir
   const gid = task?.gid || historyTask?.gid
   const status = task?.status || historyTask?.status || "unknown"
-  const completedLength = Number(
-    task?.completedLength || historyTask?.completedLength || 0
-  )
-  const totalLength = Number(task?.totalLength || historyTask?.totalLength || 0)
-  const progress =
-    totalLength > 0 ? Math.min((completedLength / totalLength) * 100, 100) : 0
+  const selectedTorrentFiles = isTorrentTask
+    ? files.filter((file) => file.selected === "true")
+    : []
+  const torrentFileTree = isTorrentTask
+    ? buildTorrentFileTree(selectedTorrentFiles, dir, torrentName)
+    : []
 
-  const isActive = status === "active"
   const isPaused = status === "paused"
   const isComplete = status === "complete"
   const isError = status === "error" || status === "removed"
 
   const getStatusLabel = () => {
     if (isComplete) return t("statusComplete")
-    if (isActive) return t("statusDownloading")
+    if (status === "active") return t("statusDownloading")
     if (isPaused) return t("statusPaused")
     if (status === "waiting") return t("statusWaiting")
     if (isError) return t("statusFailed")
@@ -67,15 +219,21 @@ export const DownloadDetail: React.FC<DownloadDetailProps> = ({
 
   const getStatusTone = () => {
     if (isComplete) return "bg-[#E9F6DE] text-[#67A94D]"
-    if (isActive) return "bg-[#FFE6EC] text-[#FF5C78]"
+    if (status === "active") return "bg-[#FFE6EC] text-[#FF5C78]"
     if (isPaused) return "bg-[#FFF3DA] text-[#D49345]"
     if (isError) return "bg-[#FFE4E4] text-[#E85C61]"
     return "bg-[#F4ECE7] text-[#8B6A5D]"
   }
 
   const infoRows = [
-    { label: t("downloadUrl"), value: url || "-", link: Boolean(url) },
-    { label: t("savePath"), value: dir, link: Boolean(dir && dir !== "-") },
+    ...(!isTorrentTask && url
+      ? [{ label: t("downloadUrl"), value: url, link: true }]
+      : []),
+    {
+      label: t("savePath"),
+      value: folderPath,
+      link: Boolean(folderPath && folderPath !== "-"),
+    },
   ]
 
   const handleDelete = async () => {
@@ -106,12 +264,6 @@ export const DownloadDetail: React.FC<DownloadDetailProps> = ({
         </h2>
         <div className="flex items-center gap-3 text-[#8B6A5D]">
           <button
-            className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-[#FFF1F4]"
-            title={t("pin")}
-          >
-            <Pin size={16} strokeWidth={1.8} />
-          </button>
-          <button
             onClick={onClose}
             className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-[#FFE4E4] hover:text-[#E85C61]"
             title={t("close")}
@@ -138,7 +290,6 @@ export const DownloadDetail: React.FC<DownloadDetailProps> = ({
                   {getStatusLabel()}
                 </span>
               </div>
-              <CarrotProgress progress={progress} isActive={isActive} />
             </div>
           </div>
         </section>
@@ -161,6 +312,19 @@ export const DownloadDetail: React.FC<DownloadDetailProps> = ({
               </div>
             ))}
           </div>
+
+          {torrentFileTree.length > 0 && (
+            <section className="mt-4 overflow-hidden rounded-[12px] border border-[#F4E3DE] bg-white/58">
+              <div className="border-b border-[#F4E3DE] px-3 py-2.5 text-[13px] font-medium text-[#6B5448]">
+                {t("files")}
+              </div>
+              <div className="max-h-[220px] overflow-y-auto py-1">
+                {torrentFileTree.map((node, index) =>
+                  renderTorrentTreeNode(node, index, 0)
+                )}
+              </div>
+            </section>
+          )}
 
           <img
             src={downloadedUrl}
