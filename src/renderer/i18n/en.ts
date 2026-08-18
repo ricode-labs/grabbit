@@ -145,6 +145,7 @@ export default {
   saveSettings: "Save Settings",
   currentVersion: "Current version",
   checkForUpdates: "Check for updates",
+  projectHomepage: "Project homepage",
   updateAvailable: "Update available",
   latestVersionAlreadyInstalled: "You are already on the latest version",
 

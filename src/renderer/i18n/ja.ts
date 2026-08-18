@@ -145,6 +145,7 @@ export default {
   saveSettings: "設定を保存",
   currentVersion: "現在のバージョン",
   checkForUpdates: "更新を確認",
+  projectHomepage: "プロジェクトページ",
   updateAvailable: "新しいバージョンがあります",
   latestVersionAlreadyInstalled: "すでに最新バージョンです",
 

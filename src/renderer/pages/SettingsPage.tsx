@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 import { Toast } from "@base-ui/react/toast"
-import { Loader2, Moon, Sun } from "lucide-react"
+import { ExternalLink, Loader2, Moon, Sun } from "lucide-react"
 import { useUI } from "../context/useUI"
 import type { Language, Preferences, Theme } from "../../shared/preferences"
 import { ListboxWrapper } from "../components/ui/ListboxWrapper"
@@ -178,6 +178,10 @@ export const SettingsPage: React.FC = () => {
     }
   }
 
+  const handleHomepageClick = () => {
+    void window.grabbit.openExternal(updateHomepageUrl)
+  }
+
   return (
     <div className="flex flex-1 flex-col overflow-hidden bg-[#FFF8F7]">
       <div className="flex-1 overflow-y-auto px-4">
@@ -328,7 +332,7 @@ export const SettingsPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-center pt-1 pb-3">
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-1 pb-3">
             <button
               type="button"
               onClick={handleVersionClick}
@@ -348,6 +352,15 @@ export const SettingsPage: React.FC = () => {
                   aria-label={t("updateAvailable")}
                 />
               )}
+            </button>
+            <button
+              type="button"
+              onClick={handleHomepageClick}
+              className="flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-medium text-[#A28D83] transition-colors hover:bg-[#FFF1F4] hover:text-[#FF5C78]"
+              title={t("projectHomepage")}
+            >
+              <ExternalLink size={12} />
+              <span>{t("projectHomepage")}</span>
             </button>
           </div>
 
