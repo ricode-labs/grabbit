@@ -43,68 +43,6 @@ import parseTorrent from "parse-torrent"
 
 const notifications = new Set<Notification>()
 
-const cleanupUnselectedFilesFromTask = async (gid: string) => {
-  try {
-    const task = await callAria2<Aria2Status>("aria2.tellStatus", [gid])
-    const taskDir = resolve(task.dir)
-    const unselectedFiles = task.files.filter(
-      (file) => file.selected === "false"
-    )
-
-    const removeEmptyParentDirectories = async (filePath: string) => {
-      let current = resolve(filePath, "..")
-
-      while (current !== taskDir) {
-        const relativePath = relative(taskDir, current)
-        if (
-          !relativePath ||
-          relativePath.startsWith(`..${sep}`) ||
-          relativePath === ".."
-        ) {
-          break
-        }
-
-        try {
-          await rmdir(current)
-        } catch (error) {
-          const code = (error as NodeJS.ErrnoException).code
-          if (code === "ENOENT") {
-            current = resolve(current, "..")
-            continue
-          }
-          if (code === "ENOTEMPTY") {
-            break
-          }
-          console.warn("Failed to remove empty torrent directory", current, error)
-          break
-        }
-
-        current = resolve(current, "..")
-      }
-    }
-
-    for (const file of unselectedFiles) {
-      const filePath = resolve(taskDir, file.path)
-      try {
-        const fileStat = await stat(filePath)
-        if (fileStat.isFile()) {
-          await unlink(filePath)
-          await removeEmptyParentDirectories(filePath)
-        }
-      } catch (error) {
-        if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
-          console.warn(
-            `Failed to remove torrent placeholder: ${filePath}`,
-            error
-          )
-        }
-      }
-    }
-  } catch (error) {
-    console.warn("Failed to inspect torrent files after adding", error)
-  }
-}
-
 export function registerIpcHandlers() {
   ipcMain.handle("aria2.addUri", async (_event, payload: AddUriPayload) => {
     return await callAria2<string>("aria2.addUri", [
@@ -122,8 +60,73 @@ export function registerIpcHandlers() {
         [],
         payload.options,
       ])
+      const cleanupUnselectedFilesFromTask = async () => {
+        try {
+          const task = await callAria2<Aria2Status>("aria2.tellStatus", [gid])
+          const taskDir = resolve(task.dir)
+          const unselectedFiles = task.files.filter(
+            (file) => file.selected === "false"
+          )
+
+          const removeEmptyParentDirectories = async (filePath: string) => {
+            let current = resolve(filePath, "..")
+
+            while (current !== taskDir) {
+              const relativePath = relative(taskDir, current)
+              if (
+                !relativePath ||
+                relativePath.startsWith(`..${sep}`) ||
+                relativePath === ".."
+              ) {
+                break
+              }
+
+              try {
+                await rmdir(current)
+              } catch (error) {
+                const code = (error as NodeJS.ErrnoException).code
+                if (code === "ENOENT") {
+                  current = resolve(current, "..")
+                  continue
+                }
+                if (code === "ENOTEMPTY") {
+                  break
+                }
+                console.warn(
+                  "Failed to remove empty torrent directory",
+                  current,
+                  error
+                )
+                break
+              }
+
+              current = resolve(current, "..")
+            }
+          }
+
+          for (const file of unselectedFiles) {
+            const filePath = resolve(taskDir, file.path)
+            try {
+              const fileStat = await stat(filePath)
+              if (fileStat.isFile()) {
+                await unlink(filePath)
+                await removeEmptyParentDirectories(filePath)
+              }
+            } catch (error) {
+              if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+                console.warn(
+                  `Failed to remove torrent placeholder: ${filePath}`,
+                  error
+                )
+              }
+            }
+          }
+        } catch (error) {
+          console.warn("Failed to inspect torrent files after adding", error)
+        }
+      }
       setImmediate(() => {
-        cleanupUnselectedFilesFromTask(gid).catch((error) => {
+        cleanupUnselectedFilesFromTask().catch((error) => {
           console.warn("Unexpected torrent placeholder cleanup failure", error)
         })
       })
