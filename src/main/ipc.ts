@@ -38,7 +38,7 @@ import { getPreferences, savePreferences } from "./preferences"
 import { updateTrayMenu } from "./tray"
 import { trayIconPath } from "./paths"
 import { stat, statfs, unlink } from "node:fs/promises"
-import { basename, extname, relative, resolve, sep } from "node:path"
+import { basename, extname, resolve } from "node:path"
 import parseTorrent from "parse-torrent"
 
 const notifications = new Set<Notification>()
@@ -48,21 +48,12 @@ const cleanupUnselectedFilesFromTask = async (gid: string) => {
     const task = await callAria2<Aria2Status>("aria2.tellStatus", [gid])
     const taskDir = resolve(task.dir)
     const unselectedFiles = (task.files ?? []).filter(
-      (file) => file.selected === "false" && file.completedLength === "0"
+      (file) => file.selected === "false"
     )
     if (unselectedFiles.length === 0) return
 
     for (const file of unselectedFiles) {
       const filePath = resolve(taskDir, file.path)
-      const relativePath = relative(taskDir, filePath)
-      if (
-        !relativePath ||
-        relativePath.startsWith(`..${sep}`) ||
-        relativePath === ".."
-      ) {
-        continue
-      }
-
       try {
         const fileStat = await stat(filePath)
         if (fileStat.isFile() && fileStat.size === 0) {
