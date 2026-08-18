@@ -47,11 +47,9 @@ const cleanupUnselectedFilesFromTask = async (gid: string) => {
   try {
     const task = await callAria2<Aria2Status>("aria2.tellStatus", [gid])
     const taskDir = resolve(task.dir)
-    const unselectedFiles = (task.files ?? []).filter(
+    const unselectedFiles = task.files.filter(
       (file) => file.selected === "false"
     )
-    if (unselectedFiles.length === 0) return
-
     for (const file of unselectedFiles) {
       const filePath = resolve(taskDir, file.path)
       try {
