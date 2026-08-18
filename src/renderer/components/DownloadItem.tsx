@@ -229,7 +229,9 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
             {formatSpeed(speed)}
           </span>
         ) : (
-          <span className="text-[11px] font-semibold text-[#BDAAA0]">--</span>
+          <span className="truncate text-[11px] font-semibold text-[#BDAAA0]">
+            {formatSpeed(0)}
+          </span>
         )}
       </div>
 
