@@ -54,7 +54,7 @@ const cleanupUnselectedFilesFromTask = async (gid: string) => {
       const filePath = resolve(taskDir, file.path)
       try {
         const fileStat = await stat(filePath)
-        if (fileStat.isFile() && fileStat.size === 0) {
+        if (fileStat.isFile()) {
           await unlink(filePath)
         }
       } catch (error) {
