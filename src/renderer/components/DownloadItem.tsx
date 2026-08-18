@@ -3,7 +3,6 @@ import { formatBytes, formatSpeed } from "../utils/format"
 import {
   CheckCircle2,
   FolderOpen,
-  MoreHorizontal,
   Pause,
   Play,
   Trash2,
@@ -145,7 +144,7 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
     ? "bg-[#FFF1F4] ring-1 ring-[#FFB9C6]"
     : "bg-white/35 hover:bg-[#FFFBF8]"
   const actionButtonClass =
-    "flex h-7 w-7 items-center justify-center rounded-full text-[#8B6A5D] transition-colors hover:bg-[#FFF1F4] hover:text-[#FF5C78] disabled:cursor-not-allowed disabled:opacity-40"
+    "flex h-8 w-8 items-center justify-center rounded-full text-[#8B6A5D] transition-colors hover:bg-[#FFF1F4] hover:text-[#FF5C78] disabled:cursor-not-allowed disabled:opacity-40"
 
   const handleOpenLocation = async (
     event: React.MouseEvent<HTMLButtonElement>
@@ -164,7 +163,7 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
   return (
     <div
       onClick={() => onSelect(download.gid)}
-      className={`group grid h-[84px] cursor-pointer grid-cols-[38px_minmax(0,1fr)_62px_54px_64px] items-center gap-2 border-b border-[#F4E3DE] px-4 transition-colors last:border-b-0 ${rowState}`}
+      className={`group grid h-[84px] cursor-pointer grid-cols-[38px_minmax(0,1fr)_62px_54px_72px] items-center gap-2 border-b border-[#F4E3DE] px-4 transition-colors last:border-b-0 ${rowState}`}
     >
       <div className="flex h-9 w-9 items-center justify-center">
         <FileIcon
@@ -294,16 +293,6 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
           <Trash2 size={16} />
         </button>
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            onSelect(download.gid)
-          }}
-          className="flex h-7 w-7 items-center justify-center rounded-full text-[#8B6A5D] transition-colors hover:bg-[#F7F0EA]"
-          title={t("downloadDetail")}
-        >
-          <MoreHorizontal size={17} />
-        </button>
       </div>
     </div>
   )
