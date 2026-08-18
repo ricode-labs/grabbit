@@ -6,23 +6,8 @@ import { useDownloadStore } from "../stores/useDownloadStore"
 export const StatusBar: React.FC = () => {
   const { t } = useUI()
   const globalStat = useDownloadStore((state) => state.globalStat)
-  const downloads = useDownloadStore((state) => state.downloads)
   const downloadSpeed = parseInt(globalStat.downloadSpeed || "0")
   const uploadSpeed = parseInt(globalStat.uploadSpeed || "0")
-  const liveTasks = [
-    ...(downloads.active || []),
-    ...(downloads.waiting || []),
-    ...(downloads.stopped || []),
-  ]
-  const btTasks = liveTasks.filter((task) => task.bittorrent || task.infoHash)
-  const connectedPeers = btTasks.reduce(
-    (total, task) => total + parseInt(task.connections || "0"),
-    0
-  )
-  const seeders = btTasks.reduce(
-    (total, task) => total + parseInt(task.numSeeders || "0"),
-    0
-  )
 
   return (
     <footer className="grid h-[30px] grid-cols-1 items-center">
@@ -38,30 +23,6 @@ export const StatusBar: React.FC = () => {
           <span>{t("uploadSpeed")}:</span>
           <span className="font-semibold text-[#5AA0D6]">
             {formatSpeed(uploadSpeed)}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2 text-[#6B5448]">
-          <span>BT Peers:</span>
-          <span
-            className={`font-semibold ${
-              connectedPeers > 0 ? "text-[#67A94D]" : "text-[#9A8276]"
-            }`}
-            title="Connected BitTorrent peers"
-          >
-            {connectedPeers}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2 text-[#6B5448]">
-          <span>Seeders:</span>
-          <span
-            className={`font-semibold ${
-              seeders > 0 ? "text-[#67A94D]" : "text-[#9A8276]"
-            }`}
-            title="Known seeders from active BitTorrent tasks"
-          >
-            {seeders}
           </span>
         </div>
       </div>

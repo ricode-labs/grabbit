@@ -91,6 +91,9 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
   const totalLength = Number(download.totalLength || 0)
   const speed = Number(download.downloadSpeed || 0)
   const progress = totalLength > 0 ? (completedLength / totalLength) * 100 : 0
+  const isBitTorrentTask = Boolean(download.bittorrent || download.infoHash)
+  const connectedPeers = Number.parseInt(download.connections || "0", 10) || 0
+  const seeders = Number.parseInt(download.numSeeders || "0", 10) || 0
 
   const isActive = download.status === "active"
   const isPaused = download.status === "paused"
@@ -189,7 +192,7 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
           </span>
         </div>
 
-        <div className="mb-1.5 flex items-center gap-2 text-[11px] text-[#7F6A5F]">
+        <div className="mb-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-[#7F6A5F]">
           <span>{formatBytes(completedLength)}</span>
           {totalLength > 0 && (
             <>
@@ -203,6 +206,14 @@ export const DownloadItem: React.FC<DownloadItemProps> = ({
               <span>
                 {t("remaining")} {remainingTime}
               </span>
+            </>
+          )}
+          {isBitTorrentTask && (
+            <>
+              <span>&middot;</span>
+              <span>Peers: {connectedPeers}</span>
+              <span>&middot;</span>
+              <span>Seeders: {seeders}</span>
             </>
           )}
         </div>
