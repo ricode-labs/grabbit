@@ -166,7 +166,7 @@ function getLaunchLinks(argv: string[]): LaunchLink[] {
 }
 
 // Submit metalink files directly; URL and torrent inputs need user options first.
-async function addLaunchLinks(launchLinks: LaunchLink[]) {
+async function submitMetalinkLaunchLinks(launchLinks: LaunchLink[]) {
   return await Promise.allSettled(
     launchLinks.map(async (launchLink) => {
       if (launchLink.kind !== "metalink") return
@@ -177,6 +177,22 @@ async function addLaunchLinks(launchLinks: LaunchLink[]) {
       ])
     })
   )
+}
+
+function toLaunchInput(launchLink: LaunchLink): LaunchInput | null {
+  if (launchLink.kind === "torrent") {
+    return { kind: "torrent", value: launchLink.value }
+  }
+
+  if (launchLink.kind === "url") {
+    return {
+      kind: "url",
+      value: launchLink.payload.url,
+      header: launchLink.payload.header,
+    }
+  }
+
+  return null
 }
 
 export function takePendingLaunchInputs() {
@@ -201,23 +217,12 @@ export function handleLaunchArgs(argv: string[]) {
     showWindow()
     const launchLinks = getLaunchLinks(pendingLaunchArgs)
     pendingLaunchInputs.push(
-      ...launchLinks.flatMap((launchLink): LaunchInput[] => {
-        if (launchLink.kind === "torrent") {
-          return [{ kind: "torrent", value: launchLink.value }]
-        }
-        if (launchLink.kind === "url") {
-          return [
-            {
-              kind: "url",
-              value: launchLink.payload.url,
-              header: launchLink.payload.header,
-            },
-          ]
-        }
-        return []
+      ...launchLinks.flatMap((launchLink) => {
+        const launchInput = toLaunchInput(launchLink)
+        return launchInput ? [launchInput] : []
       })
     )
-    void addLaunchLinks(launchLinks)
+    void submitMetalinkLaunchLinks(launchLinks)
     dispatchLaunchInputs()
     pendingLaunchArgs = []
   }

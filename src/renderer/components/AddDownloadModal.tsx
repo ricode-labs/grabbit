@@ -5,16 +5,6 @@ import { formatBytes } from "../utils/format"
 import { useUI } from "../context/useUI"
 import { DialogWrapper } from "./ui/DialogWrapper"
 import { CheckboxWrapper } from "./ui/CheckboxWrapper"
-// import { TooltipWrapper } from "./ui/TooltipWrapper"
-
-// interface FileNode {
-//   name: string
-//   selected: boolean
-//   children?: FileNode[]
-//   isExpanded?: boolean
-//   index?: string // aria2 文件索引
-//   isFile?: boolean
-// }
 
 interface AddDownloadModalProps {
   defaultDownloadDir: string
@@ -50,21 +40,6 @@ const formatContentLength = (contentLength: string | null): string => {
   return Number.isFinite(bytes) ? formatBytes(bytes) : contentLength
 }
 
-// interface DownloadMetadata {
-//   fileName: string
-//   totalLength: number
-//   contentType?: string
-//   acceptRanges?: boolean
-//   finalUrl?: string
-//   statusCode?: number
-// }
-
-// interface DiskSpaceInfo {
-//   available: number
-//   total: number
-//   path?: string
-// }
-
 export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   defaultDownloadDir,
   lastUsedDir,
@@ -80,7 +55,6 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
     initialTorrentPath ? "file" : "link"
   )
   const [url, setUrl] = useState(initialUrl)
-  // const [fileName, setFileName] = useState("")
   const [downloadDir, setDownloadDir] = useState(
     lastUsedDir || defaultDownloadDir
   )
@@ -94,7 +68,6 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
     info: HttpInfo
   } | null>(null)
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(false)
-  // const [metadataError, setMetadataError] = useState("")
   const [availableDiskSpace, setAvailableDiskSpace] = useState<number | null>(
     null
   )
@@ -160,13 +133,11 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
     throw new Error(t("metadataUnavailable"))
   }
 
-  // 初始化时读取剪切板
   useEffect(() => {
     const loadClipboard = async () => {
       if (!initialUrl) {
         try {
           const text = await window.grabbit.getClipboardText()
-          // 检查是否为可下载的链接
           if (isDownloadableLink(text)) {
             setUrl(text)
           }
@@ -246,66 +217,6 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
     }
   }, [downloadDir, shouldLoadMetadata, torrentInfo])
 
-  // useEffect(() => { ... }, [inputMode, url])
-
-  // useEffect(() => {
-  //   const expectedSize = metadata?.totalLength || 0
-  //   if (!downloadDir || expectedSize <= 0) {
-  //     setDiskSpace(null)
-  //     return
-  //   }
-
-  //   let cancelled = false
-  //   const checkSpace = async () => {
-  //     setIsCheckingSpace(true)
-  //     try {
-  //       const result = await window.electronAPI.getDiskSpace(downloadDir)
-  //       if (cancelled) return
-  //       if (result.success) {
-  //         setDiskSpace({
-  //           available: result.available || 0,
-  //           total: result.total || 0,
-  //           path: result.path,
-  //         })
-  //       } else {
-  //         setDiskSpace(null)
-  //       }
-  //     } catch {
-  //       if (!cancelled) setDiskSpace(null)
-  //     } finally {
-  //       if (!cancelled) setIsCheckingSpace(false)
-  //     }
-  //   }
-
-  //   checkSpace()
-
-  //   return () => {
-  //     cancelled = true
-  //   }
-  // }, [downloadDir, metadata?.totalLength])
-
-  // const hasInsufficientSpace = Boolean(
-  //   (metadata?.totalLength || torrentSize) &&
-  //   diskSpace?.available !== undefined &&
-  //   diskSpace.available > 0 &&
-  //   diskSpace.available < (metadata?.totalLength || torrentSize)
-  // )
-
-  // 加载文件树
-  // const loadFileTree = async (torrentPath: string) => { ... }
-
-  // 切换文件选择状态
-  // const toggleFileSelection = (index: number, parentIndex?: number) => { ... }
-
-  // 切换文件夹展开状态
-  // const toggleExpandFolder = (index: number) => { ... }
-
-  // 全选所有文件
-  // const selectAllFiles = () => { ... }
-
-  // 取消选择所有文件
-  // const deselectAllFiles = () => { ... }
-
   const handleSelectFolder = async () => {
     try {
       const folder = await window.grabbit.selectFolder()
@@ -330,11 +241,6 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
         setTorrentInfo(null)
         setSelectedTorrentFiles([])
         setTorrentFile(filePath)
-        // 从文件路径提取文件名
-        // const name = filePath.split(/[\\/]/).pop() || ""
-        // setFileName(name.replace(".torrent", ""))
-        // 不预解析种子文件，提交后直接交给 aria2 处理。
-        // setTorrentSize(0)
       }
     } catch (error) {
       console.error("Failed to open torrent file:", error)
@@ -343,19 +249,11 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
 
   const handleInputModeChange = (mode: "link" | "file") => {
     setInputMode(mode)
-    // 切换模式时清空对应的输入
     if (mode === "link") {
       setTorrentFile("")
     } else {
       setUrl("")
     }
-    // setFileName("")
-    // setFiles([])
-    // setShowFileTree(false)
-    // setIsMultiFile(false)
-    // setTorrentName("")
-    // setCreateFolder(true)
-    // setTorrentSize(0)
     setMetadata(null)
     setIsLoadingMetadata(false)
     setTorrentInfo(null)

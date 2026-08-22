@@ -11,15 +11,17 @@ export function useClipboardDownloadPrompt() {
   const [clipboardUrl, setClipboardUrl] = useState("")
   const [launchHeaders, setLaunchHeaders] = useState<string[]>([])
   const [torrentPath, setTorrentPath] = useState("")
-  const [launchQueue, setLaunchQueue] = useState<LaunchInput[]>([])
   const [modalKey, setModalKey] = useState(0)
   const isAddModalOpenRef = useRef(false)
   const launchQueueRef = useRef<LaunchInput[]>([])
 
-  const setCurrentLaunchInput = (input: LaunchInput) => {
+  const showLaunchInput = (input: LaunchInput) => {
     setClipboardUrl(input.kind === "url" ? input.value : "")
     setLaunchHeaders(input.header || [])
     setTorrentPath(input.kind === "torrent" ? input.value : "")
+    setModalKey((current) => current + 1)
+    setIsAddModalOpen(true)
+    isAddModalOpenRef.current = true
   }
 
   const openAddModal = (
@@ -29,7 +31,6 @@ export function useClipboardDownloadPrompt() {
   ) => {
     isAddModalOpenRef.current = true
     launchQueueRef.current = []
-    setLaunchQueue([])
     setModalKey((current) => current + 1)
     setClipboardUrl(url)
     setLaunchHeaders(headers)
@@ -38,17 +39,14 @@ export function useClipboardDownloadPrompt() {
   }
 
   const closeAddModal = () => {
-    const [, nextInput, ...remainingInputs] = launchQueueRef.current
+    const [nextInput, ...remainingInputs] = launchQueueRef.current
     if (nextInput) {
-      launchQueueRef.current = [nextInput, ...remainingInputs]
-      setLaunchQueue(launchQueueRef.current)
-      setCurrentLaunchInput(nextInput)
-      setModalKey((current) => current + 1)
+      launchQueueRef.current = remainingInputs
+      showLaunchInput(nextInput)
       return
     }
 
     launchQueueRef.current = []
-    setLaunchQueue([])
     isAddModalOpenRef.current = false
     setIsAddModalOpen(false)
     setClipboardUrl("")
@@ -103,14 +101,12 @@ export function useClipboardDownloadPrompt() {
     let mounted = true
     const enqueueLaunchInputs = (inputs: LaunchInput[]) => {
       if (!mounted || inputs.length === 0) return
-      const wasClosed = !isAddModalOpenRef.current
       launchQueueRef.current = [...launchQueueRef.current, ...inputs]
-      setLaunchQueue(launchQueueRef.current)
-      if (wasClosed) {
-        isAddModalOpenRef.current = true
-        setCurrentLaunchInput(launchQueueRef.current[0])
-        setModalKey((current) => current + 1)
-        setIsAddModalOpen(true)
+      if (!isAddModalOpenRef.current) {
+        const nextInput = launchQueueRef.current.shift()
+        if (nextInput) {
+          showLaunchInput(nextInput)
+        }
       }
     }
 
@@ -127,11 +123,9 @@ export function useClipboardDownloadPrompt() {
   }, [])
 
   return {
-    clipboardUrl:
-      launchQueue[0]?.kind === "url" ? launchQueue[0].value : clipboardUrl,
-    launchHeaders: launchQueue[0]?.header || launchHeaders,
-    torrentPath:
-      launchQueue[0]?.kind === "torrent" ? launchQueue[0].value : torrentPath,
+    clipboardUrl,
+    launchHeaders,
+    torrentPath,
     modalKey,
     isAddModalOpen,
     openAddModal,
