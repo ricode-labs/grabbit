@@ -30,7 +30,7 @@
 </p>
 
 - 支持 HTTP、HTTPS、FTP、BitTorrent、Magnet、`.torrent` 和 Metalink 下载
-- 支持直接添加链接、导入 `.torrent`/Metalink 文件，以及从系统打开关联文件和 `grabbit://` 链接
+- 支持直接添加链接、导入 `.torrent`/Metalink 文件，以及从系统打开关联文件和 `grabbit:?payload=...` 链接
 - 支持预览种子元数据，并在开始下载前选择单个文件
 - 支持暂停、继续、移除、清理下载结果，并显示实时进度和速度统计
 - 按状态管理任务，包括下载中、已完成、全部和已删除视图

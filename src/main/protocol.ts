@@ -33,7 +33,7 @@ type GrabbitPayload = {
   header: string[]
 }
 
-// Register the custom `grabbit://` URL scheme with the OS.
+// Register the custom `grabbit:` URL scheme with the OS.
 export function registerProtocolClient() {
   for (const protocol of [appProtocol, magnetProtocol]) {
     if (process.defaultApp) {
@@ -114,9 +114,9 @@ export function registerFileAssociations() {
   )
 }
 
-// Parse a `grabbit://` launch argument into a URL launch link.
+// Parse a `grabbit:?payload=...` launch argument into a URL launch link.
 function parseProtocolLaunchLink(value: string): GrabbitLaunchLink | null {
-  if (value.startsWith(`${appProtocol}://`)) {
+  if (value.startsWith(`${appProtocol}:?`)) {
     const payload = new URL(value).searchParams.get("payload")
     if (!payload) return null
     return { kind: "url", payload: JSON.parse(payload) }

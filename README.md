@@ -30,7 +30,7 @@
 </p>
 
 - Download from HTTP, HTTPS, FTP, BitTorrent, Magnet, `.torrent`, and Metalink sources
-- Add links directly, import `.torrent`/Metalink files, or open supported files and `grabbit://` links from the system
+- Add links directly, import `.torrent`/Metalink files, or open supported files and `grabbit:?payload=...` links from the system
 - Preview torrent metadata and choose individual files before starting a download
 - Pause, resume, remove, and clear download results, with live progress and speed stats
 - Keep tasks organized by status, including active, completed, all, and deleted views
