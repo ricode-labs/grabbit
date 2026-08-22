@@ -19,6 +19,7 @@ import type {
   Options,
   TellRangePayload,
   TorrentInfo,
+  LaunchInput,
 } from "../../shared/aria2"
 import type { Preferences } from "../../shared/preferences"
 import type { UpdateCheckResult } from "./app"
@@ -67,6 +68,8 @@ interface GrabbitAPI {
   getHttpInfo: (url: string) => Promise<HttpInfo>
   getTorrentInfo: (torrentPath: string) => Promise<TorrentInfo>
   getDiskSpace: (dir: string) => Promise<number>
+  takePendingLaunchInputs: () => Promise<LaunchInput[]>
+  onLaunchInputs: (callback: (inputs: LaunchInput[]) => void) => () => void
   showNotification: (message: string) => Promise<void>
   deleteFile: (filePath: string) => Promise<void>
   openFile: (filePath: string) => Promise<void>

@@ -10,6 +10,7 @@ import type {
   Options,
   TellRangePayload,
   TorrentInfo,
+  LaunchInput,
 } from "../shared/aria2"
 import type { Preferences } from "../shared/preferences"
 import type { UpdateCheckResult } from "../renderer/types/app"
@@ -37,6 +38,16 @@ contextBridge.exposeInMainWorld("grabbit", {
   //
   getDiskSpace: (dir: string): Promise<number> =>
     ipcRenderer.invoke("grabbit.getDiskSpace", dir),
+
+  takePendingLaunchInputs: (): Promise<LaunchInput[]> =>
+    ipcRenderer.invoke("grabbit.takePendingLaunchInputs"),
+
+  onLaunchInputs: (callback: (inputs: LaunchInput[]) => void) => {
+    const listener = (_event: Electron.IpcRendererEvent, inputs: LaunchInput[]) =>
+      callback(inputs)
+    ipcRenderer.on("grabbit.launchInputs", listener)
+    return () => ipcRenderer.removeListener("grabbit.launchInputs", listener)
+  },
 
   deleteFile: (filePath: string) =>
     ipcRenderer.invoke("grabbit.deleteFile", filePath),

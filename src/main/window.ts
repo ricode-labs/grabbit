@@ -68,5 +68,5 @@ export function toggleDevTools() {
 }
 
 export function getMainWindow() {
-  return mainWindow!
+  return mainWindow
 }

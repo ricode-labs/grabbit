@@ -1,4 +1,4 @@
-export type Options = Record<string, string>
+export type Options = Record<string, string | string[]>
 
 export type Keys = string[]
 
@@ -17,6 +17,12 @@ export type AddTorrentPayload = {
 export type AddMetalinkPayload = {
   metalinkPath: string
   options?: Options
+}
+
+export type LaunchInput = {
+  kind: "url" | "torrent"
+  value: string
+  header?: string[]
 }
 
 export type GidPayload = {

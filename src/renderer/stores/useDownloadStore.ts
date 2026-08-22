@@ -4,8 +4,7 @@ import type {
   Aria2ConnectionState,
   DownloadsData,
 } from "../types/app"
-import type { Aria2GlobalStat } from "../../shared/aria2"
-import type { Aria2Status } from "../../shared/aria2"
+import type { Aria2GlobalStat, Aria2Status, Options } from "../../shared/aria2"
 
 const seenCompletedStorageKey = "grabbit.seenCompletedTaskIds"
 const maxSeenCompletedIds = 500
@@ -20,7 +19,7 @@ export type DownloadStore = {
   refreshDownloads: () => Promise<void>
   refreshHistory: () => Promise<Aria2Status[]>
   refreshGlobalStat: () => Promise<void>
-  addDownload: (url: string, options: Record<string, string>) => Promise<void>
+  addDownload: (url: string, options: Options) => Promise<void>
   pauseDownload: (gid: string) => Promise<void>
   resumeDownload: (gid: string) => Promise<void>
 }

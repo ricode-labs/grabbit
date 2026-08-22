@@ -4,11 +4,13 @@ import { fileURLToPath } from "node:url"
 import { aria2Process, callAria2 } from "./aria2"
 import { readFile } from "fs-extra"
 import { createKey, HKEY, RegistryValueType, setValue } from "registry-js"
-import { showWindow } from "./window"
+import { getMainWindow, showWindow } from "./window"
+import type { LaunchInput } from "../shared/aria2"
 
 const appProtocol = "grabbit"
 const magnetProtocol = "magnet"
 let pendingLaunchArgs: string[] = []
+let pendingLaunchInputs: LaunchInput[] = []
 
 export type LaunchLink =
   GrabbitLaunchLink | TorrentLaunchLink | MetalinkLaunchLink
@@ -163,21 +165,11 @@ function getLaunchLinks(argv: string[]): LaunchLink[] {
   })
 }
 
-// Read launch links and submit protocol URLs, torrent files, or metalink files to aria2.
+// Submit metalink files directly; URL and torrent inputs need user options first.
 async function addLaunchLinks(launchLinks: LaunchLink[]) {
   return await Promise.allSettled(
     launchLinks.map(async (launchLink) => {
-      if (launchLink.kind === "url") {
-        const { url, header } = launchLink.payload
-        return await callAria2<string>("aria2.addUri", [[url], { header }])
-      }
-
-      if (launchLink.kind === "torrent") {
-        const file = await readFile(launchLink.value)
-        return await callAria2<string>("aria2.addTorrent", [
-          file.toString("base64"),
-        ])
-      }
+      if (launchLink.kind !== "metalink") return
 
       const file = await readFile(launchLink.value)
       return await callAria2<string>("aria2.addMetalink", [
@@ -187,12 +179,46 @@ async function addLaunchLinks(launchLinks: LaunchLink[]) {
   )
 }
 
+export function takePendingLaunchInputs() {
+  const inputs = pendingLaunchInputs
+  pendingLaunchInputs = []
+  return inputs
+}
+
+function dispatchLaunchInputs() {
+  const mainWindow = getMainWindow()
+  if (!mainWindow || mainWindow.webContents.isLoading()) return
+  const inputs = takePendingLaunchInputs()
+  if (inputs.length > 0) {
+    mainWindow.webContents.send("grabbit.launchInputs", inputs)
+  }
+}
+
 // Queue launch arguments until aria2 is available, then process them and show the window.
 export function handleLaunchArgs(argv: string[]) {
   pendingLaunchArgs.push(...argv)
   if (aria2Process) {
     showWindow()
-    addLaunchLinks(getLaunchLinks(pendingLaunchArgs))
+    const launchLinks = getLaunchLinks(pendingLaunchArgs)
+    pendingLaunchInputs.push(
+      ...launchLinks.flatMap((launchLink): LaunchInput[] => {
+        if (launchLink.kind === "torrent") {
+          return [{ kind: "torrent", value: launchLink.value }]
+        }
+        if (launchLink.kind === "url") {
+          return [
+            {
+              kind: "url",
+              value: launchLink.payload.url,
+              header: launchLink.payload.header,
+            },
+          ]
+        }
+        return []
+      })
+    )
+    void addLaunchLinks(launchLinks)
+    dispatchLaunchInputs()
     pendingLaunchArgs = []
   }
 }

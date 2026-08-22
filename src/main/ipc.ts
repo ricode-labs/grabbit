@@ -24,7 +24,9 @@ import type {
   HttpInfo,
   TellRangePayload,
   TorrentInfo,
+  LaunchInput,
 } from "../shared/aria2"
+import { takePendingLaunchInputs } from "./protocol"
 import type { Preferences } from "../shared/preferences"
 import { pathExists, readFile } from "fs-extra"
 import {
@@ -305,14 +307,18 @@ export function registerIpcHandlers() {
   })
 
   ipcMain.handle("grabbit.selectFolder", async () => {
-    const result = await dialog.showOpenDialog(getMainWindow(), {
+    const result = await dialog.showOpenDialog(getMainWindow()!, {
       properties: ["openDirectory", "createDirectory"],
     })
     return result.canceled ? null : result.filePaths[0]
   })
 
+  ipcMain.handle("grabbit.takePendingLaunchInputs", () => {
+    return takePendingLaunchInputs() satisfies LaunchInput[]
+  })
+
   ipcMain.handle("grabbit.selectTorrentFile", async () => {
-    const result = await dialog.showOpenDialog(getMainWindow(), {
+    const result = await dialog.showOpenDialog(getMainWindow()!, {
       properties: ["openFile"],
       filters: [{ name: "Torrent", extensions: ["torrent"] }],
     })

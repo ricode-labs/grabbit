@@ -32,14 +32,21 @@ const parseAria2Size = (value: string | undefined) => {
   return amount
 }
 
+const getStringOption = (options: Options, name: string) => {
+  const value = options[name]
+  return typeof value === "string" ? value : undefined
+}
+
 export const mapGlobalOptionsToSettings = (options: Options): AppSettings => ({
   maxDownloadSpeed: parseAria2Size(
-    options["max-overall-download-limit"] ?? options["max-download-limit"]
+    getStringOption(options, "max-overall-download-limit") ??
+      getStringOption(options, "max-download-limit")
   ),
   maxUploadSpeed: parseAria2Size(
-    options["max-overall-upload-limit"] ?? options["max-upload-limit"]
+    getStringOption(options, "max-overall-upload-limit") ??
+      getStringOption(options, "max-upload-limit")
   ),
-  defaultDownloadDir: options.dir ?? "",
+  defaultDownloadDir: getStringOption(options, "dir") ?? "",
 })
 
 export const mapPreferencesToSettings = (
