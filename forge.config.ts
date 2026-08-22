@@ -34,7 +34,7 @@ const config: ForgeConfig = {
       CFBundleURLTypes: [
         {
           CFBundleURLName: "Grabbit Protocol",
-          CFBundleURLSchemes: ["grabbit"],
+          CFBundleURLSchemes: ["grabbit", "magnet"],
         },
       ],
     },
@@ -100,6 +100,7 @@ const config: ForgeConfig = {
           "application/metalink+xml",
           "application/metalink4+xml",
           "x-scheme-handler/grabbit",
+          "x-scheme-handler/magnet",
         ],
       },
     }),

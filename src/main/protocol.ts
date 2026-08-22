@@ -7,6 +7,7 @@ import { createKey, HKEY, RegistryValueType, setValue } from "registry-js"
 import { showWindow } from "./window"
 
 const appProtocol = "grabbit"
+const magnetProtocol = "magnet"
 let pendingLaunchArgs: string[] = []
 
 export type LaunchLink =
@@ -34,14 +35,16 @@ type GrabbitPayload = {
 
 // Register the custom `grabbit://` URL scheme with the OS.
 export function registerProtocolClient() {
-  if (process.defaultApp) {
-    if (process.argv.length >= 2) {
-      app.setAsDefaultProtocolClient(appProtocol, process.execPath, [
-        resolve(process.argv[1]),
-      ])
+  for (const protocol of [appProtocol, magnetProtocol]) {
+    if (process.defaultApp) {
+      if (process.argv.length >= 2) {
+        app.setAsDefaultProtocolClient(protocol, process.execPath, [
+          resolve(process.argv[1]),
+        ])
+      }
+    } else {
+      app.setAsDefaultProtocolClient(protocol)
     }
-  } else {
-    app.setAsDefaultProtocolClient(appProtocol)
   }
 }
 
@@ -100,6 +103,15 @@ export function registerFileAssociations() {
     setRegistryValue(`${progIdKey}\\DefaultIcon`, "", `${executablePath},0`)
     setRegistryValue(`${progIdKey}\\shell\\open\\command`, "", openCommand)
   }
+
+  const magnetKey = "Software\\Classes\\magnet"
+  setRegistryValue(magnetKey, "", "URL:Magnet Protocol")
+  setRegistryValue(magnetKey, "URL Protocol", "")
+  setRegistryValue(
+    `${magnetKey}\\shell\\open\\command`,
+    "",
+    `"${executablePath}" "%1"`
+  )
 }
 
 // Parse a `grabbit://` launch argument into a URL launch link.
@@ -108,6 +120,13 @@ function parseProtocolLaunchLink(value: string): GrabbitLaunchLink | null {
     const payload = new URL(value).searchParams.get("payload")
     if (!payload) return null
     return { kind: "url", payload: JSON.parse(payload) }
+  }
+  return null
+}
+
+function parseMagnetLaunchLink(value: string): GrabbitLaunchLink | null {
+  if (value.startsWith(`${magnetProtocol}:`)) {
+    return { kind: "url", payload: { url: value, header: [] } }
   }
   return null
 }
@@ -135,7 +154,12 @@ function parseFileLaunchLink(value: string): LaunchLink | null {
 // Parse launch arguments from URL schemes and file paths.
 function getLaunchLinks(argv: string[]): LaunchLink[] {
   return argv.flatMap((value) => {
-    return parseProtocolLaunchLink(value) ?? parseFileLaunchLink(value) ?? []
+    return (
+      parseMagnetLaunchLink(value) ??
+      parseProtocolLaunchLink(value) ??
+      parseFileLaunchLink(value) ??
+      []
+    )
   })
 }
 
@@ -150,17 +174,15 @@ async function addLaunchLinks(launchLinks: LaunchLink[]) {
 
       if (launchLink.kind === "torrent") {
         const file = await readFile(launchLink.value)
-        return await callAria2<string>(
-          "aria2.addTorrent",
-          [file.toString("base64")]
-        )
+        return await callAria2<string>("aria2.addTorrent", [
+          file.toString("base64"),
+        ])
       }
 
       const file = await readFile(launchLink.value)
-      return await callAria2<string>(
-        "aria2.addMetalink",
-        [file.toString("base64")]
-      )
+      return await callAria2<string>("aria2.addMetalink", [
+        file.toString("base64"),
+      ])
     })
   )
 }
