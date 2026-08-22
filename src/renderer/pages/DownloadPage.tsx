@@ -20,6 +20,7 @@ import { useClipboardDownloadPrompt } from "../hooks/useClipboardDownloadPrompt"
 import { useDeleteDownloadTask } from "../hooks/useDeleteDownloadTask"
 import { NoticeModal } from "../components/ui/NoticeModal"
 import type { NoticeState } from "../types/app"
+import type { Options } from "../../shared/aria2"
 import faviconUrl from "../assets/favicon.webp"
 
 const toolbarIconButtonClass =
@@ -49,6 +50,9 @@ export const DownloadPage: React.FC = () => {
   const [notice, setNotice] = useState<NoticeState | null>(null)
   const {
     clipboardUrl,
+    launchHeaders,
+    torrentPath,
+    modalKey,
     isAddModalOpen,
     openAddModal,
     closeAddModal,
@@ -144,7 +148,7 @@ export const DownloadPage: React.FC = () => {
 
   const handleAddDownload = async (
     url: string,
-    options: Record<string, string>
+    options: Options
   ) => {
     try {
       await addDownload(url, options)
@@ -267,9 +271,12 @@ export const DownloadPage: React.FC = () => {
       {/* Modals */}
       {isAddModalOpen && (
         <AddDownloadModal
+          key={modalKey}
           defaultDownloadDir={defaultDownloadDir}
           lastUsedDir={lastUsedDownloadDir || defaultDownloadDir}
           initialUrl={clipboardUrl}
+          initialTorrentPath={torrentPath}
+          initialHeaders={launchHeaders}
           onAdd={handleAddDownload}
           onClose={closeAndMarkClipboardUrl}
           onDirChange={setLastUsedDownloadDir}

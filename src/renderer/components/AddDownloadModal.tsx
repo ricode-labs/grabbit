@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react"
 import { Clipboard, FolderOpen, Link as LinkIcon, X } from "lucide-react"
-import type { HttpInfo, TorrentInfo } from "../../shared/aria2"
+import type { HttpInfo, Options, TorrentInfo } from "../../shared/aria2"
 import { formatBytes } from "../utils/format"
 import { useUI } from "../context/useUI"
 import { DialogWrapper } from "./ui/DialogWrapper"
@@ -20,7 +20,9 @@ interface AddDownloadModalProps {
   defaultDownloadDir: string
   lastUsedDir?: string
   initialUrl?: string
-  onAdd: (url: string, options: Record<string, string>) => void | Promise<void>
+  initialTorrentPath?: string
+  initialHeaders?: string[]
+  onAdd: (url: string, options: Options) => void | Promise<void>
   onClose: () => void
   onDirChange?: (dir: string) => void
 }
@@ -67,19 +69,23 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   defaultDownloadDir,
   lastUsedDir,
   initialUrl = "",
+  initialTorrentPath = "",
+  initialHeaders = [],
   onAdd,
   onClose,
   onDirChange,
 }) => {
   const { t } = useUI()
-  const [inputMode, setInputMode] = useState<"link" | "file">("link")
+  const [inputMode, setInputMode] = useState<"link" | "file">(
+    initialTorrentPath ? "file" : "link"
+  )
   const [url, setUrl] = useState(initialUrl)
   // const [fileName, setFileName] = useState("")
   const [downloadDir, setDownloadDir] = useState(
     lastUsedDir || defaultDownloadDir
   )
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [torrentFile, setTorrentFile] = useState<string>("")
+  const [torrentFile, setTorrentFile] = useState<string>(initialTorrentPath)
   const [torrentInfo, setTorrentInfo] = useState<TorrentInfo | null>(null)
   const [selectedTorrentFiles, setSelectedTorrentFiles] = useState<number[]>([])
   const [isLoadingMagnetMetadata, setIsLoadingMagnetMetadata] = useState(false)
@@ -95,6 +101,7 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
   const [isCheckingSpace, setIsCheckingSpace] = useState(false)
 
   const isUsingDefaultDir = downloadDir === defaultDownloadDir
+
   const hasDownloadData =
     inputMode === "file"
       ? Boolean(torrentFile && torrentInfo && selectedTorrentFiles.length > 0)
@@ -380,9 +387,13 @@ export const AddDownloadModal: React.FC<AddDownloadModalProps> = ({
         return
       }
 
-      const options: Record<string, string> = { dir: downloadDir }
+      const options: Options = { dir: downloadDir }
+      if (inputMode === "link" && initialHeaders.length > 0) {
+        options.header = initialHeaders
+      }
       if (inputMode === "file") {
         options["select-file"] = selectedTorrentFiles.join(",")
+        options["bt-metadata-only"] = "false"
       }
 
       setIsSubmitting(true)
