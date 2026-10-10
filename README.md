@@ -75,7 +75,7 @@ Installers are published on the [GitHub Releases](https://github.com/ricode-labs
 Install Flatpak first, then double-click the `.flatpak` file, or run:
 
 ```bash
-flatpak install --user ./Grabbit-linux-x64.flatpak
+flatpak install ./Grabbit-linux-x64.flatpak
 ```
 
 ### Windows

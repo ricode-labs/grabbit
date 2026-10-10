@@ -75,7 +75,7 @@ Grabbit の拡張機能がこれらを自動的に処理します。
 先に Flatpak をインストールしてから、`.flatpak` ファイルをダブルクリックするか、ターミナルで次を実行します。
 
 ```bash
-flatpak install --user ./Grabbit-linux-x64.flatpak
+flatpak install ./Grabbit-linux-x64.flatpak
 ```
 
 ### Windows

@@ -75,7 +75,7 @@ Grabbit 插件会自动为你做这些事情。
 需要先安装 Flatpak，然后双击 `.flatpak` 文件，或在终端执行：
 
 ```bash
-flatpak install --user ./Grabbit-linux-x64.flatpak
+flatpak install ./Grabbit-linux-x64.flatpak
 ```
 
 ### Windows
