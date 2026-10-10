@@ -141,12 +141,12 @@ contextBridge.exposeInMainWorld("aria2", {
   getServers: (payload: GidPayload) =>
     ipcRenderer.invoke("aria2.getServers", payload),
 
-  // This method returns a list of active downloads
-  tellActive: (keys?: string[]) => ipcRenderer.invoke("aria2.tellActive", keys),
+  // // This method returns a list of active downloads
+  // tellActive: (keys?: string[]) => ipcRenderer.invoke("aria2.tellActive", keys),
 
-  // This method returns a list of waiting downloads, including paused ones
-  tellWaiting: (payload: TellRangePayload) =>
-    ipcRenderer.invoke("aria2.tellWaiting", payload),
+  // // This method returns a list of waiting downloads, including paused ones
+  // tellWaiting: (payload: TellRangePayload) =>
+  //   ipcRenderer.invoke("aria2.tellWaiting", payload),
 
   // This method returns a list of stopped downloads
   tellStopped: (payload: TellRangePayload) =>

@@ -1,21 +1,22 @@
 import Store from "electron-store"
+import { callAria2 } from "./aria2"
+import type { Aria2Status } from "../shared/aria2"
 
+type Task = {
+  gid: string
+  status: "unfinished" | "completed"
+}
 
-// type Task = {
-//   gid: string
-//   status: "unfinished" | "completed"
-// }
+type Tasks = Task[]
 
-type Tasks = Set<string>
-
-const unfinishedTasks = new Store<Tasks>({
-  name: "unfinishedTasks",
-  defaults: new Set(),
-})
+// const unfinishedTasks = new Store<Tasks>({
+//   name: "unfinishedTasks",
+//   defaults: new Set(),
+// })
 
 const completedTasks = new Store<Tasks>({
   name: "completedTasks",
-  defaults: new Set(),
+  defaults: [],
 })
 
 // const terminalStatuses: TaskStatus[] = ["complete", "error", "removed"]
@@ -26,13 +27,13 @@ const completedTasks = new Store<Tasks>({
 //   ...terminalStatuses,
 // ]
 
-
 // function getTaskByGid(gid: string): TaskRecord | null {
 //   return store.get("tasks")[gid] ?? null
 // }
 
-export function addTask(gid: string) {
-  unfinishedTasks.store.add(gid)
+export function addCompletedTasks(gid: string) {
+  unfinishedTasks.store.delete(gid)
+  completedTasks.store.add(gid)
 }
 
 export function removeTask(gid: string) {
@@ -40,11 +41,14 @@ export function removeTask(gid: string) {
   completedTasks.store.delete(gid)
 }
 
-export function getUnfinishedTasks() {
-  return unfinishedTasks.store
+export async function getUnfinishedTasks() {
+  const [active, waiting] = await Promise.all([
+    callAria2<Aria2Status[]>("aria2.tellActive"),
+    callAria2<Aria2Status[]>("aria2.tellWaiting", [0, 1000000]),
+  ])
+  return [...active, ...waiting]
 }
 
 export function getCompletedTasks() {
   return completedTasks.store
 }
-
