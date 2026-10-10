@@ -52,7 +52,7 @@ export function registerIpcHandlers() {
       payload.uris,
       payload.options,
     ])
-    addTask({gid, status: "waiting"})
+    addTask(gid)
     return gid
   })
 
