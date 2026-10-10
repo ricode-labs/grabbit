@@ -42,15 +42,18 @@ import { trayIconPath } from "./paths"
 import { rmdir, stat, statfs, unlink } from "node:fs/promises"
 import { basename, extname, relative, resolve, sep } from "node:path"
 import parseTorrent from "parse-torrent"
+import { addTask } from "./tasks"
 
 const notifications = new Set<Notification>()
 
 export function registerIpcHandlers() {
   ipcMain.handle("aria2.addUri", async (_event, payload: AddUriPayload) => {
-    return await callAria2<string>("aria2.addUri", [
+    const gid =  await callAria2<string>("aria2.addUri", [
       payload.uris,
       payload.options,
     ])
+    addTask({gid, status: "waiting"})
+    return gid
   })
 
   ipcMain.handle(

@@ -9,47 +9,33 @@ import type {
   TaskStatus,
 } from "../shared/tasks"
 
-const store = new Store<{ tasks: Record<string, TaskRecord> }>({
+type Task = {
+  gid: string
+  status: "active" | "waiting" | "paused" | "complete" | "error" | "removed"
+}
+
+type Tasks = Task[]
+
+const store = new Store<Tasks>({
   name: "tasks",
-  defaults: { tasks: {} },
+  defaults: [],
 })
 
-const terminalStatuses: TaskStatus[] = ["complete", "error", "removed"]
-const taskStatuses: TaskStatus[] = [
-  "active",
-  "waiting",
-  "paused",
-  ...terminalStatuses,
-]
+// const terminalStatuses: TaskStatus[] = ["complete", "error", "removed"]
+// const taskStatuses: TaskStatus[] = [
+//   "active",
+//   "waiting",
+//   "paused",
+//   ...terminalStatuses,
+// ]
 
-function requireGid(payload: GidPayload): string {
-  const gid = payload?.gid
-  if (typeof gid !== "string" || !/^[0-9a-f]{1,16}$/i.test(gid)) {
-    throw new Error("Invalid aria2 GID")
-  }
-  return gid
-}
 
-function requireSource(source?: TaskSource): TaskSource | undefined {
-  if (source === undefined) return undefined
-  if (
-    !source ||
-    !["uri", "torrent", "metalink"].includes(source.kind) ||
-    typeof source.value !== "string" ||
-    !source.value.trim()
-  ) {
-    throw new Error("Invalid task source")
-  }
-  return source
-}
+// function getTaskByGid(gid: string): TaskRecord | null {
+//   return store.get("tasks")[gid] ?? null
+// }
 
-function getTaskByGid(gid: string): TaskRecord | null {
-  return store.get("tasks")[gid] ?? null
-}
-
-function saveTask(task: TaskRecord): TaskRecord {
-  store.set("tasks", { ...store.get("tasks"), [task.gid]: task })
-  return task
+export function addTask(task: Task) {
+  store.store.push(task)
 }
 
 function snapshotTask(
